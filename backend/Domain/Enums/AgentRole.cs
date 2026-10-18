@@ -1,9 +1,2 @@
-namespace Domain.Entities
-{
-    public enum AgentRole
-    {
-        TrafficAgent,
-        MunicipalGuard,
-        PoliceOfficer
-    }
-}
+namespace Domain.Enums;
+public enum AgentRole { TrafficAgent, MunicipalGuard, PoliceOfficer }

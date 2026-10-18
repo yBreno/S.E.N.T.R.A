@@ -1,6 +1,79 @@
-@Api_HostAddress = http://localhost:5129
+@host = http://localhost:5129
+@token = COLOQUE_O_TOKEN_AQUI
 
-GET {{Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### 1. Login como Admin inicial (criado pelo AdminSeeder em Development)
+POST {{host}}/api/auth/login
+Content-Type: application/json
 
-###
+{
+  "email": "admin@fogo.local",
+  "password": "Admin@12345"
+}
+
+### 2. Registro público (papel Agent)
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Agente Silva",
+  "email": "silva@fogo.local",
+  "cpf": "11144477735",
+  "password": "Silva@12345"
+}
+
+### 3. Criar Organização (Admin)
+POST {{host}}/api/organizations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "CET São Paulo",
+  "type": "TrafficAuthority",
+  "description": "Companhia de Engenharia de Tráfego"
+}
+
+### 4. Criar Endereço (RD-01: bairro + coordenadas obrigatórias)
+POST {{host}}/api/addresses
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "street": "Av. Paulista",
+  "number": "1000",
+  "neighborhood": "Bela Vista",
+  "city": "São Paulo",
+  "state": "SP",
+  "zipCode": "01310-100",
+  "country": "Brasil",
+  "latitude": -23.5649,
+  "longitude": -46.6520
+}
+
+### 5. Criar Equipamento (TPH Camera)
+POST {{host}}/api/equipments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "type": "Camera",
+  "serialNumber": "CAM-PAULISTA-001",
+  "brand": "Intelbras",
+  "model": "VIP-3230",
+  "organizationId": "00000000-0000-0000-0000-000000000000",
+  "addressId": "00000000-0000-0000-0000-000000000000",
+  "hasNightVision": true,
+  "resolution": "4K",
+  "isColor": true
+}
+
+### 6. Buscar Equipamentos (RF-04)
+GET {{host}}/api/equipments?neighborhood=Bela%20Vista
+Authorization: Bearer {{token}}
+
+### 7. Dashboard (RF-03)
+GET {{host}}/api/dashboard
+Authorization: Bearer {{token}}
+
+### 8. Listar Alertas (RF-05)
+GET {{host}}/api/alerts?status=Open
+Authorization: Bearer {{token}}

@@ -1,10 +1,2 @@
-namespace Domain.Entities
-{
-    public enum MaintenanceNeed
-    {
-        None,
-        Immediate,
-        Scheduled,
-        Periodic
-    }
-}
+namespace Domain.Enums;
+public enum MaintenanceNeed { None, Immediate, Scheduled, Periodic }

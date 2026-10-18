@@ -1,12 +1,23 @@
-﻿using Domain.Entities;
+using Domain.Enums;
+namespace Domain.Entities;
 
-namespace WebApplication1.backend.Domain.Entities
+public class Agent : BaseEntity
 {
-    public class Agent
-    {
-        public Guid Id { get; set; }
-        public string Name { get; set; }
-        public string BadgeNumber { get; set; } // Número da matrícula/distintivo
-        public AgentRole Role { get; set; }
-    }
+    public string Name { get; set; } = string.Empty;
+    public string Cpf { get; set; } = string.Empty;
+    public string BadgeNumber { get; set; } = string.Empty;
+    public AgentRole Role { get; set; }
+    public AgentAvailability Availability { get; set; } = AgentAvailability.Offline;
+
+    public Guid? UserId { get; set; }
+    public User? User { get; set; }
+
+    public Guid OrganizationId { get; set; }
+    public Organization Organization { get; set; } = null!;
+
+    // Localizacao atual (RD-01: bairro + lat/long obrigatorios)
+    public string Neighborhood { get; set; } = string.Empty;
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public DateTime LocationUpdatedAt { get; set; } = DateTime.UtcNow;
 }
