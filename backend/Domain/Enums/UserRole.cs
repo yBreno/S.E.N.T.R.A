@@ -1,11 +1,2 @@
-namespace Domain.Entities
-{
-    public enum UserRole
-    {
-        Admin,
-        OperationManager,
-        CentralOperator,
-        MaintenanceTechnician,
-        Agent
-    }
-}
+namespace Domain.Enums;
+public enum UserRole { Admin, OperationManager, CentralOperator, MaintenanceTechnician, Agent }

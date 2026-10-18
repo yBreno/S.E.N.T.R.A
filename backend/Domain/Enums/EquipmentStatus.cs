@@ -1,12 +1,2 @@
-namespace Domain.Entities
-{
-    public enum EquipmentStatus
-    {
-        NotInstalled,
-        Operational,
-        Malfunctioning,
-        Deactivated,
-        Stolen,
-        Other
-    }
-}
+namespace Domain.Enums;
+public enum EquipmentStatus { NotInstalled, Operational, Malfunctioning, UnderMaintenance, Deactivated, Stolen }

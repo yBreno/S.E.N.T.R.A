@@ -1,17 +1,3 @@
-namespace Domain.Entities
-{
-    public enum EquipmentType
-    {
-        Camera,
-        Radar,
-        TruckScale,
-        EnforcementVehicle,
-        Barrier,
-        Taxi,
-        Kiosk,
-        EletricScooter,
-        PoliceCar,
-        AgentsVehicle,
-        Other
-    }
-}
+namespace Domain.Enums;
+/// <summary>Discriminador TPH: um valor por classe concreta de Equipment.</summary>
+public enum EquipmentType { Camera, Radar, Sensor, Vehicle, ElectricalScooter, ParkingMeter, Motorcycle, AutonomousVehicle }
