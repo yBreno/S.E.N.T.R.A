@@ -81,10 +81,12 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
+//Deixar fora pro Swagger rodar no link do azure
+app.UseSwagger();    
+app.UseSwaggerUI();
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    
     await AdminSeeder.SeedAsync(app.Services, app.Configuration, app.Logger);
     await PredictiveSeeder.SeedAsync(app.Services, app.Logger);
 }
