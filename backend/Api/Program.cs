@@ -81,19 +81,23 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-//Deixar fora pro Swagger rodar no link do azure
-app.UseSwagger();    
+// Swagger disponível no Azure
+app.UseSwagger();
 app.UseSwaggerUI();
+
 if (app.Environment.IsDevelopment())
 {
-    
     await AdminSeeder.SeedAsync(app.Services, app.Configuration, app.Logger);
     await PredictiveSeeder.SeedAsync(app.Services, app.Logger);
+}
+else if (app.Configuration.GetValue<bool>("SeedAdmin:Enabled"))
+{
+    await AdminSeeder.SeedAsync(app.Services, app.Configuration, app.Logger);
 }
 
 app.UseHttpsRedirection();
 app.UseCors("Default");
-app.UseAuthentication(); // sempre antes de UseAuthorization
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
