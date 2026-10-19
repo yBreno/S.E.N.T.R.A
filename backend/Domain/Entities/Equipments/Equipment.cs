@@ -17,8 +17,6 @@ public abstract class Equipment : BaseEntity
     public MaintenanceNeed MaintenanceNeed { get; set; } = MaintenanceNeed.None;
     public DateTime? NextMaintenanceDate { get; set; }
 
-    public Guid OrganizationId { get; set; }
-    public Organization Organization { get; set; } = null!;
     public Guid AddressId { get; set; }
     public Address Address { get; set; } = null!;
 

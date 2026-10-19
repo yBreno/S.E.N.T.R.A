@@ -4,7 +4,6 @@ using Application.DTOs.Agent;
 using Application.DTOs.Auth;
 using Application.DTOs.Equipment;
 using Application.DTOs.Maintenance;
-using Application.DTOs.Organization;
 using Application.Security;
 using Application.Services;
 using Application.Validators;
@@ -89,10 +88,9 @@ public class ServiceRulesTests
         .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
 
     private AddressService Addresses => new(new AddressRepository(_db), _db, new CreateAddressDtoValidator(), new UpdateAddressDtoValidator());
-    private OrganizationService Orgs => new(new OrganizationRepository(_db), _db, new CreateOrganizationDtoValidator(), new UpdateOrganizationDtoValidator());
-    private AgentService Agents => new(new AgentRepository(_db), new OrganizationRepository(_db), new UserRepository(_db), _db,
+    private AgentService Agents => new(new AgentRepository(_db), new UserRepository(_db), _db,
         new CreateAgentDtoValidator(), new UpdateAgentDtoValidator());
-    private EquipmentService Equipments => new(new EquipmentRepository(_db), new AddressRepository(_db), new OrganizationRepository(_db),
+    private EquipmentService Equipments => new(new EquipmentRepository(_db), new AddressRepository(_db),
         new AgentRepository(_db), new AlertRepository(_db), new MaintenanceRecordRepository(_db), _db,
         new CreateEquipmentDtoValidator(), new UpdateEquipmentDtoValidator(), new ChangeEquipmentStatusDtoValidator());
     private MaintenanceService Maintenances => new(new MaintenanceRecordRepository(_db), new EquipmentRepository(_db), new AgentRepository(_db),
@@ -106,19 +104,18 @@ public class ServiceRulesTests
         Street = "Rua A", Neighborhood = "Centro", City = "Sao Paulo", State = States.SP, ZipCode = "01001-000", Latitude = -23.55, Longitude = -46.63
     };
 
-    private async Task<(Guid orgId, Guid addressId)> SeedBaseAsync()
+    private async Task<Guid> SeedAddressAsync()
     {
-        var org = await Orgs.CreateAsync(new CreateOrganizationDto { Name = "CET", Type = OrganizationType.TrafficAuthority });
         var addr = await Addresses.CreateAsync(ValidAddress());
-        return (org.Id, addr.Id);
+        return addr.Id;
     }
 
     private async Task<EquipmentResponseDto> NewCameraAsync(string serial = "SN-1")
     {
-        var (org, addr) = await SeedBaseAsync();
+        var addr = await SeedAddressAsync();
         return await Equipments.CreateAsync(new CreateEquipmentDto
         {
-            Type = EquipmentType.Camera, SerialNumber = serial, Brand = "B", Model = "M", OrganizationId = org, AddressId = addr
+            Type = EquipmentType.Camera, SerialNumber = serial, Brand = "B", Model = "M", AddressId = addr
         });
     }
 
@@ -139,10 +136,9 @@ public class ServiceRulesTests
     [Fact]
     public async Task Agent_without_neighborhood_or_coordinates_is_rejected()
     {
-        var org = await Orgs.CreateAsync(new CreateOrganizationDto { Name = "Guarda", Type = OrganizationType.MunicipalGuard });
         var dto = new CreateAgentDto
         {
-            Name = "Ana", Cpf = "52998224725", BadgeNumber = "001", Role = AgentRole.TrafficAgent, OrganizationId = org.Id,
+            Name = "Ana", Cpf = "52998224725", BadgeNumber = "001", Role = AgentRole.TrafficAgent,
             Neighborhood = "", Latitude = 0, Longitude = 0
         };
         await Assert.ThrowsAsync<ValidationException>(() => Agents.CreateAsync(dto));
@@ -153,10 +149,9 @@ public class ServiceRulesTests
     [Fact]
     public async Task Equipment_requires_existing_address()
     {
-        var (org, _) = await SeedBaseAsync();
         await Assert.ThrowsAsync<NotFoundException>(() => Equipments.CreateAsync(new CreateEquipmentDto
         {
-            Type = EquipmentType.Camera, SerialNumber = "X", Brand = "B", Model = "M", OrganizationId = org, AddressId = Guid.NewGuid()
+            Type = EquipmentType.Camera, SerialNumber = "X", Brand = "B", Model = "M", AddressId = Guid.NewGuid()
         }));
     }
 
@@ -166,7 +161,7 @@ public class ServiceRulesTests
         var cam = await NewCameraAsync("DUP");
         await Assert.ThrowsAsync<ConflictException>(() => Equipments.CreateAsync(new CreateEquipmentDto
         {
-            Type = EquipmentType.Camera, SerialNumber = "DUP", Brand = "B", Model = "M", OrganizationId = cam.OrganizationId, AddressId = cam.AddressId
+            Type = EquipmentType.Camera, SerialNumber = "DUP", Brand = "B", Model = "M", AddressId = cam.AddressId
         }));
     }
 

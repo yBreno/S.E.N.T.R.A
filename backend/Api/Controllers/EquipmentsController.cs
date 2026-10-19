@@ -11,12 +11,12 @@ namespace Api.Controllers;
 [Authorize]
 public class EquipmentsController(IEquipmentService service) : ControllerBase
 {
-    /// <summary>RF-04: filtros opcionais por tipo, status, bairro e organizacao (retorna coordenadas).</summary>
+    /// <summary>RF-04: filtros opcionais por tipo, status e bairro (retorna coordenadas).</summary>
     [HttpGet]
     [Authorize(Roles = Roles.Staff)]
     public async Task<ActionResult<IReadOnlyList<EquipmentResponseDto>>> Search([FromQuery] EquipmentType? type, [FromQuery] EquipmentStatus? status,
-        [FromQuery] string? neighborhood, [FromQuery] Guid? organizationId, CancellationToken ct) =>
-        Ok(await service.SearchAsync(new EquipmentSearchDto(type, status, neighborhood, organizationId), ct));
+        [FromQuery] string? neighborhood, CancellationToken ct) =>
+        Ok(await service.SearchAsync(new EquipmentSearchDto(type, status, neighborhood), ct));
 
     [HttpGet("{id:guid}")]
     [Authorize(Roles = Roles.Staff)]

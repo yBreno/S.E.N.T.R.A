@@ -8,11 +8,11 @@ namespace Infrastructure.Repositories;
 public class AgentRepository(AppDbContext context) : Repository<Agent>(context), IAgentRepository
 {
     public override Task<Agent?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
-        Set.Include(a => a.Organization).FirstOrDefaultAsync(a => a.Id == id, ct);
+        Set.FirstOrDefaultAsync(a => a.Id == id, ct);
     public override Task<List<Agent>> GetAllAsync(CancellationToken ct = default) =>
-        Set.AsNoTracking().Include(a => a.Organization).OrderBy(a => a.Name).ToListAsync(ct);
+        Set.AsNoTracking().OrderBy(a => a.Name).ToListAsync(ct);
     public Task<Agent?> GetByUserIdAsync(Guid userId, CancellationToken ct = default) =>
-        Set.Include(a => a.Organization).FirstOrDefaultAsync(a => a.UserId == userId, ct);
+        Set.FirstOrDefaultAsync(a => a.UserId == userId, ct);
     public Task<bool> CpfExistsAsync(string cpf, Guid? ignoreId = null, CancellationToken ct = default) =>
         Set.AnyAsync(a => a.Cpf == cpf && a.Id != ignoreId, ct);
     public Task<bool> BadgeExistsAsync(string badge, Guid? ignoreId = null, CancellationToken ct = default) =>

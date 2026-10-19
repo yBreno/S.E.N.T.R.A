@@ -2,7 +2,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Api.Middleware;
 using Api.Seed;
+using Api.Workers;
 using Application;
+using Application.Predictive;
 using Application.Security;
 using Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -14,6 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 // ---- Camadas
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// ---- Cidade Preditiva (pesos e limiares auditaveis + worker de telemetria simulada)
+builder.Services.Configure<PredictiveSettings>(builder.Configuration.GetSection(PredictiveSettings.SectionName));
+builder.Services.Configure<SimulationSettings>(builder.Configuration.GetSection(SimulationSettings.SectionName));
+builder.Services.AddHostedService<TelemetrySimulationWorker>();
 
 // ---- JWT (a Key vem de user-secrets / variavel de ambiente: Jwt__Key)
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
@@ -43,14 +50,20 @@ builder.Services.AddAuthorization();
 
 // ---- CORS
 var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-builder.Services.AddCors(o => o.AddPolicy("Default", p => p.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod()));
+builder.Services.AddCors(o => o.AddPolicy("Default", p =>
+{
+    if (builder.Environment.IsDevelopment())
+        p.SetIsOriginAllowed(_ => true).AllowAnyHeader().AllowAnyMethod();
+    else
+        p.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();
+}));
 
 // ---- MVC + Swagger (esquema Bearer)
 builder.Services.AddControllers().AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(o =>
 {
-    o.SwaggerDoc("v1", new OpenApiInfo { Title = "F.O.G.O. API", Version = "v1" });
+    o.SwaggerDoc("v1", new OpenApiInfo { Title = "F.O.G.O. API - Cidade Preditiva", Version = "v1" });
     o.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.Http,
@@ -73,6 +86,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     await AdminSeeder.SeedAsync(app.Services, app.Configuration, app.Logger);
+    await PredictiveSeeder.SeedAsync(app.Services, app.Logger);
 }
 
 app.UseHttpsRedirection();

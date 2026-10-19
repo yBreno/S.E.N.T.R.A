@@ -7,7 +7,6 @@ public abstract record EquipmentWriteDto
     public string SerialNumber { get; init; } = string.Empty;
     public string Brand { get; init; } = string.Empty;
     public string Model { get; init; } = string.Empty;
-    public Guid OrganizationId { get; init; }
     public Guid AddressId { get; init; }
 
     // Camera
@@ -42,9 +41,9 @@ public record UpdateEquipmentDto : EquipmentWriteDto;
 
 public record ChangeEquipmentStatusDto(EquipmentStatus NewStatus, string? Reason);
 
-public record EquipmentSearchDto(EquipmentType? Type, EquipmentStatus? Status, string? Neighborhood, Guid? OrganizationId);
+public record EquipmentSearchDto(EquipmentType? Type, EquipmentStatus? Status, string? Neighborhood);
 
 public record EquipmentResponseDto(Guid Id, EquipmentType Type, string SerialNumber, string Brand, string Model,
     EquipmentStatus Status, MaintenanceNeed MaintenanceNeed, DateTime? NextMaintenanceDate,
-    Guid OrganizationId, string? OrganizationName, Guid AddressId, string? Neighborhood,
+    Guid AddressId, string? Neighborhood,
     double? Latitude, double? Longitude, Dictionary<string, object?> Attributes);

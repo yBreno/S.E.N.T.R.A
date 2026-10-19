@@ -7,7 +7,7 @@ using Domain.IRepositories;
 using FluentValidation;
 namespace Application.Services;
 
-public class AgentService(IAgentRepository repo, IOrganizationRepository orgs, IUserRepository users, IUnitOfWork uow,
+public class AgentService(IAgentRepository repo, IUserRepository users, IUnitOfWork uow,
     IValidator<CreateAgentDto> cv, IValidator<UpdateAgentDto> uv)
     : Service<Domain.Entities.Agent, CreateAgentDto, UpdateAgentDto, AgentResponseDto>(repo, uow, cv, uv), IAgentService
 {
@@ -16,7 +16,6 @@ public class AgentService(IAgentRepository repo, IOrganizationRepository orgs, I
 
     private async Task CheckReferencesAsync(AgentWriteDto dto, Guid? ignoreId, CancellationToken ct)
     {
-        if (!await orgs.ExistsAsync(dto.OrganizationId, ct)) throw new NotFoundException("Organizacao nao encontrada.");
         if (await repo.BadgeExistsAsync(dto.BadgeNumber.Trim(), ignoreId, ct)) throw new ConflictException("Matricula ja cadastrada.");
         if (dto.UserId is { } uid)
         {

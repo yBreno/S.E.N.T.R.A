@@ -12,9 +12,6 @@ public class Agent : BaseEntity
     public Guid? UserId { get; set; }
     public User? User { get; set; }
 
-    public Guid OrganizationId { get; set; }
-    public Organization Organization { get; set; } = null!;
-
     // Localizacao atual (RD-01: bairro + lat/long obrigatorios)
     public string Neighborhood { get; set; } = string.Empty;
     public double Latitude { get; set; }

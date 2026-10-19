@@ -8,7 +8,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<Address> Addresses => Set<Address>();
-    public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Agent> Agents => Set<Agent>();
     public DbSet<Equipment> Equipments => Set<Equipment>();
     public DbSet<MaintenanceRecord> MaintenanceRecords => Set<MaintenanceRecord>();
@@ -16,6 +15,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<TelemetryLog> TelemetryLogs => Set<TelemetryLog>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<OperationalBase> OperationalBases => Set<OperationalBase>();
+    public DbSet<Incident> Incidents => Set<Incident>();
+    public DbSet<Recommendation> Recommendations => Set<Recommendation>();
+    public DbSet<AgentPositionLog> AgentPositionLogs => Set<AgentPositionLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);

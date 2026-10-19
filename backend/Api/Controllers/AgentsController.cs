@@ -1,5 +1,6 @@
 using Api.Security;
 using Application.DTOs.Agent;
+using Application.DTOs.Predictive;
 using Application.Interfaces.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,7 @@ namespace Api.Controllers;
 [ApiController]
 [Route("api/agents")]
 [Authorize]
-public class AgentsController(IAgentService service) : ControllerBase
+public class AgentsController(IAgentService service, IAgentLocationService locationService) : ControllerBase
 {
     /// <summary>Localizacao de agentes (LGPD): apenas Admin, OperationManager e CentralOperator.</summary>
     [HttpGet]
@@ -36,6 +37,21 @@ public class AgentsController(IAgentService service) : ControllerBase
     [Authorize(Roles = Roles.Managers)]
     public async Task<ActionResult<AgentResponseDto>> Update(Guid id, [FromBody] UpdateAgentDto dto, CancellationToken ct) =>
         Ok(await service.UpdateAsync(id, dto, ct));
+
+    /// <summary>Atualiza a posicao GPS do agente e grava no historico de telemetria. O proprio agente pode atualizar apenas a si mesmo; gestores/monitoramento podem atualizar qualquer agente.</summary>
+    [HttpPut("{id:guid}/location")]
+    public async Task<ActionResult<AgentPositionDto>> UpdateLocation(Guid id, [FromBody] UpdateAgentLocationDto dto, CancellationToken ct)
+    {
+        var isStaff = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.OperationManager) || User.IsInRole(Roles.CentralOperator);
+        return Ok(await locationService.UpdateLocationAsync(id, dto, User.GetUserId(), isStaff, ct));
+    }
+
+    /// <summary>Historico de posicoes GPS do agente (LGPD: apenas Admin, OperationManager e CentralOperator).</summary>
+    [HttpGet("{id:guid}/positions")]
+    [Authorize(Roles = Roles.Monitoring)]
+    public async Task<ActionResult<IReadOnlyList<AgentPositionDto>>> GetPositions(
+        Guid id, [FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] int take = 100, CancellationToken ct = default) =>
+        Ok(await locationService.GetHistoryAsync(id, from, to, take, ct));
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = Roles.Managers)]

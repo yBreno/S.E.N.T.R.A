@@ -19,6 +19,5 @@ public class AgentConfiguration : IEntityTypeConfiguration<Agent>
         b.HasIndex(x => x.BadgeNumber).IsUnique();
         b.HasIndex(x => x.UserId).IsUnique().HasFilter("[UserId] IS NOT NULL");
         b.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne(x => x.Organization).WithMany().HasForeignKey(x => x.OrganizationId).OnDelete(DeleteBehavior.Restrict);
     }
 }

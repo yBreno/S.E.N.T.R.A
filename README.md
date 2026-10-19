@@ -39,6 +39,19 @@ Plataforma integrada para apoiar a gestão de mobilidade, trânsito e segurança
 
 ---
 
+## Tecnologias Utilizadas
+
+- **C# e ASP.NET Core Web API (.NET 10):** Framework principal do backend que centraliza os endpoints REST, o pipeline de middlewares, o controle de acesso e o `BackgroundService` de telemetria contínua. Foi escolhido pela alta performance, tipagem forte e facilidade para estruturar um monólito modular limpo (`Domain`, `Application`, `Infrastructure` e `Api`).
+- **SQL Server (LocalDB) + Entity Framework Core 10:** Banco de dados relacional e ORM responsáveis pela persistência, consultas espaciais/temporais, índices únicos e versionamento do esquema via Migrations. Foram escolhidos para mapear com segurança a herança de equipamentos em tabela única (**TPH**) e manter o histórico auditável de ocorrências, alertas e manutenções.
+- **FluentValidation:** Biblioteca de validação declarativa aplicada na camada `Application` para validar DTOs de entrada antes de qualquer operação de banco. Foi escolhida para isolar e padronizar regras críticas do domínio, como dígitos verificadores de CPF/CNPJ, placas Mercosul/antigas, CEP e limites de coordenadas GPS (RD-01).
+- **JWT (`Microsoft.AspNetCore.Authentication.JwtBearer`) + `BCrypt.Net-Next`:** Responsáveis pela autenticação stateless via tokens assinados (claims `sub`, `email`, `role`) e pelo hash seguro de senhas com salt. Foram escolhidos para proteger os endpoints por perfil operacional (`Admin`, `OperationManager`, `CentralOperator`, `MaintenanceTechnician`, `Agent`) e atender aos requisitos de segurança e LGPD.
+- **Motor Estatístico e de Regras Preditivas (Nativo em C#):** Módulo próprio (`RiskCalculator`, `AnomalyDetector`, `FailurePredictor`) que calcula o Índice de Risco ponderado, anomalias via Z-Score ($\mu + 2\sigma$) e desgaste via MTBF. Foi implementado diretamente em C# puro, sem bibliotecas de Machine Learning "caixa-preta", para garantir **100% de explicabilidade, transparência decisória e zero dependências pesadas**.
+- **Swagger / OpenAPI (`Swashbuckle.AspNetCore`):** Gera a documentação interativa de todos os endpoints e contratos JSON da API com suporte nativo ao envio do token Bearer JWT. Foi adotado para acelerar a integração com o frontend, a inspeção dos retornos de explicabilidade e a validação manual dos fluxos durante a demonstração.
+- **Leaflet + `leaflet.heat` + OpenStreetMap:** Biblioteca JavaScript leve de mapas interativos combinada com camada de mapa de calor sobre blocos cartográficos abertos. Foi escolhida por permitir renderizar marcadores operacionais e manchas de intensidade espacial (ocorrências, falhas e risco) gratuitamente, sem exigir chaves de API pagas.
+- **xUnit + EF Core InMemory:** Framework de testes automatizados usado na suíte de 49 testes da camada `Tests` com bancos isolados em memória por execução. Foi escolhido para validar de ponta a ponta a matriz de transição de status (RD-02), o ciclo de manutenção (RF-05), as regras de LGPD e o fluxo integrado da Cidade Preditiva.
+
+---
+
 ## Como Executar o Backend Atual
 
 ### Pré-requisitos

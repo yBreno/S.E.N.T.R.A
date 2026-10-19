@@ -5,7 +5,6 @@ using Application.DTOs.Alert;
 using Application.DTOs.Auth;
 using Application.DTOs.Equipment;
 using Application.DTOs.Maintenance;
-using Application.DTOs.Organization;
 using Domain.Entities;
 namespace Application.Mappings;
 
@@ -29,17 +28,8 @@ public static class Mappings
         a.Longitude = d.Longitude;
     }
 
-    public static OrganizationResponseDto ToResponse(this Domain.Entities.Organization o) => new(o.Id, o.Name, o.Type, o.Description);
-
-    public static void Apply(this Domain.Entities.Organization o, OrganizationWriteDto d)
-    {
-        o.Name = d.Name.Trim();
-        o.Type = d.Type;
-        o.Description = d.Description?.Trim();
-    }
-
     public static AgentResponseDto ToResponse(this Domain.Entities.Agent a) => new(a.Id, a.Name, Documents.MaskCpf(a.Cpf),
-        a.BadgeNumber, a.Role, a.Availability, a.UserId, a.OrganizationId, a.Organization?.Name,
+        a.BadgeNumber, a.Role, a.Availability, a.UserId,
         a.Neighborhood, a.Latitude, a.Longitude, a.LocationUpdatedAt);
 
     public static void Apply(this Domain.Entities.Agent a, AgentWriteDto d)
@@ -47,7 +37,6 @@ public static class Mappings
         a.Name = d.Name.Trim();
         a.BadgeNumber = d.BadgeNumber.Trim();
         a.Role = d.Role;
-        a.OrganizationId = d.OrganizationId;
         a.UserId = d.UserId;
         a.Availability = d.Availability;
         if (a.Neighborhood != d.Neighborhood.Trim() || a.Latitude != d.Latitude || a.Longitude != d.Longitude)
@@ -60,13 +49,13 @@ public static class Mappings
     public static UserResponseDto ToResponse(this User u) => new(u.Id, u.Name, u.Email, Documents.MaskCpf(u.Cpf), u.Role);
 
     public static AlertResponseDto ToResponse(this Domain.Entities.Alert a) =>
-        new(a.Id, a.EquipmentId, a.Severity, a.Message, a.Status, a.CreatedAt, a.ResolvedAt);
+        new(a.Id, a.EquipmentId, a.Type, a.Severity, a.Message, a.Status, a.CreatedAt, a.ResolvedAt);
 
     public static MaintenanceResponseDto ToResponse(this MaintenanceRecord m) => new(m.Id, m.EquipmentId, m.AgentId, m.InitDate,
         m.EndDate, m.Description, m.Cost, m.Urgency, m.Status, m.PeriodicityDays);
 
     public static EquipmentResponseDto ToResponse(this Domain.Entities.Equipment e) => new(e.Id, e.Type, e.SerialNumber, e.Brand, e.Model,
-        e.Status, e.MaintenanceNeed, e.NextMaintenanceDate, e.OrganizationId, e.Organization?.Name, e.AddressId,
+        e.Status, e.MaintenanceNeed, e.NextMaintenanceDate, e.AddressId,
         e.Address?.Neighborhood, e.Address?.Latitude, e.Address?.Longitude, Attributes(e));
 
     private static Dictionary<string, object?> VehicleAttrs(Vehicle v) => new()

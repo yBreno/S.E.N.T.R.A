@@ -7,7 +7,7 @@ namespace Infrastructure.Repositories;
 
 public class EquipmentRepository(AppDbContext context) : Repository<Equipment>(context), IEquipmentRepository
 {
-    private IQueryable<Equipment> Detailed => Set.Include(e => e.Address).Include(e => e.Organization);
+    private IQueryable<Equipment> Detailed => Set.Include(e => e.Address);
 
     public override Task<Equipment?> GetByIdAsync(Guid id, CancellationToken ct = default) => GetDetailedAsync(id, ct);
     public Task<Equipment?> GetDetailedAsync(Guid id, CancellationToken ct = default) =>
@@ -20,7 +20,6 @@ public class EquipmentRepository(AppDbContext context) : Repository<Equipment>(c
         var q = Detailed.AsNoTracking();
         if (f.Type.HasValue) q = q.Where(e => e.Type == f.Type.Value);
         if (f.Status.HasValue) q = q.Where(e => e.Status == f.Status.Value);
-        if (f.OrganizationId.HasValue) q = q.Where(e => e.OrganizationId == f.OrganizationId.Value);
         if (!string.IsNullOrWhiteSpace(f.Neighborhood))
         {
             var n = f.Neighborhood.Trim();
@@ -38,7 +37,9 @@ public class EquipmentRepository(AppDbContext context) : Repository<Equipment>(c
     public async Task<bool> HasDependentsAsync(Guid id, CancellationToken ct = default) =>
         await Context.MaintenanceRecords.AnyAsync(m => m.EquipmentId == id, ct) ||
         await Context.Alerts.AnyAsync(a => a.EquipmentId == id, ct) ||
-        await Context.TelemetryLogs.AnyAsync(t => t.EquipmentId == id, ct);
+        await Context.TelemetryLogs.AnyAsync(t => t.EquipmentId == id, ct) ||
+        await Context.Incidents.AnyAsync(i => i.EquipmentId == id, ct) ||
+        await Context.Recommendations.AnyAsync(r => r.EquipmentId == id, ct);
     public Task<int> CountAsync(CancellationToken ct = default) => Set.CountAsync(ct);
     public async Task<Dictionary<EquipmentStatus, int>> CountByStatusAsync(CancellationToken ct = default) =>
         (await Set.GroupBy(e => e.Status).Select(g => new { g.Key, Count = g.Count() }).ToListAsync(ct))

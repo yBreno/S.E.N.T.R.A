@@ -17,7 +17,6 @@ public static class DependencyInjection
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IAddressRepository, AddressRepository>();
-        services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         services.AddScoped<IAgentRepository, AgentRepository>();
         services.AddScoped<IEquipmentRepository, EquipmentRepository>();
         services.AddScoped<IMaintenanceRecordRepository, MaintenanceRecordRepository>();
@@ -25,6 +24,9 @@ public static class DependencyInjection
         services.AddScoped<ISupplierRepository, SupplierRepository>();
         services.AddScoped<IOperationalBaseRepository, OperationalBaseRepository>();
         services.AddScoped<ITelemetryLogRepository, TelemetryLogRepository>();
+        services.AddScoped<IIncidentRepository, IncidentRepository>();
+        services.AddScoped<IRecommendationRepository, RecommendationRepository>();
+        services.AddScoped<IAgentPositionLogRepository, AgentPositionLogRepository>();
         return services;
     }
 }

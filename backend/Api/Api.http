@@ -10,7 +10,7 @@ Content-Type: application/json
   "password": "Admin@12345"
 }
 
-### 2. Registro público (papel Agent)
+### 2. Registro pÃºblico (papel Agent)
 POST {{host}}/api/auth/register
 Content-Type: application/json
 
@@ -21,18 +21,7 @@ Content-Type: application/json
   "password": "Silva@12345"
 }
 
-### 3. Criar Organização (Admin)
-POST {{host}}/api/organizations
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "name": "CET São Paulo",
-  "type": "TrafficAuthority",
-  "description": "Companhia de Engenharia de Tráfego"
-}
-
-### 4. Criar Endereço (RD-01: bairro + coordenadas obrigatórias)
+### 3. Criar EndereÃ§o (RD-01: bairro + coordenadas obrigatÃ³rias)
 POST {{host}}/api/addresses
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -41,7 +30,7 @@ Content-Type: application/json
   "street": "Av. Paulista",
   "number": "1000",
   "neighborhood": "Bela Vista",
-  "city": "São Paulo",
+  "city": "SÃ£o Paulo",
   "state": "SP",
   "zipCode": "01310-100",
   "country": "Brasil",
@@ -49,7 +38,7 @@ Content-Type: application/json
   "longitude": -46.6520
 }
 
-### 5. Criar Equipamento (TPH Camera)
+### 4. Criar Equipamento (TPH Camera)
 POST {{host}}/api/equipments
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -59,21 +48,66 @@ Content-Type: application/json
   "serialNumber": "CAM-PAULISTA-001",
   "brand": "Intelbras",
   "model": "VIP-3230",
-  "organizationId": "00000000-0000-0000-0000-000000000000",
   "addressId": "00000000-0000-0000-0000-000000000000",
   "hasNightVision": true,
   "resolution": "4K",
   "isColor": true
 }
 
-### 6. Buscar Equipamentos (RF-04)
+### 5. Buscar Equipamentos (RF-04)
 GET {{host}}/api/equipments?neighborhood=Bela%20Vista
 Authorization: Bearer {{token}}
 
-### 7. Dashboard (RF-03)
+### 6. Dashboard com Resumo Preditivo (RF-03 + 3Âª Parte)
 GET {{host}}/api/dashboard
 Authorization: Bearer {{token}}
 
-### 8. Listar Alertas (RF-05)
+### 7. Listar Alertas (RF-05 + filtro Failure / Preventive)
 GET {{host}}/api/alerts?status=Open
 Authorization: Bearer {{token}}
+
+### ===================================================================
+### 3Âª PARTE â€” CIDADE PREDITIVA
+### ===================================================================
+
+### 8. Ãndice de Risco Transparente por Bairro (0..100 + Explicabilidade)
+GET {{host}}/api/risk
+Authorization: Bearer {{token}}
+
+### 9. Ãndice de Risco de um Bairro EspecÃ­fico
+GET {{host}}/api/risk/Bela%20Vista
+Authorization: Bearer {{token}}
+
+### 10. Mapa de Calor (Heatmap) com filtros dinÃ¢micos (Incidents | Failures | Risk)
+GET {{host}}/api/heatmap?metric=Incidents&neighborhood=Bela%20Vista&fromHour=0&toHour=23
+Authorization: Bearer {{token}}
+
+### 11. DetecÃ§Ã£o de Anomalias (Z-Score e Falhas Repetidas)
+GET {{host}}/api/predictions/anomalies
+Authorization: Bearer {{token}}
+
+### 12. PrevisÃ£o de Indisponibilidade Futura (MTBF)
+GET {{host}}/api/predictions/failures?onlyAtRisk=false
+Authorization: Bearer {{token}}
+
+### 13. Rodar Varredura Preditiva Completa (gera Alertas Preventivos e RecomendaÃ§Ãµes)
+POST {{host}}/api/predictions/analyze
+Authorization: Bearer {{token}}
+
+### 14. Listar RecomendaÃ§Ãµes Preventivas com Explicabilidade JSON
+GET {{host}}/api/recommendations?status=Pending
+Authorization: Bearer {{token}}
+
+### 15. Registrar OcorrÃªncia (Fluxo Integrado: Incidente -> Equipamento -> Alerta -> Risco -> RecomendaÃ§Ã£o)
+POST {{host}}/api/incidents
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "type": "TrafficAccident",
+  "severity": "Critical",
+  "neighborhood": "Bela Vista",
+  "latitude": -23.5614,
+  "longitude": -46.6559,
+  "description": "ColisÃ£o mÃºltipla com bloqueio de faixa na Av. Paulista"
+}

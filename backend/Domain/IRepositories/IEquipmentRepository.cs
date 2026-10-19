@@ -2,11 +2,11 @@ using Domain.Entities;
 using Domain.Enums;
 namespace Domain.IRepositories;
 
-public record EquipmentFilter(EquipmentType? Type, EquipmentStatus? Status, string? Neighborhood, Guid? OrganizationId);
+public record EquipmentFilter(EquipmentType? Type, EquipmentStatus? Status, string? Neighborhood);
 
 public interface IEquipmentRepository : IRepository<Equipment>
 {
-    /// <summary>Retorna o equipamento com Address e Organization carregados.</summary>
+    /// <summary>Retorna o equipamento com Address carregado.</summary>
     Task<Equipment?> GetDetailedAsync(Guid id, CancellationToken ct = default);
     Task<List<Equipment>> SearchAsync(EquipmentFilter filter, CancellationToken ct = default);
     Task<bool> SerialNumberExistsAsync(string serialNumber, Guid? ignoreId = null, CancellationToken ct = default);

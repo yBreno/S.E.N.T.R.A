@@ -5,6 +5,7 @@ public class Alert : BaseEntity
 {
     public Guid EquipmentId { get; set; }
     public Equipment Equipment { get; set; } = null!;
+    public AlertType Type { get; set; } = AlertType.Failure;
     public AlertSeverity Severity { get; set; }
     public string Message { get; set; } = string.Empty;
     public AlertStatus Status { get; set; } = AlertStatus.Open;

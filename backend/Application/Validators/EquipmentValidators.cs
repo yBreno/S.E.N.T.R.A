@@ -11,7 +11,6 @@ public abstract class EquipmentWriteValidator<T> : AbstractValidator<T> where T 
         RuleFor(x => x.SerialNumber).NotEmpty().MaximumLength(80);
         RuleFor(x => x.Brand).NotEmpty().MaximumLength(80);
         RuleFor(x => x.Model).NotEmpty().MaximumLength(80);
-        RuleFor(x => x.OrganizationId).NotEmpty();
         RuleFor(x => x.AddressId).NotEmpty().WithMessage("AddressId e obrigatorio (RD-01).");
         RuleFor(x => x.LicensePlate).Must(Documents.IsValidLicensePlate).WithMessage("Placa invalida.")
             .When(x => !string.IsNullOrWhiteSpace(x.LicensePlate));
