@@ -7,6 +7,7 @@ using Application.DTOs.Maintenance;
 using Application.Security;
 using Application.Services;
 using Application.Validators;
+using Domain.Entities;
 using Domain.Enums;
 using Domain.Exceptions;
 using Domain.Rules;
@@ -120,22 +121,6 @@ public class ValidacaoEMascaramentoDeDocumentosTests
 /// </summary>
 public abstract class CenarioDeTestesDeServico : IDisposable
 {
-    private readonly AppDbContext _db = new(new DbContextOptionsBuilder<AppDbContext>()
-        .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
-
-    private AddressService Addresses => new(new AddressRepository(_db), _db, new CreateAddressDtoValidator(), new UpdateAddressDtoValidator());
-    private AgentService Agents => new(new AgentRepository(_db), new UserRepository(_db), _db,
-        new CreateAgentDtoValidator(), new UpdateAgentDtoValidator());
-    private EquipmentService Equipments => new(new EquipmentRepository(_db), new AddressRepository(_db),
-        new AgentRepository(_db), new AlertRepository(_db), new MaintenanceRecordRepository(_db), _db,
-        new CreateEquipmentDtoValidator(), new UpdateEquipmentDtoValidator(), new ChangeEquipmentStatusDtoValidator());
-    private MaintenanceService Maintenances => new(new MaintenanceRecordRepository(_db), new EquipmentRepository(_db), new AgentRepository(_db),
-        new AlertRepository(_db), _db, new OpenMaintenanceDtoValidator(), new CloseMaintenanceDtoValidator());
-    private AuthService Auth => new(new UserRepository(_db), _db, new BCryptPasswordHasher(),
-        new JwtTokenService(Options.Create(new JwtSettings { Key = new string('k', 40), Issuer = "i", Audience = "a" })),
-        new RegisterDtoValidator(), new LoginDtoValidator());
-
-    private static CreateAddressDto ValidAddress() => new()
     protected readonly AppDbContext Banco = new(
         new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -147,15 +132,8 @@ public abstract class CenarioDeTestesDeServico : IDisposable
         new CreateAddressDtoValidator(),
         new UpdateAddressDtoValidator());
 
-    protected OrganizationService Organizacoes => new(
-        new OrganizationRepository(Banco),
-        Banco,
-        new CreateOrganizationDtoValidator(),
-        new UpdateOrganizationDtoValidator());
-
     protected AgentService Agentes => new(
         new AgentRepository(Banco),
-        new OrganizationRepository(Banco),
         new UserRepository(Banco),
         Banco,
         new CreateAgentDtoValidator(),
@@ -164,7 +142,6 @@ public abstract class CenarioDeTestesDeServico : IDisposable
     protected EquipmentService Equipamentos => new(
         new EquipmentRepository(Banco),
         new AddressRepository(Banco),
-        new OrganizationRepository(Banco),
         new AgentRepository(Banco),
         new AlertRepository(Banco),
         new MaintenanceRecordRepository(Banco),
@@ -206,29 +183,9 @@ public abstract class CenarioDeTestesDeServico : IDisposable
         Longitude = -46.63
     };
 
-    private async Task<Guid> SeedAddressAsync()
-    {
-        var addr = await Addresses.CreateAsync(ValidAddress());
-        return addr.Id;
-    protected async Task<(Guid IdOrganizacao, Guid IdEndereco)> PrepararOrganizacaoEEnderecoAsync()
-    {
-        var organizacao = await Organizacoes.CreateAsync(new CreateOrganizationDto
-        {
-            Name = "CET",
-            Type = OrganizationType.TrafficAuthority
-        });
-
-        var endereco = await Enderecos.CreateAsync(CriarEnderecoValido());
-        return (organizacao.Id, endereco.Id);
-    }
-
     protected async Task<EquipmentResponseDto> CriarCameraValidaAsync(string numeroSerie = "SN-1")
     {
-        var addr = await SeedAddressAsync();
-        return await Equipments.CreateAsync(new CreateEquipmentDto
-        {
-            Type = EquipmentType.Camera, SerialNumber = serial, Brand = "B", Model = "M", AddressId = addr
-        var (idOrganizacao, idEndereco) = await PrepararOrganizacaoEEnderecoAsync();
+        var endereco = await Enderecos.CreateAsync(CriarEnderecoValido());
 
         return await Equipamentos.CreateAsync(new CreateEquipmentDto
         {
@@ -236,8 +193,7 @@ public abstract class CenarioDeTestesDeServico : IDisposable
             SerialNumber = numeroSerie,
             Brand = "B",
             Model = "M",
-            OrganizationId = idOrganizacao,
-            AddressId = idEndereco
+            AddressId = endereco.Id
         });
     }
 
@@ -272,23 +228,12 @@ public class ValidacaoDeCadastroDeEnderecoAgenteEEquipamentoTests : CenarioDeTes
     [Fact]
     public async Task Deve_rejeitar_agente_sem_bairro_e_coordenadas_validas_e_mascarar_seu_cpf_apos_cadastro_valido()
     {
-        var dto = new CreateAgentDto
-        {
-            Name = "Ana", Cpf = "52998224725", BadgeNumber = "001", Role = AgentRole.TrafficAgent,
-            Neighborhood = "", Latitude = 0, Longitude = 0
-        var organizacao = await Organizacoes.CreateAsync(new CreateOrganizationDto
-        {
-            Name = "Guarda",
-            Type = OrganizationType.MunicipalGuard
-        });
-
         var dadosAgente = new CreateAgentDto
         {
             Name = "Ana",
             Cpf = "52998224725",
             BadgeNumber = "001",
             Role = AgentRole.TrafficAgent,
-            OrganizationId = organizacao.Id,
             Neighborhood = "",
             Latitude = 0,
             Longitude = 0
@@ -309,12 +254,6 @@ public class ValidacaoDeCadastroDeEnderecoAgenteEEquipamentoTests : CenarioDeTes
     [Fact]
     public async Task Deve_rejeitar_cadastro_de_equipamento_quando_o_endereco_informado_nao_existir()
     {
-        await Assert.ThrowsAsync<NotFoundException>(() => Equipments.CreateAsync(new CreateEquipmentDto
-        {
-            Type = EquipmentType.Camera, SerialNumber = "X", Brand = "B", Model = "M", AddressId = Guid.NewGuid()
-        }));
-        var (idOrganizacao, _) = await PrepararOrganizacaoEEnderecoAsync();
-
         await Assert.ThrowsAsync<NotFoundException>(() =>
             Equipamentos.CreateAsync(new CreateEquipmentDto
             {
@@ -322,7 +261,6 @@ public class ValidacaoDeCadastroDeEnderecoAgenteEEquipamentoTests : CenarioDeTes
                 SerialNumber = "X",
                 Brand = "B",
                 Model = "M",
-                OrganizationId = idOrganizacao,
                 AddressId = Guid.NewGuid()
             }));
     }
@@ -330,11 +268,6 @@ public class ValidacaoDeCadastroDeEnderecoAgenteEEquipamentoTests : CenarioDeTes
     [Fact]
     public async Task Deve_impedir_cadastro_de_dois_equipamentos_com_o_mesmo_numero_de_serie()
     {
-        var cam = await NewCameraAsync("DUP");
-        await Assert.ThrowsAsync<ConflictException>(() => Equipments.CreateAsync(new CreateEquipmentDto
-        {
-            Type = EquipmentType.Camera, SerialNumber = "DUP", Brand = "B", Model = "M", AddressId = cam.AddressId
-        }));
         var equipamentoExistente = await CriarCameraValidaAsync("DUP");
 
         await Assert.ThrowsAsync<ConflictException>(() =>
@@ -344,7 +277,6 @@ public class ValidacaoDeCadastroDeEnderecoAgenteEEquipamentoTests : CenarioDeTes
                 SerialNumber = "DUP",
                 Brand = "B",
                 Model = "M",
-                OrganizationId = equipamentoExistente.OrganizationId,
                 AddressId = equipamentoExistente.AddressId
             }));
     }
