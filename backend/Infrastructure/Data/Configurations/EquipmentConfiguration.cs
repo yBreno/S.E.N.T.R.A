@@ -30,7 +30,6 @@ public class EquipmentConfiguration : IEntityTypeConfiguration<Equipment>
         b.HasIndex(x => x.Type);
 
         b.HasOne(x => x.Address).WithMany().HasForeignKey(x => x.AddressId).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne(x => x.Organization).WithMany().HasForeignKey(x => x.OrganizationId).OnDelete(DeleteBehavior.Restrict);
     }
 }
 

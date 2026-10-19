@@ -8,19 +8,17 @@ namespace Application.Services;
 
 public class AlertService(IAlertRepository repo, IUnitOfWork uow) : IAlertService
 {
-    private async Task<Domain.Entities.Alert> LoadAsync(Guid id, CancellationToken ct) =>
-        await repo.GetByIdAsync(id, ct) ?? throw new NotFoundException($"Alerta {id} nao encontrado.");
+    public async Task<AlertResponseDto> GetByIdAsync(Guid id, CancellationToken ct = default) =>
+        (await repo.GetByIdAsync(id, ct) ?? throw new NotFoundException($"Alerta {id} nao encontrado.")).ToResponse();
 
-    public async Task<AlertResponseDto> GetByIdAsync(Guid id, CancellationToken ct = default) => (await LoadAsync(id, ct)).ToResponse();
-
-    public async Task<IReadOnlyList<AlertResponseDto>> GetAllAsync(AlertStatus? status, CancellationToken ct = default) =>
-        (await repo.GetByStatusAsync(status, ct)).Select(a => a.ToResponse()).ToList();
+    public async Task<IReadOnlyList<AlertResponseDto>> GetAllAsync(AlertStatus? status, AlertType? type, CancellationToken ct = default) =>
+        (await repo.GetByStatusAsync(status, type, ct)).Select(a => a.ToResponse()).ToList();
 
     public async Task<AlertResponseDto> ResolveAsync(Guid id, CancellationToken ct = default)
     {
-        var alert = await LoadAsync(id, ct);
-        alert.Resolve();
+        var a = await repo.GetByIdAsync(id, ct) ?? throw new NotFoundException($"Alerta {id} nao encontrado.");
+        a.Resolve();
         await uow.SaveChangesAsync(ct);
-        return alert.ToResponse();
+        return a.ToResponse();
     }
 }

@@ -11,7 +11,7 @@ using FluentValidation;
 namespace Application.Services;
 
 public class EquipmentService(
-    IEquipmentRepository repo, IAddressRepository addresses, IOrganizationRepository orgs, IAgentRepository agents,
+    IEquipmentRepository repo, IAddressRepository addresses, IAgentRepository agents,
     IAlertRepository alerts, IMaintenanceRecordRepository maintenances, IUnitOfWork uow,
     IValidator<CreateEquipmentDto> cv, IValidator<UpdateEquipmentDto> uv, IValidator<ChangeEquipmentStatusDto> sv)
     : Service<Domain.Entities.Equipment, CreateEquipmentDto, UpdateEquipmentDto, EquipmentResponseDto>(repo, uow, cv, uv), IEquipmentService
@@ -20,15 +20,14 @@ public class EquipmentService(
     protected override EquipmentResponseDto ToResponse(Domain.Entities.Equipment e) => e.ToResponse();
 
     public async Task<IReadOnlyList<EquipmentResponseDto>> SearchAsync(EquipmentSearchDto f, CancellationToken ct = default) =>
-        (await repo.SearchAsync(new EquipmentFilter(f.Type, f.Status, f.Neighborhood, f.OrganizationId), ct)).Select(ToResponse).ToList();
+        (await repo.SearchAsync(new EquipmentFilter(f.Type, f.Status, f.Neighborhood), ct)).Select(ToResponse).ToList();
 
-    /// <summary>RD-01 (endereco com bairro + coordenadas validas), organizacao, unicidades e regras do veiculo.</summary>
+    /// <summary>RD-01 (endereco com bairro + coordenadas validas), unicidades e regras do veiculo.</summary>
     private async Task CheckReferencesAsync(EquipmentWriteDto dto, Guid? ignoreId, bool isVehicle, CancellationToken ct)
     {
         var address = await addresses.GetByIdAsync(dto.AddressId, ct) ?? throw new NotFoundException("Endereco nao encontrado.");
         if (string.IsNullOrWhiteSpace(address.Neighborhood) || !Documents.IsValidLatitude(address.Latitude) || !Documents.IsValidLongitude(address.Longitude))
             throw new BusinessRuleException("RD-01: o endereco deve ter bairro e latitude/longitude validos.");
-        if (!await orgs.ExistsAsync(dto.OrganizationId, ct)) throw new NotFoundException("Organizacao nao encontrada.");
         if (await repo.SerialNumberExistsAsync(dto.SerialNumber.Trim(), ignoreId, ct)) throw new ConflictException("Numero de serie ja cadastrado.");
 
         if (!isVehicle) return;
@@ -46,7 +45,6 @@ public class EquipmentService(
         e.SerialNumber = d.SerialNumber.Trim();
         e.Brand = d.Brand.Trim();
         e.Model = d.Model.Trim();
-        e.OrganizationId = d.OrganizationId;
         e.AddressId = d.AddressId;
 
         switch (e)

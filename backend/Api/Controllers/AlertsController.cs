@@ -12,8 +12,8 @@ namespace Api.Controllers;
 public class AlertsController(IAlertService service) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<AlertResponseDto>>> GetAll([FromQuery] AlertStatus? status, CancellationToken ct) =>
-        Ok(await service.GetAllAsync(status, ct));
+    public async Task<ActionResult<IReadOnlyList<AlertResponseDto>>> GetAll([FromQuery] AlertStatus? status, [FromQuery] AlertType? type, CancellationToken ct) =>
+        Ok(await service.GetAllAsync(status, type, ct));
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<AlertResponseDto>> Get(Guid id, CancellationToken ct) => Ok(await service.GetByIdAsync(id, ct));

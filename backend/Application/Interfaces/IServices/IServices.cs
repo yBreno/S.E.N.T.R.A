@@ -5,12 +5,10 @@ using Application.DTOs.Auth;
 using Application.DTOs.Dashboard;
 using Application.DTOs.Equipment;
 using Application.DTOs.Maintenance;
-using Application.DTOs.Organization;
 using Domain.Enums;
 namespace Application.Interfaces.IServices;
 
 public interface IAddressService : IService<AddressResponseDto, CreateAddressDto, UpdateAddressDto>;
-public interface IOrganizationService : IService<OrganizationResponseDto, CreateOrganizationDto, UpdateOrganizationDto>;
 
 public interface IAgentService : IService<AgentResponseDto, CreateAgentDto, UpdateAgentDto>
 {
@@ -20,7 +18,7 @@ public interface IAgentService : IService<AgentResponseDto, CreateAgentDto, Upda
 
 public interface IEquipmentService : IService<EquipmentResponseDto, CreateEquipmentDto, UpdateEquipmentDto>
 {
-    /// <summary>RF-04: busca filtrada (tipo, status, bairro, organizacao) com coordenadas.</summary>
+    /// <summary>RF-04: busca filtrada (tipo, status, bairro) com coordenadas.</summary>
     Task<IReadOnlyList<EquipmentResponseDto>> SearchAsync(EquipmentSearchDto filter, CancellationToken ct = default);
     /// <summary>RD-02/RF-05. isManager = Admin ou OperationManager.</summary>
     Task<EquipmentResponseDto> ChangeStatusAsync(Guid id, ChangeEquipmentStatusDto dto, bool isManager, CancellationToken ct = default);
@@ -37,7 +35,7 @@ public interface IMaintenanceService
 public interface IAlertService
 {
     Task<AlertResponseDto> GetByIdAsync(Guid id, CancellationToken ct = default);
-    Task<IReadOnlyList<AlertResponseDto>> GetAllAsync(AlertStatus? status, CancellationToken ct = default);
+    Task<IReadOnlyList<AlertResponseDto>> GetAllAsync(AlertStatus? status, AlertType? type, CancellationToken ct = default);
     Task<AlertResponseDto> ResolveAsync(Guid id, CancellationToken ct = default);
 }
 

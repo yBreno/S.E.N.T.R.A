@@ -11,7 +11,6 @@ public abstract class AgentWriteValidator<T> : AbstractValidator<T> where T : Ag
         RuleFor(x => x.BadgeNumber).NotEmpty().MaximumLength(30);
         RuleFor(x => x.Role).IsInEnum();
         RuleFor(x => x.Availability).IsInEnum();
-        RuleFor(x => x.OrganizationId).NotEmpty();
         RuleFor(x => x.Neighborhood).NotEmpty().WithMessage("Bairro e obrigatorio (RD-01).").MaximumLength(120);
         RuleFor(x => x.Latitude).Must(Documents.IsValidLatitude).WithMessage("Latitude deve estar entre -90 e 90 (RD-01).");
         RuleFor(x => x.Longitude).Must(Documents.IsValidLongitude).WithMessage("Longitude deve estar entre -180 e 180 (RD-01).");
