@@ -1,88 +1,137 @@
-# F.O.G.O. — Ferramenta Onisciente de Gestão e Operações
+﻿# S.E.N.T.R.A.
 
-Plataforma integrada para apoiar a gestão de mobilidade, trânsito e segurança urbana (**Desafio PROMETHEUS**), reunindo **Inventário Inteligente da Cidade**, **Centro de Operações da Cidade** e **Cidade Preditiva** em uma única solução.
+Plataforma de monitoramento e gestão de operações urbanas desenvolvida para o desafio
+**F.O.G.O. — Ferramenta Onisciente de Gestão e Operações**, da DSIN/PROMETHEUS.
+Integra inventário, monitoramento geográfico e análise preditiva explicável.
 
----
+## Módulos e estado atual
 
-## Status do Projeto (Cruzamento com o Documento de Contexto)
+| Módulo | Backend implementado | Interface React |
+| --- | --- | --- |
+| Inventário Inteligente da Cidade | Equipamentos e agentes: cadastro, consulta, edição, exclusão e estados; endereços; abertura/fechamento e histórico de manutenção | Marcadores, filtros e inspeção; telas de cadastro, edição e manutenção pendentes |
+| Centro de Operações da Cidade | Dashboard, alertas, ocorrências, telemetria e localização de agentes | Login, indicadores, mapa, marcadores, popups, inspeção, filtros e atualização manual; gestão de alertas/ocorrências pendente |
+| Cidade Preditiva | Risco regional, anomalias, previsão por MTBF e recomendações com explicabilidade | Heat Map Incidents/Failures/Risk e filtros; painel de fatores, anomalias, previsões e ações de recomendações pendente |
 
-### ✅ Feitos
+A presença de um endpoint não significa que o fluxo correspondente já possui tela.
+Fornecedores e bases operacionais têm entidades/repositórios, sem telas ou controllers próprios.
 
-- **Arquitetura em Monólito Modular (.NET 10 + EF Core + SQL Server):** Separação limpa nas camadas `Domain`, `Application`, `Infrastructure`, `Api` e `Tests` com migrations (`InitialCreate`, `RemoveOrganization`, `AddPredictiveCity`) aplicadas no banco `FogoDb`.
-- **Autenticação JWT, Papéis e LGPD:** Login/registro com BCrypt, proteção por papéis (`Admin`, `OperationManager`, `CentralOperator`, `MaintenanceTechnician`, `Agent`) e mascaramento de CPF nos retornos.
-- **3.1 Inventário Inteligente de Equipamentos (TPH):** Cadastro, consulta, atualização e exclusão segura de câmeras, radares, sensores, veículos, patinetes, parquímetros, motos e veículos autônomos com atributos específicos por tipo.
-- **3.1 Localização e Endereços (RD-01):** Entidade e endpoints de endereço exigindo CEP, rua, cidade/UF, bairro obrigatório e validação de coordenadas GPS (`Latitude` e `Longitude`).
-- **3.1 Status Operacional e Matriz de Transição (RD-02):** Máquina de estados validada (`NotInstalled`, `Operational`, `Malfunctioning`, `UnderMaintenance`, `Deactivated`, `Stolen`) impedindo transições inválidas.
-- **3.1 Gestão de Manutenções:** Abertura e fechamento de manutenções com urgência, periodicidade, custo, cálculo automático de `NextMaintenanceDate` e restauração automática do equipamento para `Operational`.
-- **3.1 Cadastro e Disponibilidade de Agentes:** CRUD de agentes de trânsito, guardas e policiais com controle de disponibilidade (`Available`, `Busy`, `Offline`) e atualização de posição GPS.
-- **3.2 API do Centro de Operações (Dashboard, Filtros e Alertas):** Endpoints de dashboard consolidado (`/api/dashboard`), filtros de equipamentos por tipo/status/bairro (`/api/equipments`) e gestão de alertas (`/api/alerts`).
-- **3.2 Telemetria IoT e Simulação em Tempo Real:** Endpoints de telemetria (`/api/telemetry`) e worker em background (`TelemetrySimulationWorker`) simulando pulsos de sensores e movimentação GPS de agentes.
-- **3.3 Base Histórica e Dados Sintéticos de Demonstração:** Entidade `Incident` e `PredictiveSeeder` populando 6 semanas de ocorrências, falhas e manutenções em 5 bairros (`Bela Vista`, `Centro`, `Pinheiros`, `Vila Mariana`, `Mooca`).
-- **3.3 Índice de Risco Regional Transparente:** Cálculo auditável de 0 a 100 por bairro (`/api/risk`) ponderando densidade de ocorrências (40%), falhas recorrentes (30%), horário de pico (20%) e indisponibilidade (10%).
-- **3.3 Detecção de Anomalias e Previsão Futura (MTBF):** Rotinas estatísticas (`/api/predictions/anomalies` via Z-Score $\mu + 2\sigma$ e falhas repetidas; `/api/predictions/failures` via desgaste $\ge 85\%$ do MTBF).
-- **3.3 & 5. API de Mapa de Calor (Heatmap) + Protótipo Leaflet:** Endpoint `/api/heatmap` com filtros por métrica (`Incidents`, `Failures`, `Risk`), período, hora, dia da semana, bairro e tipo, validado em `frontend/heatmap.html`.
-- **4. Fluxo Integrado (Evento $\rightarrow$ Status $\rightarrow$ Alerta $\rightarrow$ Risco $\rightarrow$ Recomendação):** O registro de ocorrência (`POST /api/incidents`) atualiza o equipamento, abre alerta, recalcula o risco do bairro e gera recomendações (`DeployAgent` / `SendMaintenance`) com JSON de explicabilidade.
-- **6 & 12. Testes Automatizados (xUnit):** Suíte com 49 testes passando (`RulesTests.cs` e `PredictiveCityTests.cs`) cobrindo transições de status, validações, LGPD, ciclo de manutenção e motor preditivo.
+## Stack e arquitetura
 
----
+- Backend: C# / ASP.NET Core .NET 10, EF Core 10, SQL Server, FluentValidation, JWT e BCrypt.
+- Frontend: React 19, JavaScript/JSX, Vite 8 e CSS; React Leaflet 5.0.0, Leaflet 1.9.4 e leaflet.heat 0.2.0.
+- Testes: xUnit e EF Core InMemory no backend; `node:test` no frontend.
+- Publicação existente: Azure App Service, Azure SQL e Azure Static Web Apps, com workflows GitHub Actions.
 
-### ❌ Não feitos (Pendências até a entrega)
+O backend é um monólito modular: Domain contém entidades e regras; Application contém
+casos de uso, DTOs, validadores e cálculos; Infrastructure implementa EF Core e repositórios;
+Api expõe controllers, autenticação, autorização e tarefas hospedadas.
+O frontend separa páginas, componentes, hooks, configuração e serviços HTTP.
 
-- **6. Aplicação Frontend em React + TypeScript:** Inicializar o projeto SPA em `frontend/` (atualmente só existe a página estática de validação `frontend/heatmap.html`) consumindo a API com autenticação JWT.
-- **3.1 Telas de Inventário e Manutenção no Frontend:** Criar as interfaces de listagem, cadastro, edição, troca de status de equipamentos/agentes e abertura/encerramento de manutenções.
-- **3.2 Tela do Dashboard e Centro de Operações no Frontend:** Construir o painel visual com cards de disponibilidade, contadores de equipamentos por status, agentes ativos, feed de alertas e resumo regional.
-- **3.2 Mapa Operacional Interativo com Marcadores no Frontend:** Renderizar no mapa Leaflet os marcadores distintos (cores/ícones por categoria e status) de equipamentos e agentes, com filtros laterais e drawer/modal de detalhes ao clicar.
-- **3.3 & 5. Integração do Heatmap e Explicabilidade no Frontend React:** Incorporar a camada de mapa de calor, os cards de índice de risco, anomalias, MTBF, botões de aceitar/descartar recomendações e um aviso visual claro identificando dados simulados.
-- **3.1 Tipos Extras de Equipamento do Enunciado (se exigidos literalmente):** Caso o enunciado oficial cobre todos os exemplos da seção 3.1, adicionar no enum/TPH os subtipos restantes (`TruckScale`/balança, `Gate`/portão, `Taxi`, `SchoolVehicle`).
-- **12. Documentação Final e Declaração de IA no README:** Completar este `README.md` com instruções finais do frontend React, limitações conhecidas do modelo baseado em regras e declaração das ferramentas de IA utilizadas.
-- **10 & 12. Pacote Final de Entrega ($\le$ 50 MB) e Vídeo de Demonstração:** Gravar o vídeo curto seguindo o roteiro da seção 10 e gerar o pacote executável (ou arquivo `.txt` com link público do GitHub/Drive).
-
----
-
-## Tecnologias Utilizadas
-
-- **C# e ASP.NET Core Web API (.NET 10):** Framework principal do backend que centraliza os endpoints REST, o pipeline de middlewares, o controle de acesso e o `BackgroundService` de telemetria contínua. Foi escolhido pela alta performance, tipagem forte e facilidade para estruturar um monólito modular limpo (`Domain`, `Application`, `Infrastructure` e `Api`).
-- **SQL Server (LocalDB) + Entity Framework Core 10:** Banco de dados relacional e ORM responsáveis pela persistência, consultas espaciais/temporais, índices únicos e versionamento do esquema via Migrations. Foram escolhidos para mapear com segurança a herança de equipamentos em tabela única (**TPH**) e manter o histórico auditável de ocorrências, alertas e manutenções.
-- **FluentValidation:** Biblioteca de validação declarativa aplicada na camada `Application` para validar DTOs de entrada antes de qualquer operação de banco. Foi escolhida para isolar e padronizar regras críticas do domínio, como dígitos verificadores de CPF/CNPJ, placas Mercosul/antigas, CEP e limites de coordenadas GPS (RD-01).
-- **JWT (`Microsoft.AspNetCore.Authentication.JwtBearer`) + `BCrypt.Net-Next`:** Responsáveis pela autenticação stateless via tokens assinados (claims `sub`, `email`, `role`) e pelo hash seguro de senhas com salt. Foram escolhidos para proteger os endpoints por perfil operacional (`Admin`, `OperationManager`, `CentralOperator`, `MaintenanceTechnician`, `Agent`) e atender aos requisitos de segurança e LGPD.
-- **Motor Estatístico e de Regras Preditivas (Nativo em C#):** Módulo próprio (`RiskCalculator`, `AnomalyDetector`, `FailurePredictor`) que calcula o Índice de Risco ponderado, anomalias via Z-Score ($\mu + 2\sigma$) e desgaste via MTBF. Foi implementado diretamente em C# puro, sem bibliotecas de Machine Learning "caixa-preta", para garantir **100% de explicabilidade, transparência decisória e zero dependências pesadas**.
-- **Swagger / OpenAPI (`Swashbuckle.AspNetCore`):** Gera a documentação interativa de todos os endpoints e contratos JSON da API com suporte nativo ao envio do token Bearer JWT. Foi adotado para acelerar a integração com o frontend, a inspeção dos retornos de explicabilidade e a validação manual dos fluxos durante a demonstração.
-- **Leaflet + `leaflet.heat` + OpenStreetMap:** Biblioteca JavaScript leve de mapas interativos combinada com camada de mapa de calor sobre blocos cartográficos abertos. Foi escolhida por permitir renderizar marcadores operacionais e manchas de intensidade espacial (ocorrências, falhas e risco) gratuitamente, sem exigir chaves de API pagas.
-- **xUnit + EF Core InMemory:** Framework de testes automatizados usado na suíte de 49 testes da camada `Tests` com bancos isolados em memória por execução. Foi escolhido para validar de ponta a ponta a matriz de transição de status (RD-02), o ciclo de manutenção (RF-05), as regras de LGPD e o fluxo integrado da Cidade Preditiva.
-
----
-
-## Como Executar o Backend Atual
-
-### Pré-requisitos
-- **.NET 10 SDK**
-- **SQL Server LocalDB** (`(localdb)\mssqllocaldb`)
-
-### 1. Configurar `user-secrets` (apenas na primeira vez)
-```powershell
-cd backend
-dotnet user-secrets set "Jwt:Key" "ChaveSecretaSuperSeguraComMaisDe32Caracteres2026!" --project Api
-dotnet user-secrets set "SeedAdmin:Email" "admin@fogo.local" --project Api
-dotnet user-secrets set "SeedAdmin:Password" "Admin@12345" --project Api
-dotnet user-secrets set "SeedAdmin:Cpf" "52998224725" --project Api
+```text
+backend/
+  Domain/                 Entidades e regras de negócio
+  Application/            Serviços, contratos e motor preditivo
+  Infrastructure/         Persistência, migrations e ferramentas DEMO
+  Api/                    API HTTP e configuração por ambiente
+  Tests/                  Testes automatizados
+  DemoData*/ e DemoAdmin/  Ferramentas manuais protegidas
+  Solution/Solution.slnx   Solução completa
+frontend/
+  src/                    Interface React
+  public/                 Recursos públicos, quando necessários
+  tests/                  Testes frontend
+scripts/                  Inicializador protegido da API DEMO local
+docs/                     Relatórios históricos e índice de documentação
 ```
 
-### 2. Aplicar as Migrations no Banco (`FogoDb`)
+## Funcionalidades concluídas
+
+- Login/logout e expiração; JWT somente em memória. Recarregar exige novo login.
+- Monitoramento para Admin, OperationManager e CentralOperator, com autorização efetiva no backend.
+- Indicadores da API, mapa de São Paulo e camadas independentes de equipamentos, agentes e calor.
+- Marcadores por estado/disponibilidade, validação de coordenadas e detalhes sem CPF.
+- Filtros locais por tipo, estado e bairro de equipamentos e disponibilidade dos agentes.
+- Heat Map por ocorrências, falhas e risco, com filtros próprios, cache em memória e cancelamento.
+- Atualização manual, dados anteriores sinalizados como desatualizados durante falhas,
+  mensagens de erro/vazio e layout responsivo; mudanças de filtros preservam a instância do mapa.
+- `locationUpdatedAt` explícito em UTC no DTO e apresentação no fuso do navegador;
+  tradução visual de TrafficAgent para Agente de trânsito.
+
+**Cartografia:** o bloqueio OpenStreetMap por ausência de Referer foi corrigido com
+`strict-origin-when-cross-origin` no HTML e no TileLayer. A correção foi validada no site
+publicado pelo responsável do projeto, conforme informado por ele. URL HTTPS oficial e
+atribuição foram mantidas. A disponibilidade dos tiles depende do provedor e de sua política.
+
+## Execução local
+
+Pré-requisitos: .NET 10 SDK, Node compatível com Vite 8 (22.12+ na linha 22, ou 20.19+ na
+linha 20) e npm. A validação local utilizou Node 26.7.0 e npm 11.16.0.
+SQL Server/LocalDB e banco já preparado são necessários para usar a API, mas não para os testes InMemory.
+
+Na raiz, os comandos de build e testes estão na seção seguinte. Para iniciar o frontend,
+consulte o [guia específico](frontend/README.md); a API precisa estar disponível separadamente.
+
+### API DEMO local isolada
+
+O inicializador preservado exige `SENTRA_DEMO_CONNECTION_STRING` fornecida privadamente
+no ambiente do terminal, apontando exclusivamente para o banco `SENTRA_DEMO_Stage73`
+na instância `(localdb)\MSSQLLocalDB`, com autenticação integrada. Não use a conexão Azure.
+O banco, schema, dados e conta devem estar previamente preparados e autorizados.
+
 ```powershell
-cd backend
-dotnet ef database update -p Infrastructure -s Api
+# Na raiz, após configurar privadamente a conexão dedicada:
+dotnet build backend/Solution/Solution.slnx
+& ./scripts/Start-DemoApi.ps1 -ConfirmStart
 ```
 
-### 3. Executar os Testes Automatizados (xUnit)
+A API fica somente em `http://127.0.0.1:5180`, ambiente Demo, sem simulação,
+seeders ou migrations automáticas e com bloqueio de escrita. O inicializador gera uma
+chave JWT exclusiva em memória; reiniciá-lo exige novo login. Não cria contas nem carga.
+Esta limpeza não executou o inicializador ou qualquer ferramenta de banco.
+
+Os perfis normais `http` e `https` de `backend/Api/Properties/launchSettings.json` usam
+Development e portas 5129/7130. Iniciar esses perfis pode executar seeders e simulação;
+use-os somente com destino privado previamente conferido e autorização para escrita.
+
+### Configuração privada
+
+- Frontend: `VITE_API_BASE_URL` é uma URL pública, sem `/api`, credenciais, query ou fragmento.
+  Variáveis `VITE_*` entram no bundle e nunca devem conter segredos. Preserve `.env.local` existente.
+- API normal: `ConnectionStrings:DefaultConnection`, `Jwt:Key`, `Jwt:Issuer` e `Jwt:Audience`
+  são selecionados pela configuração .NET; guarde segredos em user-secrets locais ou variáveis privadas.
+  Variáveis aninhadas usam `__`, como `Jwt__Key` e `ConnectionStrings__DefaultConnection`.
+- `Cors:AllowedOrigins`, `Simulation:Enabled` e `SeedAdmin:Enabled` controlam comportamentos
+  operacionais. Fora de Demo, a simulação tem padrão habilitado; não inicie apontando para banco não autorizado.
+- Ferramentas DEMO são manuais e possuem verificações próprias de ambiente/destino.
+  Não execute cargas, provisionamento ou migrations como parte de uma simples inicialização.
+
+## Build e testes
+
+Na raiz, após restaurar as dependências quando necessário (`npm.cmd ci --prefix frontend`
+e `dotnet restore backend/Solution/Solution.slnx`):
+
 ```powershell
-cd backend
-dotnet test Tests/Tests.csproj
+npm.cmd --prefix frontend run build
+npm.cmd --prefix frontend run lint
+node --test frontend/tests/*.test.js
+dotnet build backend/Solution/Solution.slnx --no-restore
+dotnet test backend/Tests/Tests.csproj --no-build --no-restore
 ```
 
-### 4. Subir a API e Testar o Protótipo do Heatmap
-```powershell
-cd backend
-dotnet run --project Api/Api.csproj
-```
-- **Swagger UI:** acesse `http://localhost:5062/swagger` (ou a porta exibida no terminal).
-- **Protótipo do Mapa de Calor e Explicabilidade:** abra o arquivo `frontend/heatmap.html` no navegador, informe a URL da API e clique em **Autenticar & Carregar**.
+A validação desta limpeza aprovou build/lint frontend, 72 testes frontend e 120 testes
+backend; build backend sem avisos ou erros. Testes automatizados não substituem a
+validação no navegador nem comprovam contagens atuais no Azure ou no SQL Server real.
+
+## Limitações e próximos passos
+
+- Concluir telas de inventário/manutenção, alertas/ocorrências e interface preditiva usando as APIs existentes.
+- Não há polling automático nem clustering/spiderfy; marcadores próximos podem se sobrepor.
+- O modelo preditivo é estatístico e baseado em regras, sem garantia de ocorrência futura.
+  Revisar o efeito operacional de aceitar recomendações de deslocamento: hoje não movimenta agentes.
+- A janela padrão de ocorrências do calor é de sete dias. Dados DEMO antigos podem deixar de aparecer;
+  a carga idempotente não renova datas já persistidas.
+- Confirmar requisitos no enunciado oficial antes de ampliar tipos de equipamento ou funcionalidades opcionais.
+- Concluir documentação de entrega, declaração das ferramentas de IA utilizadas e roteiro de demonstração.
+
+O [índice de documentação](docs/README.md) contextualiza os relatórios históricos e as
+mudanças posteriores. As contagens e autorizações antigas não devem ser tratadas como estado atual.

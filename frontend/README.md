@@ -1,87 +1,66 @@
-﻿# S.E.N.T.R.A. — frontend
+﻿# Frontend S.E.N.T.R.A.
 
-React 19 + Vite 8 em JavaScript/JSX. Dashboard operacional com mapa base Leaflet/OpenStreetMap, marcadores de equipamentos/agentes e mapa de calor para ocorrências, falhas e risco regional.
+React 19 + Vite 8 em JavaScript/JSX. Dashboard operacional com Leaflet, marcadores de
+equipamentos/agentes, filtros, inspeção e Heat Map Incidents/Failures/Risk.
+Consulte o [README principal](../README.md) para escopo, arquitetura, backend e limitações.
 
-## Configuração e execução
+## Executar
 
-Na raiz do repositório, usando PowerShell:
+Na raiz, em PowerShell:
 
 ```powershell
+npm.cmd ci --prefix frontend
 if (-not (Test-Path -LiteralPath frontend/.env.local)) {
   Copy-Item -LiteralPath frontend/.env.example -Destination frontend/.env.local
 }
-Set-Location frontend
-npm.cmd ci
-npm.cmd run dev -- --host localhost --port 5173 --strictPort
+npm.cmd --prefix frontend run dev -- --host localhost --port 5173 --strictPort
 ```
 
-Se `.env.local` já existir, preserve o arquivo e ajuste apenas a URL. Acesse http://localhost:5173.
+Acesse `http://localhost:5173`. `VITE_API_BASE_URL` deve apontar para a API já disponível,
+sem `/api`, credenciais, query ou fragmento. O exemplo usa `http://localhost:5129`;
+HTTPS local utiliza `https://localhost:7130` e requer certificado confiável.
+Preserve `.env.local` existente; nenhuma variável `VITE_*` pode conter segredos.
+Configuração Vite é incorporada durante execução/build: reinicie o processo ao mudá-la.
 
-```dotenv
-VITE_API_BASE_URL=http://localhost:5129
-```
-
-A configuração é obrigatória, sem `/api` no final. Para o perfil HTTPS, utilize `https://localhost:7130` com certificado local confiável. Reinicie Vite após mudar o arquivo. Nenhuma variável `VITE_*` deve conter segredos, senhas ou tokens; esses valores são públicos no bundle. `.env.local` é ignorado pelo Git.
-
-A API precisa ser executada separadamente. Em outro terminal, na raiz, quando sua inicialização estiver autorizada:
+Para usar temporariamente a API DEMO, sem editar arquivos privados, em um terminal dedicado:
 
 ```powershell
-dotnet run --project backend/Api/Api.csproj --launch-profile http
+$env:VITE_API_BASE_URL = 'http://127.0.0.1:5180'
+npm.cmd --prefix frontend run dev -- --host localhost --port 5173 --strictPort
+# Após Ctrl+C:
+Remove-Item Env:VITE_API_BASE_URL
 ```
 
-Alternativa:
-
-```powershell
-dotnet run --project backend/Api/Api.csproj --launch-profile https
-```
-
-O backend requer .NET 10, banco SQL Server/LocalDB já preparado e `Jwt:Key` em configuração privada. A inicialização em Development já chama seeders e inicia o worker de simulação, podendo alterar o banco. Esta entrega não iniciou esses serviços nem executou migrations. Use uma conta já existente; não há credenciais preenchidas no formulário.
-
-`npm.cmd` funciona no PowerShell quando a política bloqueia `npm.ps1`, sem mudar a política do sistema. A porta 5062 citada no protótipo não corresponde aos perfis locais atuais.
+A variável vale somente para o terminal e processos filhos. A API DEMO deve estar previamente
+iniciada pelo procedimento protegido do README principal. O Vite não inicia backend ou banco.
+Use uma conta existente; token fica apenas em memória e recarregar a página exige novo login.
 
 ## Comportamento
 
-- Token somente em memória React. Recarregar exige login; logout, expiração ou 401 encerram a sessão.
-- Monitoramento disponível para Admin, OperationManager e CentralOperator. O backend mantém a autorização efetiva.
-- Após login autorizado: dashboard com indicadores de `/api/dashboard`, mapa base centrado em São Paulo e atualização manual.
-- Os quatro GETs existentes (dashboard, equipamentos, agentes e pontos de heatmap Incidents) compartilham uma rodada de consultas. Seus resultados detalhados ficam na seção recolhível de verificação da API.
-- Equipamentos e agentes reutilizam os registros desses mesmos GETs, com controles independentes, legenda de estados e popups operacionais. Não são realizadas consultas adicionais ao alternar camadas.
-- Filtros locais combinam tipo, status e bairro dos equipamentos; disponibilidade filtra somente agentes. Limpar filtros restaura as opções iniciais, sem novas consultas ou recentralização.
-- Contadores separados mostram recebidos, válidos, após filtros, descartados e na camada. A quantidade filtrada não substitui o total geral da dashboard.
-- A inspeção reutiliza o conteúdo seguro do popup. Seleções removidas por filtros, camadas desligadas ou respostas novas são limpas, sem restaurá-las ao limpar filtros.
-- A última resposta válida é mantida durante atualização e falhas, com aviso de possível desatualização e horário da resposta válida por endpoint.
-- Arrays vazios mostram mensagens sem criar marcadores fictícios. Coordenadas precisam ser números finitos, dentro dos limites geográficos; zero é válido. Strings numéricas não são convertidas automaticamente.
-- Popups não exibem CPF e renderizam textos da API com JSX. Atualizações dos dados preservam centro/zoom; abrir explicitamente um popup pode ajustar a vista para torná-lo legível.
-- Resultados independentes, atualização manual e erros específicos para status HTTP, rede e contrato inválido.
-- Cancelamento ao desmontar/substituir consultas, compatível com StrictMode.
-- React Leaflet 5.0.0, Leaflet 1.9.4 e leaflet.heat 0.2.0, fixados no manifesto e lockfile.
-- Mapa responsivo com zoom nativo, navegação, atribuição visível e tiles HTTPS oficiais. Precisa de acesso à internet para carregar a cartografia.
-- Equipamentos, agentes e calor podem ser ativados/desativados independentemente. O calor inicia desativado.
-- Abra "Mapa de calor" para escolher a métrica e os filtros. "Aplicar filtros" consulta ou reutiliza a consulta equivalente; "Atualizar calor" solicita uma atualização explícita. Alterar campos cancela chamadas anteriores e não dispara outra automaticamente.
-- Incidents permite período, horas, dia, bairro e tipo de ocorrência. Failures mantém os mesmos filtros temporais/bairro, com tipo EquipmentFailure fixo no backend. Risk permite somente bairro e instante de referência.
-- O calor reaproveita a resposta padrão de Incidents já recebida pela verificação. As demais consultas usam o mesmo cliente JWT e cache em memória por parâmetros.
-- Intensidade zero é válida e contabilizada sem produzir mancha. Pontos inválidos são descartados; valores positivos não recebem piso artificial. As cores são intensidade visual, não probabilidade estatística.
-- Risk mostra referências regionais, não polígonos de bairros nem certeza de ocorrência. Datas usam o fuso do navegador; faixa de horas/dia usa o horário configurado no backend.
-- Nenhum polling ou armazenamento persistente de credenciais.
+- Dashboard, equipamentos, agentes e Incidents padrão compartilham a rodada inicial de GETs.
+- Filtros de marcadores são locais, sem novos GETs; camadas são independentes.
+- Atualização é manual, com cancelamento e preservação sinalizada da última resposta válida.
+- O calor tem cache por consulta; aplicar filtros e atualizar calor são ações explícitas.
+- Coordenadas inválidas são descartadas; ausência de dados não gera registros fictícios.
+- Layout responsivo e alterações de dados/filtros preservam a instância Leaflet.
+- Tiles HTTPS oficiais OSM com atribuição e política `strict-origin-when-cross-origin`
+  no HTML e no TileLayer. O responsável informou validação da correção no site publicado.
+- Sem polling ou clustering. Não há telas CRUD ou painel preditivo completo nesta interface.
 
-## Verificação
+## Verificar
 
-Dentro de `frontend`:
+Na raiz:
 
 ```powershell
-npm.cmd run build
-npm.cmd run lint
-node --test tests/*.test.js
+npm.cmd --prefix frontend run build
+npm.cmd --prefix frontend run lint
+node --test frontend/tests/*.test.js
 ```
 
-Os testes usam transporte controlado e não substituem login real. Na etapa 6, build, lint e 70 testes passaram. O Chrome verificou pixels do plugin real, as três métricas, zero/vazio sem manchas, camadas independentes, cache, cancelamento, 401/403/rede, limpeza e layout móvel com API e tiles interceptados. O carregamento do plugin também foi conferido em um build de produção de teste. Isso não comprova dados reais do Azure nem acesso à cartografia real. Nenhum serviço Azure ou banco foi alterado.
+Os 72 testes automatizados cobrem serviços, contratos, filtros, coordenadas, UTC, tradução,
+cache e cancelamento. Não substituem a verificação visual/autenticada contra a API real.
+O build gera `frontend/dist`; não publica automaticamente.
 
-Para estrutura dos arquivos, evidências, limitações e checklist manual, consulte [o relatório da etapa 2](../docs/integracao-api-etapa-2.md). O protótipo `heatmap.html` foi preservado.
-
-Para as mudanças da dashboard, comportamento do mapa, evidências de navegador e próximas pendências, consulte [o relatório da etapa 3](../docs/dashboard-mapa-etapa-3.md).
-
-Para camadas operacionais, validação dos dados e testes de marcadores, consulte [o relatório da etapa 4](../docs/marcadores-etapa-4.md).
-
-Para filtros, contadores, inspeção e preservação da última resposta válida, consulte [o relatório da etapa 5](../docs/filtros-inspecao-etapa-5.md).
-
-Para o mapa de calor, compatibilidade do plugin, controles, ciclo de vida e evidências, consulte [o relatório da etapa 6](../docs/heatmap-etapa-6.md).
+Os [relatórios históricos](../docs/README.md) preservam evidências das etapas anteriores.
+O protótipo HTML e os assets do template foram removidos; o Heat Map oficial está nos
+componentes React e foi preservado.
