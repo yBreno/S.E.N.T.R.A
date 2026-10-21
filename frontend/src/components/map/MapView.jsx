@@ -62,6 +62,7 @@ export default function MapView({ verification, token, onLogout }) {
         <MapContainer className="operational-map" center={saoPauloCenter} zoom={12} zoomControl scrollWheelZoom>
           <TileLayer
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            referrerPolicy="strict-origin-when-cross-origin"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             maxZoom={19}
             keepBuffer={0}
