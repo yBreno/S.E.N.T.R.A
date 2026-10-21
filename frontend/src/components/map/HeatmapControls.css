@@ -1,31 +1,164 @@
-.heatmap-controls { border-bottom: 1px solid var(--border); }
-.heatmap-controls > summary { cursor: pointer; padding: 14px 18px; font-size: 0.85rem; color: var(--accent); }
-.heatmap-controls > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.heatmap-controls-body { padding: 0 18px 14px; font-size: 0.75rem; }
-.heatmap-controls-body p { color: var(--text-muted); margin: 8px 0; }
-.heatmap-controls-body .error { color: #ffb5b9; }
-.heatmap-controls-body .stale-data { color: var(--accent); }
-.heatmap-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.heatmap-fields label { display: grid; gap: 6px; color: var(--text-muted); min-width: 0; }
-.heatmap-fields input, .heatmap-fields select { width: 100%; min-width: 0; font: inherit; color: var(--text); background: #111214; padding: 8px; border: 1px solid #63666d; border-radius: 3px; color-scheme: dark; }
-.heatmap-fields select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.heatmap-actions { margin: 8px 0; }
-.heatmap-actions button { font-size: 0.75rem; }
-.heatmap-counts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; padding-block: 10px; }
-.heatmap-counts dt { color: var(--text-muted); overflow-wrap: anywhere; }
-.heatmap-counts dd { margin: 4px 0 0; font-size: 1rem; }
-.heatmap-legend { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 10px; }
-.heatmap-swatches { display: inline-flex; vertical-align: middle; margin-inline: 12px; }
-.heatmap-swatches i { width: 22px; height: 10px; background: #3498db; }
-.heatmap-swatches i:nth-child(2) { background: #2ecc71; }
-.heatmap-swatches i:nth-child(3) { background: #f1c40f; }
-.heatmap-swatches i:nth-child(4) { background: #e74c3c; }
-.operational-map .leaflet-heatmap-layer { pointer-events: none; }
-.heat-shape { border-color: var(--accent); background: var(--accent); border-radius: 50%; }
-@media (max-width: 1000px) { .heatmap-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* Controles do mapa de calor */
+
+.heatmap-controls {
+    border-bottom: 1px solid var(--border);
+}
+
+.heatmap-controls > summary {
+    cursor: pointer;
+    padding: 14px 18px;
+    font-size: 0.85rem;
+    color: var(--accent);
+}
+
+.heatmap-controls > summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+.heatmap-controls-body {
+    padding: 0 18px 14px;
+    font-size: 0.75rem;
+}
+
+.heatmap-controls-body p {
+    color: var(--text-muted);
+    margin: 8px 0;
+}
+
+.heatmap-controls-body .error {
+    color: #ffb5b9;
+}
+
+.heatmap-controls-body .stale-data {
+    color: var(--accent);
+}
+
+/* Filtros */
+
+.heatmap-fields {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.heatmap-fields label {
+    display: grid;
+    gap: 6px;
+    color: var(--text-muted);
+    min-width: 0;
+}
+
+.heatmap-fields input, .heatmap-fields select {
+    width: 100%;
+    min-width: 0;
+    font: inherit;
+    color: var(--text);
+    background: #111214;
+    padding: 8px;
+    border: 1px solid #63666d;
+    border-radius: 3px;
+    color-scheme: dark;
+}
+
+.heatmap-fields select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.heatmap-actions {
+    margin: 8px 0;
+}
+
+.heatmap-actions button {
+    font-size: 0.75rem;
+}
+
+/* Contadores */
+
+.heatmap-counts {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    padding-block: 10px;
+}
+
+.heatmap-counts dt {
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+.heatmap-counts dd {
+    margin: 4px 0 0;
+    font-size: 1rem;
+}
+
+/* Legenda */
+
+.heatmap-legend {
+    border-top: 1px solid var(--border);
+    margin-top: 12px;
+    padding-top: 10px;
+}
+
+.heatmap-swatches {
+    display: inline-flex;
+    vertical-align: middle;
+    margin-inline: 12px;
+}
+
+.heatmap-swatches i {
+    width: 22px;
+    height: 10px;
+    background: #3498db;
+}
+
+.heatmap-swatches i:nth-child(2) {
+    background: #2ecc71;
+}
+
+.heatmap-swatches i:nth-child(3) {
+    background: #f1c40f;
+}
+
+.heatmap-swatches i:nth-child(4) {
+    background: #e74c3c;
+}
+
+/* Camada de calor */
+
+.operational-map .leaflet-heatmap-layer {
+    pointer-events: none;
+}
+
+.heat-shape {
+    border-color: var(--accent);
+    background: var(--accent);
+    border-radius: 50%;
+}
+
+/* Responsividade */
+
+@media (max-width: 1000px) {
+    .heatmap-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 @media (max-width: 600px) {
-  .heatmap-controls-body { padding-inline: 12px; }
-  .heatmap-controls > summary { padding-inline: 12px; }
-  .heatmap-fields { grid-template-columns: minmax(0, 1fr); }
-  .heatmap-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .heatmap-controls-body {
+        padding-inline: 12px;
+    }
+
+    .heatmap-controls > summary {
+        padding-inline: 12px;
+    }
+
+    .heatmap-fields {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .heatmap-counts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }

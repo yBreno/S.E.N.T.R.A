@@ -1,23 +1,55 @@
-﻿:root {
-  font-family: system-ui, sans-serif;
-  line-height: 1.5;
-  --text: #ececee;
-  --text-muted: #a7a9b0;
-  --surface: #1b1c1f;
-  --border: #34363b;
-  --accent: #f2ce42;
-  color: var(--text);
-  background: #151618;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+﻿/* Tema e estilos globais */
+
+:root {
+    font-family: system-ui, sans-serif;
+    line-height: 1.5;
+    --text: #ececee;
+    --text-muted: #a7a9b0;
+    --surface: #1b1c1f;
+    --border: #34363b;
+    --accent: #f2ce42;
+    color: var(--text);
+    background: #151618;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
 }
 
-* { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; }
-button, input { font: inherit; }
-button { cursor: pointer; }
-button:disabled { cursor: default; opacity: 0.65; }
-button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-h1, h2, h3 { line-height: 1.25; }
-code { overflow-wrap: anywhere; }
+/* Estrutura principal */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+}
+
+/* Controles e acessibilidade */
+
+button, input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: default;
+    opacity: 0.65;
+}
+
+button:focus-visible, input:focus-visible, a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+h1, h2, h3 {
+    line-height: 1.25;
+}
+
+code {
+    overflow-wrap: anywhere;
+}
