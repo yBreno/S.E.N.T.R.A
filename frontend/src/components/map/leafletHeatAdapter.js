@@ -1,6 +1,9 @@
 // Bibliotecas externas
 import L from 'leaflet';
 
+// Serviços e utilitários
+import { attachHeatmapPinchZoom } from './heatmapPinchZoom.js';
+
 let pluginPromise;
 export function loadHeatmapFactory() {
   if (!pluginPromise) {
@@ -17,8 +20,20 @@ export function loadHeatmapFactory() {
       return (points, options) => {
         const layer = L.heatLayer(points, options);
         if (!(layer instanceof L.Layer)) throw new Error('Instância Leaflet incompatível.');
+        let detachPinchZoom;
+        const originalAdd = layer.onAdd;
+        layer.onAdd = function (map) {
+          originalAdd.call(this, map);
+          detachPinchZoom?.();
+          // leaflet.heat 0.2.0 não expõe getContainer; o acesso interno fica restrito ao adaptador.
+          if (L.Browser.any3d && this._canvas) {
+            detachPinchZoom = attachHeatmapPinchZoom(map, this._canvas, L.DomUtil);
+          }
+        };
         const originalRemove = layer.onRemove;
         layer.onRemove = function (map) {
+          detachPinchZoom?.();
+          detachPinchZoom = null;
           // O release 0.2.0 não cancela o frame de redraw pendente ao remover.
           if (this._frame) L.Util.cancelAnimFrame(this._frame);
           this._frame = null;
