@@ -12,7 +12,7 @@ const groups = [
   { label: 'Visão geral', items: [{ label: 'Dashboard', icon: 'dashboard', target: 'dashboard' }] },
   { label: 'Gestão operacional', items: [
     { label: 'Equipamentos', icon: 'equipment' }, { label: 'Agentes', icon: 'agents' },
-    { label: 'Manutenções', icon: 'maintenance' }, { label: 'Empresas', icon: 'company' }
+    { label: 'Manutenções', icon: 'maintenance' }
   ] },
   { label: 'Monitoramento', items: [
     { label: 'Mapa operacional', icon: 'map', target: 'mapa-operacional' },
@@ -23,7 +23,7 @@ const groups = [
     { label: 'Cidade preditiva', icon: 'predictive' }, { label: 'Relatórios e indicadores', icon: 'report' }
   ] },
   { label: 'Sistema', items: [
-    { label: 'Configurações', icon: 'settings' }, { label: 'Perfil do usuário', icon: 'user' }
+    { label: 'Usuarios(Apenas ADM)', icon: 'user' }
   ] }
 ];
 
