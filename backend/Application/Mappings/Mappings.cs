@@ -30,7 +30,11 @@ public static class Mappings
 
     public static AgentResponseDto ToResponse(this Domain.Entities.Agent a) => new(a.Id, a.Name, Documents.MaskCpf(a.Cpf),
         a.BadgeNumber, a.Role, a.Availability, a.UserId,
-        a.Neighborhood, a.Latitude, a.Longitude, a.LocationUpdatedAt);
+        a.Neighborhood, a.Latitude, a.Longitude,
+        // SQL datetime2 loses Kind; persisted agent locations are written in UTC.
+        a.LocationUpdatedAt.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(a.LocationUpdatedAt, DateTimeKind.Utc)
+            : a.LocationUpdatedAt.ToUniversalTime());
 
     public static void Apply(this Domain.Entities.Agent a, AgentWriteDto d)
     {
