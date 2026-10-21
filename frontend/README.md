@@ -34,6 +34,7 @@ no manifesto, enquanto as três bibliotecas de mapa estão fixadas no `package.j
 
 ```text
 frontend/
+├── public/brand/                     Logos oficiais, incluindo a versão transparente
 ├── src/
 │   ├── main.jsx                      Inicialização com React StrictMode
 │   ├── App.jsx                       Login, restauração e acesso à dashboard
@@ -42,9 +43,10 @@ frontend/
 │   ├── pages/
 │   │   └── DashboardPage.jsx         Página operacional e navegação lateral
 │   ├── components/
+│   │   ├── Brand.jsx / Brand.css     Logo e nome completo compartilhados
 │   │   ├── LoginForm.jsx             Formulário de autenticação
-│   │   ├── EndpointVerification.jsx  Inspeção dos resultados da API
-│   │   ├── dashboard/                Indicadores operacionais
+│   │   ├── auth/                     Composição visual e estilos do acesso
+│   │   ├── dashboard/                Menu, cabeçalho, indicadores e painéis laterais
 │   │   └── map/                      Mapa, marcadores, filtros, calor e inspeção
 │   ├── hooks/                        Estado e integração com serviços
 │   └── services/                     HTTP, autenticação, sessão e consultas
@@ -67,6 +69,39 @@ removido; o mapa de calor oficial é o integrado ao React.
 | `useHeatmap` | Métrica, filtros, visibilidade e recurso de consultas de calor |
 
 ## Funcionalidades implementadas
+
+### Identidade visual e experiência
+
+A identidade utiliza a logo oficial **sem fundo** em `public/brand/sentra-logo.png`,
+compartilhada por `Brand.jsx` no login e no topo da sidebar. Abaixo da marca aparece
+**Sistema Estratégico de Navegação, Tráfego e Resposta Ativa**. A versão original com
+fundo foi organizada como `public/brand/sentra-logo-background.png` e não é utilizada na interface.
+
+| Cor | Papel na interface |
+| --- | --- |
+| `#111316` | Fundo principal |
+| `#171B1F` | Navegação e área de apresentação do login |
+| `#20252A` | Painéis operacionais |
+| `#FFCC00` | Ação principal, seleção e foco |
+| `#F5F5F5` | Texto principal |
+| `#9CA3AF` | Texto de apoio |
+
+O login tem duas colunas no desktop: marca e apresentação da operação à esquerda,
+formulário de acesso à direita. No celular, a composição vira uma coluna com marca,
+nome completo e formulário. Os campos têm 50 px de altura, rótulos visíveis, autocomplete
+nativo e fonte de 16 px; carregamento e erros mantêm o tratamento da autenticação existente.
+Não foram adicionados fontes externas, bibliotecas ou animações de entrada.
+
+`auth/AuthLayout.jsx` organiza apenas a apresentação. A lógica de login, restauração,
+expiração, logout e autorização permanece nos hooks e serviços existentes. Os estilos
+do acesso são específicos dessa tela para preservar os controles do mapa e da dashboard.
+A sidebar mantém sua versão recolhida no desktop e o menu com fechamento por teclado
+no celular; quando recolhida, a descrição fica oculta e a janela da logo mostra apenas
+o símbolo oficial, sem alterar o arquivo original.
+
+Na limpeza visual, `EndpointVerification.jsx`, sem consumidores, foi removido. A análise
+final dos imports a partir de `main.jsx` confirmou que os **22 componentes JSX restantes**
+participam da aplicação; nenhum outro JSX foi excluído.
 
 ### Autenticação e sessão
 
@@ -93,14 +128,21 @@ revoga um JWT já emitido no servidor; ele remove a sessão deste cliente.
 
 ### Dashboard
 
-A página mostra nome/papel do usuário e três indicadores vindos de `/api/dashboard`:
-`totalEquipments`, `availabilityRatePercent` e `activeAgents`. São números gerais da API;
-os filtros do mapa não recalculam esses totais.
+A página mostra nome/papel do usuário e cinco indicadores baseados em `/api/dashboard`:
+total cadastrado, operacionais, indisponíveis, disponibilidade e agentes ativos.
+Operacionais usa `byStatus.Operational`; indisponíveis soma Malfunctioning,
+UnderMaintenance e Stolen, definição também mostrada no card. São números gerais da API;
+os filtros do mapa não recalculam esses totais. Nenhuma variação temporal é inventada.
 
 Há estados de carregamento, erro e ausência de dados, além do botão **Atualizar dados**.
 Durante uma atualização ou falha, a última resposta válida é preservada com aviso de possível
-desatualização. A seção recolhível **Verificação da API** mostra os resultados dos quatro
-endpoints da rodada operacional, sem criar consultas adicionais ao ser aberta.
+desatualização. A seção visual de verificação de endpoints foi removida; os serviços e
+consultas compartilhadas continuam sendo utilizados pelos indicadores e pelo mapa.
+
+A sidebar pode ser recolhida no desktop e aberta como menu no celular. Seções sem telas
+implementadas são identificadas como **Em breve**. A coluna direita apresenta um estado
+informativo para alertas ainda não integrados e uma rosca SVG da distribuição real de
+equipamentos por estado, sem dependência de gráficos ou novas consultas.
 
 ### Mapa operacional
 
@@ -200,7 +242,7 @@ recentralizar a vista. Popups têm altura máxima e rolagem para acomodar detalh
 ### Páginas e outros recursos
 
 A página operacional existente é `pages/DashboardPage.jsx`. O login é renderizado por `App.jsx`
-com `LoginForm`; a navegação lateral abre a visão operacional ou a verificação de endpoints.
+com `LoginForm`; a navegação lateral leva à dashboard, ao mapa operacional ou ao calor.
 Não há páginas próprias de inventário, agentes, manutenção, alertas, ocorrências ou Cidade
 Preditiva completa, nem um roteador de navegação entre esses módulos.
 
@@ -331,11 +373,19 @@ Não existe script `npm test` no manifesto atual. Os scripts disponíveis são `
 | `heatmap.test.js` | Métricas, filtros, contratos e normalização das intensidades |
 | `heatmapResource.test.js` | Cache, compartilhamento, concorrência, cancelamento e erros |
 | `heatmapPinchZoom.test.js` | Transformações de zoom/pan, encaixe final e limpeza de listeners |
+| `dashboard.test.js` | Indicadores derivados, distribuição, vazio e estados desconhecidos |
 
-Na execução local desta atualização: **build e lint aprovados; 93 testes aprovados, zero
+Na execução local da refatoração visual: **build e lint aprovados; 99 testes aprovados, zero
 falhas e zero ignorados**. A quantidade corresponde à suíte executada, não a uma meta fixa.
 Os testes usam dados e transportes controlados; não comprovam contagens atuais do banco,
 login real ou renderização física em dispositivos móveis.
+
+A atualização de identidade também foi revisada em Chrome com API de teste isolada:
+login e dashboard, logo carregada, F5, filtros locais sem GETs adicionais, camadas
+independentes e as três métricas de calor. Larguras de 320, 360, 390, 768, 1024, 1280 e
+1600 px foram verificadas sem rolagem horizontal e sem exceções JavaScript nos fluxos
+exercitados. As capturas usam dados controlados; não representam o banco DEMO ou Azure.
+O gesto de pinça e o teclado virtual ainda exigem conferência em celular real.
 
 Para verificação manual, conferir login/F5/logout, filtros e camadas, popups, as três métricas,
 zoom/arraste em desktop e pinça em celular. Os tiles devem mostrar cartografia real: uma

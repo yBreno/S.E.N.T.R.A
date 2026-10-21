@@ -15,11 +15,11 @@ import OperationalFilters from './OperationalFilters.jsx';
 import RecordInspection from './RecordInspection.jsx';
 import HeatmapLayer from './HeatmapLayer.jsx';
 import HeatmapControls from './HeatmapControls.jsx';
+import DashboardIcon from '../dashboard/DashboardIcon.jsx';
 
 // Hooks personalizados
 import { useOperationalMarkers } from '../../hooks/useOperationalMarkers.js';
 import { useMarkerInspection } from '../../hooks/useMarkerInspection.js';
-import { useHeatmap } from '../../hooks/useHeatmap.js';
 
 // Serviços e utilitários
 import { createEmptyFilters } from './operationalFilters.js';
@@ -50,16 +50,11 @@ function MapResizeObserver() {
 
 export default function MapView({
   verification,
-  token,
-  onLogout
+  heatmap
 }) {
-  const heatmap = useHeatmap({
-    token,
-    onLogout,
-    verification
-  });
-
   const [heatmapError, setHeatmapError] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(() =>
+    typeof window === 'undefined' || window.matchMedia('(min-width: 761px)').matches);
   const [filters, setFilters] = useState(createEmptyFilters);
 
   const layers = useOperationalMarkers(verification, filters);
@@ -97,13 +92,27 @@ export default function MapView({
   }), []);
 
   return (
-    <div className="map-view">
-      <OperationalFilters
+    <div className={`map-view ${heatmap.enabled ? 'heatmap-is-enabled' : ''}`}>
+      <header className="map-panel-heading">
+        <div><h2 id="map-heading">Mapa operacional</h2><p>Recursos urbanos monitorados</p></div>
+        <div className="map-view-switch" role="group" aria-label="Visualização do mapa">
+          <button aria-pressed={!heatmap.enabled} onClick={() => heatmap.changeEnabled(false)}>
+            <DashboardIcon name="map" />Operacional
+          </button>
+          <button aria-pressed={heatmap.enabled} onClick={() => heatmap.changeEnabled(true)}>
+            <DashboardIcon name="heat" />Heat Map
+          </button>
+        </div>
+      </header>
+      <details className="map-filter-panel" open={filtersOpen} onToggle={event => setFiltersOpen(event.currentTarget.open)}>
+        <summary><DashboardIcon name="filter" />Filtros operacionais</summary>
+        <OperationalFilters
         filters={filters}
         onChange={setFilters}
         onClear={() => setFilters(createEmptyFilters())}
         neighborhoodOptions={layers.equipments.neighborhoodOptions}
-      />
+        />
+      </details>
       <MapLayersControl
         layers={layers}
         showEquipments={showEquipments}

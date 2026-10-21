@@ -43,7 +43,7 @@ export default function OperationalFilters({
           ))}
           <option value={UNKNOWN_FILTER_VALUE}>Tipo não informado / desconhecido</option>
         </select></label>
-        <label htmlFor="equipment-status">Status do equipamento<select
+        <label htmlFor="equipment-status">Situação<select
           id="equipment-status"
           value={filters.equipmentStatus}
           onChange={update('equipmentStatus')}
@@ -56,7 +56,7 @@ export default function OperationalFilters({
           ))}
           <option value={UNKNOWN_FILTER_VALUE}>Status não informado / desconhecido</option>
         </select></label>
-        <label htmlFor="equipment-neighborhood">Bairro do equipamento<select
+        <label htmlFor="equipment-neighborhood">Região (bairro)<select
           id="equipment-neighborhood"
           value={filters.neighborhood}
           onChange={update('neighborhood')}

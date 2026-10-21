@@ -1,4 +1,5 @@
 // Componentes
+import AuthLayout from './components/auth/AuthLayout.jsx';
 import LoginForm from './components/LoginForm.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 
@@ -13,17 +14,12 @@ import './App.css';
 
 function App() {
   const auth = useAuth();
+  const Layout = auth.session && auth.canMonitor ? 'div' : AuthLayout;
 
   return (
-    <div
+    <Layout
       className={auth.session && auth.canMonitor ? 'app-dashboard' : 'app-shell'}
     >
-      {(!auth.session || !auth.canMonitor) && (
-        <header>
-          <h1>S.E.N.T.R.A.</h1>
-          <p>Centro de operações</p>
-        </header>
-      )}
       {apiConfig.error && (
         <p className="message error" role="alert">
           {apiConfig.error}
@@ -53,10 +49,7 @@ function App() {
             : (
               <DashboardPage session={auth.session} onLogout={auth.logout} />
             )}
-      {(!auth.session || !auth.canMonitor) && (
-        <footer>Sessão temporária nesta aba. Sair ou expirar exige novo login.</footer>
-      )}
-    </div>
+    </Layout>
   );
 }
 

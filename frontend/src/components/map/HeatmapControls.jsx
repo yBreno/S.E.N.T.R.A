@@ -1,3 +1,6 @@
+// Bibliotecas externas
+import { useEffect, useRef } from 'react';
+
 // Serviços e utilitários
 import { heatmapMetrics, incidentTypes, weekDays } from '../../services/heatmapQuery.js';
 
@@ -8,6 +11,11 @@ export default function HeatmapControls({
   heatmap,
   layerError
 }) {
+  const panel = useRef(null);
+
+  useEffect(() => {
+    if (heatmap.enabled && panel.current) panel.current.open = true;
+  }, [heatmap.enabled]);
   const {
     filters,
     data
@@ -23,7 +31,7 @@ export default function HeatmapControls({
   const risk = filters.metric === 'Risk';
 
   return (
-    <details className="heatmap-controls">
+    <details ref={panel} className="heatmap-controls" id="mapa-de-calor">
       <summary>Mapa de calor · {heatmapMetrics[filters.metric]} · {heatmap.enabled ? 'Ativado' : 'Desativado'}</summary>
       <div className="heatmap-controls-body">
         <p>Filtros exclusivos da camada de calor. Alterar campos cancela a consulta anterior; use Aplicar filtros para consultar ou reutilizar os dados correspondentes.</p>

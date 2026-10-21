@@ -112,51 +112,61 @@ export default function MapLayersControl({
           onChange={event => heatmap.changeEnabled(event.target.checked)}
         /><span className="layer-shape heat-shape" aria-hidden="true" /> Mapa de calor</label>
       </fieldset>
-      <div className="layer-messages layer-statistics" aria-live="polite">
-        <LayerMessage
-          label="Equipamentos"
-          singular="equipamento"
-          layer={layers.equipments}
-          enabled={showEquipments}
-          loading={loading}
-          error={error}
-        />
-        <LayerMessage
-          label="Agentes"
-          singular="agente"
-          layer={layers.agents}
-          enabled={showAgents}
-          loading={loading}
-          error={error}
-        />
-      </div>
-      <details className="marker-legend">
-        <summary>Legenda dos estados</summary>
-        <div className="legend-columns">
-          <div>
-            <strong>Equipamentos · ícone quadrado</strong>
-            <ul>
-              {Object.entries(equipmentStates).map(([key, state]) => (
-                <li key={key}>
-                  <span className={`legend-dot state-${state.tone}`} aria-hidden="true" />
-                  {state.label}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <strong>Agentes · ícone circular</strong>
-            <ul>
-              {Object.entries(agentStates).map(([key, state]) => (
-                <li key={key}>
-                  <span className={`legend-dot state-${state.tone}`} aria-hidden="true" />
-                  {state.label}
-                </li>
-              ))}
-              <li><span className="legend-dot state-unknown" aria-hidden="true" />Estado não informado ou desconhecido (ambas as camadas)</li>
-            </ul>
-          </div>
+      {loading && <p className="layer-inline-message" role="status">Atualizando recursos…</p>}
+      {!loading && (layers.equipments.error || layers.agents.error || error) && (
+        <p className="layer-alert" role="alert">{layers.equipments.error || layers.agents.error || error}</p>
+      )}
+      {!loading && (layers.equipments.stale || layers.agents.stale) && <p className="stale-data">Exibindo recursos da última resposta válida.</p>}
+      {!loading && layers.equipments.hasData && layers.equipments.total === 0 && <p className="layer-inline-message">Nenhum equipamento retornado pela API.</p>}
+      {!loading && layers.agents.hasData && layers.agents.total === 0 && <p className="layer-inline-message">Nenhum agente retornado pela API.</p>}
+      <details className="layer-details">
+        <summary>Resumo e legenda das camadas</summary>
+        <div className="layer-messages layer-statistics" aria-live="polite">
+          <LayerMessage
+            label="Equipamentos"
+            singular="equipamento"
+            layer={layers.equipments}
+            enabled={showEquipments}
+            loading={loading}
+            error={error}
+          />
+          <LayerMessage
+            label="Agentes"
+            singular="agente"
+            layer={layers.agents}
+            enabled={showAgents}
+            loading={loading}
+            error={error}
+          />
         </div>
+        <details className="marker-legend">
+          <summary>Legenda dos estados</summary>
+          <div className="legend-columns">
+            <div>
+              <strong>Equipamentos · ícone quadrado</strong>
+              <ul>
+                {Object.entries(equipmentStates).map(([key, state]) => (
+                  <li key={key}>
+                    <span className={`legend-dot state-${state.tone}`} aria-hidden="true" />
+                    {state.label}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <strong>Agentes · ícone circular</strong>
+              <ul>
+                {Object.entries(agentStates).map(([key, state]) => (
+                  <li key={key}>
+                    <span className={`legend-dot state-${state.tone}`} aria-hidden="true" />
+                    {state.label}
+                  </li>
+                ))}
+                <li><span className="legend-dot state-unknown" aria-hidden="true" />Estado não informado ou desconhecido (ambas as camadas)</li>
+              </ul>
+            </div>
+          </div>
+        </details>
       </details>
     </div>
   );

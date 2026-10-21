@@ -1,15 +1,15 @@
 ﻿/* Tema e estilos globais */
 
 :root {
-    font-family: system-ui, sans-serif;
+    font-family: 'Segoe UI', system-ui, sans-serif;
     line-height: 1.5;
-    --text: #ececee;
-    --text-muted: #a7a9b0;
-    --surface: #1b1c1f;
-    --border: #34363b;
-    --accent: #f2ce42;
+    --text: #F5F5F5;
+    --text-muted: #9CA3AF;
+    --surface: #20252A;
+    --border: #343A40;
+    --accent: #FFCC00;
     color: var(--text);
-    background: #151618;
+    background: #111316;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
