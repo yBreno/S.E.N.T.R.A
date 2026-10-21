@@ -33,7 +33,28 @@ Remove-Item Env:VITE_API_BASE_URL
 
 A variável vale somente para o terminal e processos filhos. A API DEMO deve estar previamente
 iniciada pelo procedimento protegido do README principal. O Vite não inicia backend ou banco.
-Use uma conta existente; token fica apenas em memória e recarregar a página exige novo login.
+Use uma conta existente. Para a demonstração, a sessão utiliza memória e sessionStorage
+da aba; atualizar a página tenta restaurá-la com validação na API.
+
+## Persistência temporária da sessão
+
+- Após login, somente JWT, validade e nome/papel de apresentação são guardados, vinculados
+  à URL da API. Não são persistidos senha, CPF, cookies ou respostas operacionais.
+- F5 mantém a sessão apenas se o JWT e `expiresAt` ainda estiverem válidos e
+  `GET /api/dashboard` aceitar o Bearer. Até essa confirmação, a dashboard não é exibida.
+  Essa consulta de validação ocorre somente na restauração; não há polling ou refresh token.
+- Usa-se a menor validade entre `exp` do JWT e `expiresAt`. Ler claims no navegador
+  não valida assinatura nem concede autorização: os endpoints continuam protegidos pela API.
+- Logout, expiração e 401 dos fluxos autenticados limpam a sessão. Falhas de restauração
+  também exigem novo login; requisições canceladas não restauram estado antigo.
+- Não há localStorage. Se sessionStorage estiver bloqueado, o login funciona somente em memória.
+- **Risco de XSS:** scripts executados na origem podem ler ou adulterar sessionStorage.
+  Esta é uma alternativa temporária para demonstração, não uma proteção equivalente a HttpOnly.
+  O armazenamento é associado à aba; não equivale a “lembrar de mim” entre sessões do navegador.
+- Cookies HttpOnly/Secure exigiriam suporte no backend, logout por endpoint, proteção CSRF,
+  envio de credenciais e CORS compatível. SameSite depende dos domínios da interface e API;
+  cookies entre sites podem exigir `SameSite=None; Secure` e sofrer bloqueio pelo navegador.
+  Essa migração não foi implementada.
 
 ## Comportamento
 
@@ -57,8 +78,9 @@ npm.cmd --prefix frontend run lint
 node --test frontend/tests/*.test.js
 ```
 
-Os 72 testes automatizados cobrem serviços, contratos, filtros, coordenadas, UTC, tradução,
-cache e cancelamento. Não substituem a verificação visual/autenticada contra a API real.
+Os testes automatizados cobrem serviços, contratos, filtros, coordenadas, UTC, tradução,
+cache, cancelamento e restauração/limpeza de sessão com transporte controlado.
+Não substituem a verificação visual/autenticada contra a API real.
 O build gera `frontend/dist`; não publica automaticamente.
 
 Os [relatórios históricos](../docs/README.md) preservam evidências das etapas anteriores.

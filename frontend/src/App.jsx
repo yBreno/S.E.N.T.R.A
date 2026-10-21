@@ -29,28 +29,32 @@ function App() {
           {apiConfig.error}
         </p>
       )}
-      {!auth.session
+      {auth.isRestoring
         ? (
-          <LoginForm
-            onLogin={auth.login}
-            isSubmitting={auth.isSubmitting}
-            error={auth.error}
-            configurationError={apiConfig.error}
-          />
+          <p role="status">Validando sessão anterior…</p>
         )
-        : !auth.canMonitor
+        : !auth.session
           ? (
-            <section className="panel">
-              <h2>Acesso ao monitoramento indisponível</h2>
-              <p role="alert">Seu papel ({auth.session.user.role}) não permite acessar esta tela. É necessário Admin, OperationManager ou CentralOperator.</p>
-              <button onClick={() => auth.logout()}>Voltar ao login</button>
-            </section>
+            <LoginForm
+              onLogin={auth.login}
+              isSubmitting={auth.isSubmitting}
+              error={auth.error}
+              configurationError={apiConfig.error}
+            />
           )
-          : (
-            <DashboardPage session={auth.session} onLogout={auth.logout} />
-          )}
+          : !auth.canMonitor
+            ? (
+              <section className="panel">
+                <h2>Acesso ao monitoramento indisponível</h2>
+                <p role="alert">Seu papel ({auth.session.user.role}) não permite acessar esta tela. É necessário Admin, OperationManager ou CentralOperator.</p>
+                <button onClick={() => auth.logout()}>Voltar ao login</button>
+              </section>
+            )
+            : (
+              <DashboardPage session={auth.session} onLogout={auth.logout} />
+            )}
       {(!auth.session || !auth.canMonitor) && (
-        <footer>Sessão mantida somente em memória. Atualizar a página exige novo login.</footer>
+        <footer>Sessão temporária nesta aba. Sair ou expirar exige novo login.</footer>
       )}
     </div>
   );
