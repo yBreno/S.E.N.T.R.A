@@ -2,6 +2,10 @@
   <Project Path="../Api/Api.csproj" />
   <Project Path="../Application/Application.csproj" />
   <Project Path="../Domain/Domain.csproj" />
+  <Project Path="../DemoData/DemoData.csproj" />
+  <Project Path="../DemoData.Validation/DemoData.Validation.csproj" />
+  <Project Path="../DemoAdmin/DemoAdmin.csproj" />
+  <Project Path="../DemoData.Azure/DemoData.Azure.csproj" />
   <Project Path="../Infrastructure/Infrastructure.csproj" />
   <Project Path="../Tests/Tests.csproj" />
 </Solution>

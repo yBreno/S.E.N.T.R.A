@@ -1,122 +1,56 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+// Componentes
+import AuthLayout from './components/auth/AuthLayout.jsx';
+import LoginForm from './components/LoginForm.jsx';
+import DashboardPage from './pages/DashboardPage.jsx';
+
+// Hooks personalizados
+import { useAuth } from './hooks/useAuth.js';
+
+// Serviços e utilitários
+import { apiConfig } from './config/api.js';
+
+// Estilos
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const auth = useAuth();
+  const Layout = auth.session && auth.canMonitor ? 'div' : AuthLayout;
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <Layout
+      className={auth.session && auth.canMonitor ? 'app-dashboard' : 'app-shell'}
+    >
+      {apiConfig.error && (
+        <p className="message error" role="alert">
+          {apiConfig.error}
+        </p>
+      )}
+      {auth.isRestoring
+        ? (
+          <p role="status">Validando sessão anterior…</p>
+        )
+        : !auth.session
+          ? (
+            <LoginForm
+              onLogin={auth.login}
+              isSubmitting={auth.isSubmitting}
+              error={auth.error}
+              configurationError={apiConfig.error}
+            />
+          )
+          : !auth.canMonitor
+            ? (
+              <section className="panel">
+                <h2>Acesso ao monitoramento indisponível</h2>
+                <p role="alert">Seu papel ({auth.session.user.role}) não permite acessar esta tela. É necessário Admin, OperationManager ou CentralOperator.</p>
+                <button onClick={() => auth.logout()}>Voltar ao login</button>
+              </section>
+            )
+            : (
+              <DashboardPage session={auth.session} onLogout={auth.logout} />
+            )}
+    </Layout>
+  );
 }
 
-export default App
+export default App;

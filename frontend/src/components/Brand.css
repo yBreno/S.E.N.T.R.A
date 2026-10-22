@@ -1,0 +1,26 @@
+/* Identidade oficial compartilhada */
+
+.brand {
+    width: 100%;
+    max-width: 360px;
+}
+
+.brand-logo {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.brand-image {
+    display: block;
+    overflow: hidden;
+}
+
+.brand-tagline {
+    margin: 0;
+    max-width: 31ch;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.6;
+    text-wrap: pretty;
+}

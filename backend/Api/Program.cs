@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using Api.Middleware;
+using Api.Demo;
 using Api.Seed;
 using Api.Workers;
 using Application;
@@ -12,15 +13,18 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
+var isDemo = DemoApiConfiguration.Prepare(builder.Configuration, builder.Environment);
+if (isDemo) builder.WebHost.UseUrls(DemoApiConfiguration.Url);
 
 // ---- Camadas
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+DemoApiConfiguration.RegisterReadOnlyPersistence(builder.Services, isDemo);
 
 // ---- Cidade Preditiva (pesos e limiares auditaveis + worker de telemetria simulada)
 builder.Services.Configure<PredictiveSettings>(builder.Configuration.GetSection(PredictiveSettings.SectionName));
 builder.Services.Configure<SimulationSettings>(builder.Configuration.GetSection(SimulationSettings.SectionName));
-builder.Services.AddHostedService<TelemetrySimulationWorker>();
+DemoApiConfiguration.RegisterSimulation(builder.Services, isDemo);
 
 // ---- JWT (a Key vem de user-secrets / variavel de ambiente: Jwt__Key)
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
@@ -49,7 +53,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // ---- CORS
-var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+var origins = isDemo ? DemoApiConfiguration.Origins : builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(o => o.AddPolicy("Default", p =>
 {
     if (builder.Environment.IsDevelopment())
@@ -85,18 +89,19 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-if (app.Environment.IsDevelopment())
+if (DemoApiConfiguration.RunDevelopmentSeeders(app.Environment, isDemo))
 {
     await AdminSeeder.SeedAsync(app.Services, app.Configuration, app.Logger);
     await PredictiveSeeder.SeedAsync(app.Services, app.Logger);
 }
-else if (app.Configuration.GetValue<bool>("SeedAdmin:Enabled"))
+else if (DemoApiConfiguration.RunAdminSeeder(app.Configuration, isDemo))
 {
     await AdminSeeder.SeedAsync(app.Services, app.Configuration, app.Logger);
 }
 
-app.UseHttpsRedirection();
+if (!isDemo) app.UseHttpsRedirection();
 app.UseCors("Default");
+if (isDemo) app.UseMiddleware<DemoReadOnlyMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

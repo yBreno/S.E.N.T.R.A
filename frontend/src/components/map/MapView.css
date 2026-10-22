@@ -1,0 +1,66 @@
+/* Mapa e navegação */
+
+.map-instructions {
+    margin: 0;
+    padding: 10px 18px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.map-region {
+    height: clamp(390px, 59vh, 780px);
+    height: clamp(390px, 59dvh, 780px);
+}
+
+.operational-map {
+    width: 100%;
+    height: 100%;
+    background: #d6d6cf;
+    color: #171717;
+    font-family: inherit;
+    z-index: 0;
+}
+
+.operational-map .leaflet-control-zoom a {
+    color: #171717;
+    background: #fff;
+}
+
+.operational-map .leaflet-control-zoom a:hover {
+    background: #f1e4a8;
+}
+
+.operational-map .leaflet-control-attribution {
+    color: #252525;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.operational-map .leaflet-control-attribution a {
+    color: #174e80;
+}
+
+/* Estado da cartografia */
+
+.map-status {
+    padding: 8px 18px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.map-status p {
+    margin: 0;
+}
+
+/* Responsividade */
+
+@media (max-width: 600px) {
+    .map-region {
+        height: 420px;
+        height: max(380px, 55dvh);
+    }
+
+    .map-instructions {
+        padding: 10px 12px;
+    }
+}
