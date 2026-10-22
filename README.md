@@ -46,7 +46,8 @@ docs/                     Relatórios históricos e índice de documentação
 
 ## Funcionalidades concluídas
 
-- Login/logout e expiração; JWT somente em memória. Recarregar exige novo login.
+- Login/logout e expiração; JWT em memória e, temporariamente para demonstração, em
+  sessionStorage. Após F5, a restauração exige validade local e aceitação pela API.
 - Monitoramento para Admin, OperationManager e CentralOperator, com autorização efetiva no backend.
 - Indicadores da API, mapa de São Paulo e camadas independentes de equipamentos, agentes e calor.
 - Marcadores por estado/disponibilidade, validação de coordenadas e detalhes sem CPF.
