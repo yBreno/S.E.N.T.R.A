@@ -360,10 +360,32 @@ são recusados antes do envio. Campos em branco deixam os padrões correspondent
 
 A camada é carregada por importação dinâmica quando utilizada. O adaptador mantém a mesma
 instância Leaflet do React Leaflet e prepara a integração do plugin; ao desmontar, remove
-listeners e cancela o frame pendente. Os parâmetros visuais atuais são raio de 28 px,
-blur de 20 px e gradiente azul, verde, amarelo e vermelho. A escala de renderização considera
-as intensidades positivas válidas, com referência mínima de 1; `maxIntensity` da API
-é preservado separadamente para apresentação.
+listeners e cancela o frame pendente. O gradiente usa azul, verde, amarelo e vermelho.
+A escala de renderização considera as intensidades positivas válidas, com referência
+mínima de 1; `maxIntensity` da API é preservado separadamente para apresentação.
+
+**Raio geográfico aproximado:** a suavização visual usa **1.000 metros de raio total**,
+incluindo a borda suave, configurados em `geographicHeatmap.js`. Esse valor é do frontend:
+o contrato da API não contém distância de abrangência e a mancha não delimita uma área
+de risco comprovada. O raio total é repartido entre núcleo e blur na proporção 28:20.
+
+O frontend converte metros em pixels pela escala Web Mercator e pela latitude média dos
+pontos de desenho da consulta atual. Ao terminar o zoom, atualiza raio e blur na mesma
+camada. Mover o mapa não muda a latitude de referência e não altera o raio. As intensidades
+não recebem a atenuação por zoom do plugin (`maxZoom: 0`); continuam derivadas dos valores
+da API e da concentração dos pontos. Não há novas consultas HTTP ao navegar pelo mapa.
+
+Como leaflet.heat usa um raio único por camada, essa é uma aproximação regional, adequada
+a pontos próximos em latitude. Não garante uma distância exata em cada ponto quando os
+dados se espalham por latitudes muito diferentes. Arredondamento de pixels, agrupamento
+interno do plugin e rasterização também podem produzir pequenas diferenças visuais.
+
+Para evitar bitmaps enormes no zoom de rua, `boundedHeatKernel.js` mantém a textura auxiliar
+entre 8 e 256 px por lado e a desenha na dimensão projetada necessária, sem limitar o raio
+geográfico. O canvas principal continua com o tamanho da área visível. O adaptador cancela
+o frame que duplicaria o redesenho após o zoom. Essa integração acessa estruturas internas
+do **leaflet.heat 0.2.0/simpleheat** para controlar a textura e o ciclo de desenho; uma
+atualização da biblioteca exige retestar esse adaptador. Não foi adicionada dependência.
 
 **Zoom no celular:** `heatmapPinchZoom.js` acompanha os eventos de pinça transformando o
 canvas existente, sem consultar a API ou redesenhar todos os pontos por frame. O encaixe final
@@ -548,6 +570,8 @@ Nenhum desses comandos publica o frontend.
 | `components/map/operationalFilters.js` | `createEmptyFilters`, `buildOperationalLayers`, contadores e resolução da seleção válida |
 | `components/map/markerIcons.js` | `getMarkerIcon`: cria e reutiliza ícones estáticos por categoria e estado |
 | `components/map/leafletHeatAdapter.js` | `loadHeatmapFactory`: integração do plugin com a instância Leaflet e limpeza de recursos |
+| `components/map/geographicHeatmap.js` | `heatmapScale` / `attachGeographicHeatmap`: converte o raio de 1 km e atualiza a escala em `zoomend` |
+| `components/map/boundedHeatKernel.js` | `boundHeatKernel`: limita o bitmap auxiliar preservando a dimensão geográfica projetada |
 | `components/map/heatmapPinchZoom.js` | `attachHeatmapPinchZoom`: acompanha visualmente o canvas durante a pinça |
 | `components/dashboard/dashboardData.js` | `getDashboardSummary`, `userInitials` e `userRoleLabel`: distribuição, cálculos e identificação visual |
 
@@ -598,9 +622,10 @@ Não existe script `npm test` no manifesto atual. Os scripts disponíveis são `
 | `heatmap.test.js` | Métricas, filtros, contratos e normalização das intensidades |
 | `heatmapResource.test.js` | Cache, compartilhamento, concorrência, cancelamento e erros |
 | `heatmapPinchZoom.test.js` | Transformações de zoom/pan, encaixe final e limpeza de listeners |
+| `geographicHeatmap.test.js` | Raio em metros, latitudes/zooms, atualização e limpeza, textura limitada e preservação das intensidades |
 | `dashboard.test.js` | Indicadores derivados, distribuição, vazio e estados desconhecidos |
 
-Na execução local da refatoração visual: **build e lint aprovados; 99 testes aprovados, zero
+Na última verificação local do mapa de calor: **build e lint aprovados; 104 testes aprovados, zero
 falhas e zero ignorados**. A quantidade corresponde à suíte executada, não a uma meta fixa.
 Os testes usam dados e transportes controlados; não comprovam contagens atuais do banco,
 login real ou renderização física em dispositivos móveis.
@@ -611,6 +636,14 @@ independentes e as três métricas de calor. Larguras de 320, 360, 390, 768, 102
 1600 px foram verificadas sem rolagem horizontal e sem exceções JavaScript nos fluxos
 exercitados. As capturas usam dados controlados; não representam o banco DEMO ou Azure.
 O gesto de pinça e o teclado virtual ainda exigem conferência em celular real.
+
+Na correção do raio, uma verificação adicional com API de teste isolada e Leaflet real
+mediu aproximadamente 1.000 m na latitude de referência nos zooms 0, 8, 10, 12, 15 e 19,
+com bitmap auxiliar de no máximo 256 px por lado e um redesenho ao finalizar cada zoom.
+Incidents, Failures e Risk continuaram funcionando; alternar a camada não acumulou canvas
+ou listeners e navegar pelo mapa não disparou novos GETs. A pinça emulada no Chrome foi
+exercitada nos dois sentidos, com transformação do canvas durante o gesto e um redesenho
+final, sem exceções JavaScript. Isso não comprova desempenho ou fluidez em celular físico.
 
 Para verificação manual, conferir login/F5/logout, filtros e camadas, popups, as três métricas,
 zoom/arraste em desktop e pinça em celular. Os tiles devem mostrar cartografia real: uma

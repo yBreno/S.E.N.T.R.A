@@ -237,7 +237,8 @@ export default function HeatmapControls({
             <i />
           </div>
           <span>Menor → Maior</span>
-          <p>Cores representam a intensidade visual dos valores da API e sua concentração, com influência do zoom. Escala de referência: 0 a {data?.renderMax ?? 1}. Nenhum piso de intensidade é aplicado.</p>
+          <p>Cores representam a intensidade visual dos valores da API e sua concentração. Escala de referência: 0 a {data?.renderMax ?? 1}. Nenhum piso de intensidade é aplicado.</p>
+          <p>Raio de suavização visual: aproximadamente 1 km para a região dos dados, incluindo a borda suave. Não representa uma área de abrangência definida pela API.</p>
           {risk && (
             <p>Risk é um índice regional, não certeza de ocorrência nem necessariamente uma probabilidade estatística calibrada. Os pontos são referências regionais, não polígonos dos bairros.</p>
           )}

@@ -4,12 +4,10 @@ import { useMap } from 'react-leaflet';
 
 // Serviços e utilitários
 import { loadHeatmapFactory } from './leafletHeatAdapter.js';
+import { attachGeographicHeatmap } from './geographicHeatmap.js';
 
 const options = {
-  radius: 28,
-  blur: 20,
   minOpacity: 0,
-  maxZoom: 12,
   gradient: {
     0.25: '#3498db',
     0.5: '#2ecc71',
@@ -25,6 +23,7 @@ export default function HeatmapLayer({
   const map = useMap();
 
   const layerRef = useRef(null);
+  const geographicRef = useRef(null);
 
   const latest = useRef({
     points,
@@ -36,6 +35,7 @@ export default function HeatmapLayer({
       points,
       max
     };
+    geographicRef.current?.updatePoints(points);
     layerRef.current?.setOptions({
       max
     });
@@ -45,13 +45,17 @@ export default function HeatmapLayer({
   useEffect(() => {
     let cancelled = false;
     let layer;
+    let geographic;
     loadHeatmapFactory().then(createLayer => {
       if (cancelled) return;
       layer = createLayer(latest.current.points, {
         ...options,
         max: latest.current.max
-      }).addTo(map);
+      });
+      geographic = attachGeographicHeatmap(map, layer, latest.current.points);
+      layer.addTo(map);
       layerRef.current = layer;
+      geographicRef.current = geographic;
       onError('');
     }).catch(error => {
       if (!cancelled) onError(error.message);
@@ -59,8 +63,10 @@ export default function HeatmapLayer({
 
     return () => {
       cancelled = true;
+      geographic?.remove();
       layer?.remove();
       layerRef.current = null;
+      geographicRef.current = null;
     };
   }, [map, onError]);
 
