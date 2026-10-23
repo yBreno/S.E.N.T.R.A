@@ -1,0 +1,8 @@
+.agent-page .inventory-filter-grid { grid-template-columns: 2fr repeat(3, minmax(0, 1fr)); }
+.agent-page .inventory-badge.state-available { color: #65dc94; }
+.agent-page .inventory-badge.state-busy { color: #ffc262; }
+.agent-page .agent-vehicle-panel, .agent-page .agent-operation-form { border-top: 1px solid var(--border); margin-top: 24px; padding-top: 20px; }
+.agent-page .agent-vehicle-panel form, .agent-page .agent-operation-form { display: grid; gap: 14px; }
+.agent-page .agent-vehicle-panel form > button, .agent-page .agent-operation-form > button { justify-self: start; }
+@media (max-width: 1200px) { .agent-page .inventory-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .agent-page .inventory-filter-grid { grid-template-columns: minmax(0, 1fr); } }

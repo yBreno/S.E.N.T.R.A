@@ -1,0 +1,23 @@
+.operations-note { color: var(--text-muted); font-size: .78rem; line-height: 1.6; }
+.operations-alert-list, .operations-resource-list { padding: 0; list-style: none; }
+.operations-alert-list li, .operations-resource-list li { display: grid; gap: 8px; margin: 12px 0; padding: 14px; border: 1px solid var(--border); border-radius: 6px; overflow-wrap: anywhere; font-size: .82rem; }
+.operations-alert-list li p { margin: 0; }
+.operations-alert-list li time, .operations-resource-list li span { color: var(--text-muted); }
+.operations-alert-list .severity-Critical { border-left: 4px solid #ed646b; }
+.operations-alert-list .severity-High { border-left: 4px solid #f3ad31; }
+.operations-alert-list .severity-Medium { border-left: 4px solid #e1bd31; }
+.operations-alert-list .severity-Low { border-left: 4px solid #529ff0; }
+.operations-maintenance { margin-top: 16px; }
+.city-overview { margin-top: 20px; min-width: 0; }
+.operations-table-scroll { position: relative; max-width: 100%; overflow: auto; }
+.operations-table-scroll table { border-collapse: collapse; width: 100%; font-size: .8rem; }
+.operations-table-scroll th, .operations-table-scroll td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
+.operations-table-scroll th { white-space: nowrap; }
+.city-overview button, .operations-resource-list button, .operations-alert-list button { min-height: 38px; white-space: normal; overflow-wrap: anywhere; }
+.operations-sync { margin: 8px 0 18px; color: var(--text-muted); font-size: .8rem; }
+.recent-alerts > p, .operations-maintenance > p, .city-overview > p { margin: 12px 16px; }
+.operations-alert-list, .operations-resource-list { margin: 12px 16px; }
+.recent-alerts > button, .operations-maintenance > button { margin: 0 16px 16px; }
+.operations-maintenance > details { margin: 12px 16px; }
+.operations-alert-list { max-height: 520px; overflow: auto; }
+.operations-resource-list { max-height: 400px; overflow: auto; }
