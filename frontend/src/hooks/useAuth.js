@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // Serviços e utilitários
-import { canMonitor, login as authenticate } from "../services/auth.js";
+import { canMonitor, canReadEquipments, login as authenticate } from "../services/auth.js";
 import { invalidResponse, isAbortError } from "../services/http.js";
 import {
   normalizeSession,
@@ -97,6 +97,7 @@ export function useAuth() {
   return {
     session,
     canMonitor: canMonitor(session?.user),
+    canReadEquipments: canReadEquipments(session?.user),
     error,
     isSubmitting,
     isRestoring,

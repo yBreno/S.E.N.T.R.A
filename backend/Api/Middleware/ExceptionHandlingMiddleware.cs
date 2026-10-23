@@ -22,7 +22,11 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             context.Response.Clear();
             context.Response.StatusCode = problem.Status!.Value;
             context.Response.ContentType = "application/problem+json";
-            await context.Response.WriteAsJsonAsync(problem, (System.Text.Json.JsonSerializerOptions?)null, "application/problem+json");
+            // Preserva Errors de ValidationProblemDetails na serializacao do tipo derivado.
+            if (problem is ValidationProblemDetails validation)
+                await context.Response.WriteAsJsonAsync(validation, (System.Text.Json.JsonSerializerOptions?)null, "application/problem+json");
+            else
+                await context.Response.WriteAsJsonAsync(problem, (System.Text.Json.JsonSerializerOptions?)null, "application/problem+json");
         }
     }
 

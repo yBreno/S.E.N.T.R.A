@@ -34,6 +34,8 @@ public class EquipmentRepository(AppDbContext context) : Repository<Equipment>(c
         Context.Equipments.OfType<Vehicle>().AnyAsync(v => v.LicensePlate == plate && v.Id != ignoreId, ct);
     public Task<bool> AgentHasVehicleAsync(Guid agentId, Guid? ignoreVehicleId = null, CancellationToken ct = default) =>
         Context.Equipments.OfType<Vehicle>().AnyAsync(v => v.CurrentAgentId == agentId && v.Id != ignoreVehicleId, ct);
+    public Task<List<Vehicle>> GetVehiclesByAgentAsync(Guid agentId, CancellationToken ct = default) =>
+        Detailed.OfType<Vehicle>().Where(vehicle => vehicle.CurrentAgentId == agentId).ToListAsync(ct);
     public async Task<bool> HasDependentsAsync(Guid id, CancellationToken ct = default) =>
         await Context.MaintenanceRecords.AnyAsync(m => m.EquipmentId == id, ct) ||
         await Context.Alerts.AnyAsync(a => a.EquipmentId == id, ct) ||

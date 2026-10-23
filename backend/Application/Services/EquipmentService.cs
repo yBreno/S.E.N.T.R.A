@@ -25,9 +25,12 @@ public class EquipmentService(
     /// <summary>RD-01 (endereco com bairro + coordenadas validas), unicidades e regras do veiculo.</summary>
     private async Task CheckReferencesAsync(EquipmentWriteDto dto, Guid? ignoreId, bool isVehicle, CancellationToken ct)
     {
-        var address = await addresses.GetByIdAsync(dto.AddressId, ct) ?? throw new NotFoundException("Endereco nao encontrado.");
-        if (string.IsNullOrWhiteSpace(address.Neighborhood) || !Documents.IsValidLatitude(address.Latitude) || !Documents.IsValidLongitude(address.Longitude))
-            throw new BusinessRuleException("RD-01: o endereco deve ter bairro e latitude/longitude validos.");
+        if (dto.Address is null)
+        {
+            var address = await addresses.GetByIdAsync(dto.AddressId, ct) ?? throw new NotFoundException("Endereco nao encontrado.");
+            if (string.IsNullOrWhiteSpace(address.Neighborhood) || !Documents.IsValidLatitude(address.Latitude) || !Documents.IsValidLongitude(address.Longitude))
+                throw new BusinessRuleException("RD-01: o endereco deve ter bairro e latitude/longitude validos.");
+        }
         if (await repo.SerialNumberExistsAsync(dto.SerialNumber.Trim(), ignoreId, ct)) throw new ConflictException("Numero de serie ja cadastrado.");
 
         if (!isVehicle) return;
@@ -45,7 +48,12 @@ public class EquipmentService(
         e.SerialNumber = d.SerialNumber.Trim();
         e.Brand = d.Brand.Trim();
         e.Model = d.Model.Trim();
-        e.AddressId = d.AddressId;
+        e.Category = string.IsNullOrWhiteSpace(d.Category) ? null : d.Category.Trim();
+        if (d.MaintenanceNeed is { } need)
+        {
+            e.MaintenanceNeed = need;
+            e.NextMaintenanceDate = d.NextMaintenanceDate?.ToUniversalTime();
+        }
 
         switch (e)
         {
@@ -65,6 +73,24 @@ public class EquipmentService(
         }
     }
 
+    private async Task ApplyAddressAsync(Domain.Entities.Equipment e, EquipmentWriteDto dto, CancellationToken ct)
+    {
+        if (dto.Address is { } input)
+        {
+            // Nunca altera um endereco compartilhado. O unico SaveChanges do CRUD grava ambos.
+            var address = new Domain.Entities.Address();
+            address.Apply(input);
+            await addresses.AddAsync(address, ct);
+            e.Address = address;
+            e.AddressId = address.Id;
+        }
+        else
+        {
+            e.AddressId = dto.AddressId;
+            e.Address = (await addresses.GetByIdAsync(dto.AddressId, ct))!;
+        }
+    }
+
     protected override async Task<Domain.Entities.Equipment> BuildAsync(CreateEquipmentDto dto, CancellationToken ct)
     {
         Domain.Entities.Equipment e = dto.Type switch
@@ -81,13 +107,23 @@ public class EquipmentService(
         };
         await CheckReferencesAsync(dto, null, e is Vehicle, ct);
         Apply(e, dto); // status inicial: NotInstalled
+        await ApplyAddressAsync(e, dto, ct);
         return e;
     }
 
     protected override async Task ApplyUpdateAsync(Domain.Entities.Equipment e, UpdateEquipmentDto dto, CancellationToken ct)
     {
         await CheckReferencesAsync(dto, e.Id, e is Vehicle, ct);
+        if (dto.MaintenanceNeed.HasValue && (dto.MaintenanceNeed != e.MaintenanceNeed || dto.NextMaintenanceDate != e.NextMaintenanceDate)
+            && (await maintenances.GetByEquipmentAsync(e.Id, ct)).Any(m => m.Status != MaintenanceStatus.Closed))
+            throw new BusinessRuleException("O planejamento pertence a uma ordem de manutencao; consulte o modulo de manutencoes.");
+        if (dto.MaintenanceNeed.HasValue &&
+            ((e.Status == EquipmentStatus.Malfunctioning && dto.MaintenanceNeed != MaintenanceNeed.Immediate) ||
+             (e.Status == EquipmentStatus.UnderMaintenance &&
+              (dto.MaintenanceNeed != e.MaintenanceNeed || dto.NextMaintenanceDate != e.NextMaintenanceDate))))
+            throw new BusinessRuleException("O planejamento de manutencao nao pode ocultar uma falha ou alterar uma manutencao em andamento.");
         Apply(e, dto);
+        await ApplyAddressAsync(e, dto, ct);
     }
 
     protected override async Task EnsureCanDeleteAsync(Domain.Entities.Equipment e, CancellationToken ct)
@@ -106,7 +142,9 @@ public class EquipmentService(
             throw new ForbiddenException("Reativar um equipamento desativado exige perfil de gestor (Admin ou OperationManager).");
         if (to == EquipmentStatus.UnderMaintenance)
             throw new BusinessRuleException("Para colocar em manutencao, abra um registro de manutencao.");
-        if (from == EquipmentStatus.UnderMaintenance && to == EquipmentStatus.Operational
+        if (to != EquipmentStatus.Malfunctioning && (await maintenances.GetByEquipmentAsync(id, ct)).Any(m => m.Status == MaintenanceStatus.Scheduled))
+            throw new BusinessRuleException("Existe ordem agendada; inicie e conclua a intervencao antes de alterar a situacao.");
+        if (from == EquipmentStatus.UnderMaintenance
             && (await maintenances.GetByEquipmentAsync(id, ct)).Any(m => m.Status == MaintenanceStatus.Open))
             throw new BusinessRuleException("Existe manutencao aberta; feche-a para retornar o equipamento a operacao.");
 

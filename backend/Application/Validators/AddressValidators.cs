@@ -8,6 +8,9 @@ public abstract class AddressWriteValidator<T> : AbstractValidator<T> where T : 
     protected AddressWriteValidator()
     {
         RuleFor(x => x.Street).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.Number).MaximumLength(20);
+        RuleFor(x => x.Complement).MaximumLength(100);
+        RuleFor(x => x.LocationReference).MaximumLength(200);
         RuleFor(x => x.Neighborhood).NotEmpty().WithMessage("Bairro e obrigatorio (RD-01).").MaximumLength(120);
         RuleFor(x => x.City).NotEmpty().MaximumLength(120);
         RuleFor(x => x.State).IsInEnum();

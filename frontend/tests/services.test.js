@@ -308,8 +308,8 @@ test('consultas compartilham os registros de mapa sem duplicar GETs nem reter CP
   const results = await loadVerification('test-token', {
     client
   });
-  assert.equal(calls.length, 4);
-  assert.equal(new Set(calls).size, 4);
+  assert.equal(calls.length, 5);
+  assert.equal(new Set(calls).size, 5);
   const agents = results.find(result => result.id === 'agents');
   const equipments = results.find(result => result.id === 'equipments');
   assert.equal(agents.data, 1);
@@ -319,5 +319,5 @@ test('consultas compartilham os registros de mapa sem duplicar GETs nem reter CP
   assert.equal(agents.items[0].name, 'Teste');
   assert.ok(!JSON.stringify(results).includes('private'));
   assert.ok(!Object.hasOwn(agents.items[0], 'maskedCpf'));
-  assert.ok(!Object.hasOwn(equipments.items[0], 'attributes'));
+  assert.ok(!Object.hasOwn(equipments.items[0].attributes, 'private'));
 });

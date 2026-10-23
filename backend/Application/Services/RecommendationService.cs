@@ -13,7 +13,8 @@ using Microsoft.Extensions.Options;
 namespace Application.Services;
 
 public class RecommendationService(IRecommendationRepository repo, IAgentRepository agents, IEquipmentRepository equipments,
-    IUnitOfWork uow, IOptions<PredictiveSettings> options, TimeProvider clock) : IRecommendationService
+    IUnitOfWork uow, IOptions<PredictiveSettings> options, TimeProvider clock, IMaintenanceService maintenance,
+    IMaintenanceRecordRepository maintenanceRecords) : IRecommendationService
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
@@ -33,17 +34,16 @@ public class RecommendationService(IRecommendationRepository repo, IAgentReposit
     public async Task<RecommendationResponseDto> AcceptAsync(Guid id, CancellationToken ct = default)
     {
         var r = await LoadAsync(id, ct);
-        r.Accept();
-        // Manutencao preventiva aceita: agenda a manutencao do equipamento (ele continua Operational ate a falha real).
-        if (r.Type == RecommendationType.SendMaintenance && r.EquipmentId is { } eid)
+        if (r.Status == RecommendationStatus.Accepted) return r.ToResponse();
+        if (r.Status != RecommendationStatus.Pending) throw new BusinessRuleException("A recomendacao ja foi descartada.");
+        if (r.Type == RecommendationType.SendMaintenance)
         {
-            var e = await equipments.GetDetailedAsync(eid, ct);
-            if (e is not null && e.Status == EquipmentStatus.Operational)
-            {
-                e.MaintenanceNeed = MaintenanceNeed.Scheduled;
-                e.NextMaintenanceDate = clock.GetUtcNow().UtcDateTime.AddDays(options.Value.PreventiveScheduleDays);
-            }
+            if (r.EquipmentId is not { } eid)
+                throw new BusinessRuleException("Selecione um equipamento e agende sua manutencao; esta recomendacao se refere a um bairro.");
+            await maintenance.PrepareRecommendationAsync(eid, r.Id,
+                clock.GetUtcNow().UtcDateTime.AddDays(options.Value.PreventiveScheduleDays), r.Reason, ct);
         }
+        r.Accept();
         await uow.SaveChangesAsync(ct);
         return r.ToResponse();
     }
@@ -112,6 +112,7 @@ public class RecommendationService(IRecommendationRepository repo, IAgentReposit
     public async Task<RecommendationResponseDto?> CreateForAnomalyAsync(AnomalyDto a, CancellationToken ct = default)
     {
         var type = a.Kind == "RepeatedFailure" ? RecommendationType.SendMaintenance : RecommendationType.DeployAgent;
+        if (type == RecommendationType.SendMaintenance && a.EquipmentId is { } id && await HasMaintenanceAsync(id, ct)) return null;
         if (await repo.ExistsPendingAsync(type, a.Neighborhood, a.EquipmentId, ct)) return null;
 
         object extra = new { };
@@ -140,12 +141,16 @@ public class RecommendationService(IRecommendationRepository repo, IAgentReposit
 
     public async Task<RecommendationResponseDto?> CreateForPredictionAsync(FailurePredictionDto p, CancellationToken ct = default)
     {
+        if (await HasMaintenanceAsync(p.EquipmentId, ct)) return null;
         if (await repo.ExistsPendingAsync(RecommendationType.SendMaintenance, p.Neighborhood, p.EquipmentId, ct)) return null;
         var rec = Build(RecommendationType.SendMaintenance, p.Neighborhood,
             $"Manutencao preventiva em {p.SerialNumber}: {p.Ratio:P0} do MTBF ({p.MtbfDays:0.#} dias).", null, p.EquipmentId,
             new { trigger = "MtbfPrediction", rule = $"dias desde a ultima restauracao / MTBF >= {options.Value.MtbfWarningRatio:P0}", prediction = p });
         return (await SaveAsync([rec], ct)).FirstOrDefault();
     }
+
+    private async Task<bool> HasMaintenanceAsync(Guid equipmentId, CancellationToken ct) =>
+        (await maintenanceRecords.GetByEquipmentAsync(equipmentId, ct)).Any(m => m.Status != MaintenanceStatus.Closed);
 
     private async Task<IReadOnlyList<RecommendationResponseDto>> SaveAsync(List<Recommendation> list, CancellationToken ct)
     {

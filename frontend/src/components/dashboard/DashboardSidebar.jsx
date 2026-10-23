@@ -7,12 +7,13 @@ import DashboardIcon from './DashboardIcon.jsx';
 
 // Serviços e utilitários
 import { userInitials, userRoleLabel } from './dashboardData.js';
+import { canMonitor, canMaintain } from '../../services/auth.js';
 
 const groups = [
   { label: 'Visão geral', items: [{ label: 'Dashboard', icon: 'dashboard', target: 'dashboard' }] },
   { label: 'Gestão operacional', items: [
-    { label: 'Equipamentos', icon: 'equipment' }, { label: 'Agentes', icon: 'agents' },
-    { label: 'Manutenções', icon: 'maintenance' }
+    { label: 'Equipamentos', icon: 'equipment', target: 'equipamentos' }, { label: 'Agentes', icon: 'agents', target: 'agentes' },
+    { label: 'Manutenções', icon: 'maintenance', target: 'manutencoes' }
   ] },
   { label: 'Monitoramento', items: [
     { label: 'Mapa operacional', icon: 'map', target: 'mapa-operacional' },
@@ -27,7 +28,7 @@ const groups = [
   ] }
 ];
 
-export default function DashboardSidebar({ user, active, collapsed, mobileOpen, onCollapse, onClose, onNavigate, onLogout }) {
+export default function DashboardSidebar({ user, active, collapsed, mobileOpen, onCollapse, onClose, onNavigate, onLogout, busy = false }) {
   const sidebar = useRef(null);
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function DashboardSidebar({ user, active, collapsed, mobileOpen, 
       <aside ref={sidebar} id="dashboard-navigation" className={`dashboard-sidebar ${mobileOpen ? 'is-open' : ''}`}
         aria-label="Navegação principal" onKeyDown={handleKey}>
         <div className="sidebar-brand">
-          <a href="#dashboard" onClick={() => onNavigate('dashboard')} aria-label="S.E.N.T.R.A. — Dashboard">
+          <a href={canMonitor(user) ? '#dashboard' : '#equipamentos'} onClick={event => { if (busy) event.preventDefault(); else onNavigate(canMonitor(user) ? 'dashboard' : 'equipamentos'); }} aria-label="S.E.N.T.R.A. — Início">
             <Brand />
           </a>
           <button className="sidebar-mobile-close icon-button" aria-label="Fechar menu" onClick={onClose}>
@@ -67,10 +68,10 @@ export default function DashboardSidebar({ user, active, collapsed, mobileOpen, 
           {groups.map(group => (
             <section className="sidebar-group" key={group.label}>
               <h2>{group.label}</h2>
-              {group.items.map(item => item.target ? (
+              {group.items.filter(item => item.target === 'manutencoes' ? canMaintain(user) : !item.target || item.target === 'equipamentos' || canMonitor(user)).map(item => item.target ? (
                 <a key={item.label} className={`sidebar-link ${active === item.target ? 'active' : ''}`}
                   href={`#${item.target}`} aria-current={active === item.target ? 'location' : undefined}
-                  title={item.label} onClick={() => onNavigate(item.target)}>
+                  aria-disabled={busy} title={item.label} onClick={event => { if (busy) event.preventDefault(); else onNavigate(item.target); }}>
                   <DashboardIcon name={item.icon} /><span className="sidebar-label">{item.label}</span>
                 </a>
               ) : (

@@ -150,6 +150,15 @@
     border-radius: 5px;
 }
 
+.operational-marker.attention-immediate, .operational-marker.attention-upcoming { box-shadow: 0 0 0 3px #f5cb00; }
+.operational-marker.attention-immediate::after, .operational-marker.attention-upcoming::after { content: '!'; position: absolute; right: -7px; top: -9px; width: 16px; height: 16px; background: #f5cb00; color: #111; border: 1px solid #111; border-radius: 50%; font: bold 12px/15px sans-serif; text-align: center; }
+.operational-marker.attention-upcoming::after { content: '◷'; }
+.marker-type-legend { padding: 10px 18px; font-size: .8rem; color: var(--text-muted); }
+.marker-type-legend ul { display: flex; flex-wrap: wrap; gap: 10px 20px; padding: 0; list-style: none; }
+.marker-type-legend li { display: flex; align-items: center; gap: 6px; }
+.marker-type-legend svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.operational-detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
 .operational-marker.marker-agent {
     border-radius: 50%;
 }

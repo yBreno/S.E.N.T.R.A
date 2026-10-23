@@ -1,6 +1,7 @@
 // Serviços e utilitários
 import { agentStates, equipmentStates } from './markerData.js';
 import { equipmentTypes, UNKNOWN_FILTER_VALUE } from './operationalFilters.js';
+import { agentRoles } from '../agents/agentModel.js';
 
 // Estilos
 import './OperationalFilters.css';
@@ -84,6 +85,7 @@ export default function OperationalFilters({
           ))}
           <option value={UNKNOWN_FILTER_VALUE}>Disponibilidade não informada / desconhecida</option>
         </select></label>
+        <label htmlFor="agent-role">Categoria do agente<select id="agent-role" value={filters.agentRole} onChange={update('agentRole')}><option value="">Todas as categorias</option>{Object.entries(agentRoles).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       </div>
     </section>
   );

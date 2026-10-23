@@ -41,7 +41,7 @@ export function userInitials(name) {
 }
 
 export function userRoleLabel(role) {
-  const labels = { Admin: 'Administrador', OperationManager: 'Gestor de operações', CentralOperator: 'Operador da central' };
+  const labels = { Admin: 'Administrador', OperationManager: 'Gestor de operações', CentralOperator: 'Operador da central', MaintenanceTechnician: 'Técnico de manutenção' };
 
   return Object.hasOwn(labels, role) ? labels[role] : role;
 }

@@ -13,7 +13,7 @@ import { createHeatmapResource } from '../services/heatmapResource.js';
 export function useHeatmap({
   token,
   onLogout,
-  verification
+  verification, active = true
 }) {
   const [filters, setFilters] = useState(createHeatmapFilters);
   const [enabled, setEnabled] = useState(false);
@@ -38,9 +38,12 @@ export function useHeatmap({
     resource.setShared({
       result: sharedResult,
       loading: verification.loading,
-      attemptedAt: verification.updatedAt?.toISOString()
+      attemptedAt: verification.attemptedAt?.toISOString()
     });
-  }, [resource, sharedResult, verification.loading, verification.updatedAt]);
+  }, [resource, sharedResult, verification.loading, verification.attemptedAt]);
+
+  useEffect(() => { if (active && enabled && verification.attemptedAt) void resource.poll(); }, [resource, active, enabled, verification.attemptedAt]);
+  useEffect(() => { if (!active) resource.cancel(false); }, [resource, active]);
 
   useEffect(() => () => resource.cancel(false), [resource]);
 

@@ -9,7 +9,7 @@ namespace Api.Controllers;
 [ApiController]
 [Route("api/agents")]
 [Authorize]
-public class AgentsController(IAgentService service, IAgentLocationService locationService) : ControllerBase
+public class AgentsController(IAgentService service, IAgentLocationService locationService, IAgentVehicleService vehicleService) : ControllerBase
 {
     /// <summary>Localizacao de agentes (LGPD): apenas Admin, OperationManager e CentralOperator.</summary>
     [HttpGet]
@@ -60,4 +60,14 @@ public class AgentsController(IAgentService service, IAgentLocationService locat
         await service.DeleteAsync(id, ct);
         return NoContent();
     }
+
+    [HttpGet("{id:guid}/vehicle")]
+    [Authorize(Roles = Roles.Monitoring)]
+    public async Task<ActionResult<AgentVehicleDto>> GetVehicle(Guid id, CancellationToken ct) =>
+        Ok(await vehicleService.GetAsync(id, ct));
+
+    [HttpPut("{id:guid}/vehicle")]
+    [Authorize(Roles = Roles.Managers)]
+    public async Task<ActionResult<AgentVehicleDto>> AssignVehicle(Guid id, [FromBody] AssignAgentVehicleDto dto, CancellationToken ct) =>
+        Ok(await vehicleService.AssignAsync(id, dto, ct));
 }

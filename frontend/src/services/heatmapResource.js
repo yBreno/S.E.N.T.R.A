@@ -172,6 +172,7 @@ export function createHeatmapResource({
     setQuery,
     setShared,
     request,
+    poll: () => query?.key !== defaultHeatmapQuery.key && (entry()?.data || entry()?.error) ? request({ force: true }) : Promise.resolve(),
     cancel
   };
 }

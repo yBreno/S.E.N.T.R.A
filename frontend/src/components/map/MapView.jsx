@@ -23,6 +23,10 @@ import { useMarkerInspection } from '../../hooks/useMarkerInspection.js';
 
 // Serviços e utilitários
 import { createEmptyFilters } from './operationalFilters.js';
+import { OperationalNavigation } from './operationalNavigation.js';
+import { markerSymbols } from './markerPresentation.js';
+import { MAINTENANCE_LOOKAHEAD_DAYS } from '../../services/operations.js';
+import { equipmentTypes, getNeighborhoodOptions } from './operationalFilters.js';
 
 const saoPauloCenter = [-23.5505, -46.6333];
 
@@ -50,12 +54,12 @@ function MapResizeObserver() {
 
 export default function MapView({
   verification,
-  heatmap
+  heatmap, filters, onFiltersChange, navigation
 }) {
   const [heatmapError, setHeatmapError] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(() =>
     typeof window === 'undefined' || window.matchMedia('(min-width: 761px)').matches);
-  const [filters, setFilters] = useState(createEmptyFilters);
+  const setFilters = onFiltersChange;
 
   const layers = useOperationalMarkers(verification, filters);
 
@@ -92,7 +96,7 @@ export default function MapView({
   }), []);
 
   return (
-    <div className={`map-view ${heatmap.enabled ? 'heatmap-is-enabled' : ''}`}>
+    <OperationalNavigation.Provider value={navigation}><div className={`map-view ${heatmap.enabled ? 'heatmap-is-enabled' : ''}`}>
       <header className="map-panel-heading">
         <div><h2 id="map-heading">Mapa operacional</h2><p>Recursos urbanos monitorados</p></div>
         <div className="map-view-switch" role="group" aria-label="Visualização do mapa">
@@ -110,7 +114,7 @@ export default function MapView({
         filters={filters}
         onChange={setFilters}
         onClear={() => setFilters(createEmptyFilters())}
-        neighborhoodOptions={layers.equipments.neighborhoodOptions}
+        neighborhoodOptions={getNeighborhoodOptions(verification.results.filter(item => ['equipments', 'agents'].includes(item.id)).flatMap(item => item.items || []))}
         />
       </details>
       <MapLayersControl
@@ -125,6 +129,7 @@ export default function MapView({
       />
       <HeatmapControls heatmap={heatmap} layerError={heatmapError} />
       <p className="map-instructions" id="map-instructions">Arraste para navegar. Use os controles + e − para aproximar ou afastar.</p>
+      <details className="marker-type-legend"><summary>Tipos e manutenção no mapa</summary><ul>{Object.entries(equipmentTypes).map(([type, label]) => <li key={type}><span aria-hidden="true" dangerouslySetInnerHTML={{ __html: `<svg viewBox="0 0 24 24">${markerSymbols[type]}</svg>` }} />{label}</li>)}</ul><p>Equipamentos: quadrados. Agentes: círculos com símbolo da categoria. A cor indica a situação. ! indica manutenção imediata; ◷ indica previsão vencida ou nos próximos {MAINTENANCE_LOOKAHEAD_DAYS} dias.</p></details>
       <div
         className="map-region"
         role="region"
@@ -189,6 +194,6 @@ export default function MapView({
         loading={verification.loading}
         onClose={() => select(null)}
       />
-    </div>
+    </div></OperationalNavigation.Provider>
   );
 }

@@ -5,6 +5,21 @@ const monitoringRoles = new Set(['Admin', 'OperationManager', 'CentralOperator']
 export function canMonitor(user) {
   return monitoringRoles.has(user?.role);
 }
+export function canReadEquipments(user) {
+  return canMonitor(user) || user?.role === 'MaintenanceTechnician';
+}
+export function canManageEquipments(user) {
+  return user?.role === 'Admin' || user?.role === 'OperationManager';
+}
+export function canReadAgents(user) {
+  return canMonitor(user);
+}
+export function canManageAgents(user) {
+  return canManageEquipments(user);
+}
+export function canMaintain(user) {
+  return canManageEquipments(user) || user?.role === 'MaintenanceTechnician';
+}
 export async function login(credentials, {
   signal,
   client = http

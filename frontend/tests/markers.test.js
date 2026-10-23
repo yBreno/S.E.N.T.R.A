@@ -15,13 +15,14 @@ import {
   formatLocationUpdatedAt
 } from '../src/components/map/markerData.js';
 
-test('TrafficAgent recebe tradução somente na apresentação, com fallback seguro', () => {
+test('categorias de agentes recebem tradução somente na apresentação, com fallback seguro', () => {
   const record = {
     role: 'TrafficAgent'
   };
   assert.equal(agentRoleLabel(record.role), 'Agente de trânsito');
   assert.equal(record.role, 'TrafficAgent');
-  assert.equal(agentRoleLabel('MunicipalGuard'), 'MunicipalGuard');
+  assert.equal(agentRoleLabel('MunicipalGuard'), 'Guarda municipal');
+  assert.equal(agentRoleLabel('PoliceOfficer'), 'Policial');
   assert.equal(agentRoleLabel(null), 'Não informado');
 });
 test('timestamp UTC do contrato é exibido em São Paulo sem deslocamento duplicado', () => {

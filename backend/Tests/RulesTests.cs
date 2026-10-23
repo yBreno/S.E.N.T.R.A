@@ -29,6 +29,7 @@ public class RegrasDeTransicaoDeStatusDeEquipamentoTests
     [InlineData(EquipmentStatus.NotInstalled, EquipmentStatus.Deactivated)]
     [InlineData(EquipmentStatus.NotInstalled, EquipmentStatus.Stolen)]
     [InlineData(EquipmentStatus.Operational, EquipmentStatus.Malfunctioning)]
+    [InlineData(EquipmentStatus.Operational, EquipmentStatus.UnderMaintenance)]
     [InlineData(EquipmentStatus.Operational, EquipmentStatus.Deactivated)]
     [InlineData(EquipmentStatus.Operational, EquipmentStatus.Stolen)]
     [InlineData(EquipmentStatus.Malfunctioning, EquipmentStatus.UnderMaintenance)]
@@ -46,7 +47,6 @@ public class RegrasDeTransicaoDeStatusDeEquipamentoTests
 
     [Theory]
     [InlineData(EquipmentStatus.NotInstalled, EquipmentStatus.Malfunctioning)]
-    [InlineData(EquipmentStatus.Operational, EquipmentStatus.UnderMaintenance)]
     [InlineData(EquipmentStatus.Malfunctioning, EquipmentStatus.Operational)]
     [InlineData(EquipmentStatus.UnderMaintenance, EquipmentStatus.Stolen)]
     [InlineData(EquipmentStatus.Deactivated, EquipmentStatus.Stolen)]
@@ -157,7 +157,7 @@ public abstract class CenarioDeTestesDeServico : IDisposable
         new AlertRepository(Banco),
         Banco,
         new OpenMaintenanceDtoValidator(),
-        new CloseMaintenanceDtoValidator());
+        new CloseMaintenanceDtoValidator(), new ScheduleMaintenanceDtoValidator());
 
     protected AuthService Autenticacao => new(
         new UserRepository(Banco),
@@ -390,9 +390,9 @@ public class FluxoDeStatusManutencaoEAlertasDeEquipamentoTests : CenarioDeTestes
         await Assert.ThrowsAsync<BusinessRuleException>(() =>
             Manutencoes.CloseAsync(
                 manutencaoAberta.Id,
-                new CloseMaintenanceDto { EndDate = manutencaoAberta.InitDate.AddDays(-1) }));
+                new CloseMaintenanceDto { EndDate = manutencaoAberta.InitDate!.Value.AddDays(-1) }));
 
-        var dataEncerramento = DateTime.UtcNow.AddHours(1);
+        var dataEncerramento = DateTime.UtcNow;
         var manutencaoEncerrada = await Manutencoes.CloseAsync(
             manutencaoAberta.Id,
             new CloseMaintenanceDto { EndDate = dataEncerramento, Cost = 150m });

@@ -1,6 +1,7 @@
 // Serviços e utilitários
 import { apiConfig } from '../config/api.js';
 import { http, isAbortError } from './http.js';
+import { canMonitor } from './auth.js';
 
 const storageKey = 'sentra.session.v1';
 
@@ -85,7 +86,7 @@ export async function restoreSession({ store = sessionStore, client = http, sign
   if (!cached) return null;
 
   try {
-    await client.getJson('/api/dashboard', { token: cached.token, signal });
+    await client.getJson(canMonitor(cached.user) ? '/api/dashboard' : '/api/equipments', { token: cached.token, signal });
     signal?.throwIfAborted();
     const current = store.read();
 

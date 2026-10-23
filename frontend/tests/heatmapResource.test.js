@@ -43,6 +43,16 @@ const completeShared = store => store.setShared({
   attemptedAt: '2026-01-01T00:00:00Z'
 });
 
+test('polling do calor não duplica consulta padrão nem aplica filtro ainda não consultado', async () => {
+  let calls = 0;
+  const store = resource(async () => { calls++; return { points: [] }; });
+  completeShared(store); await store.poll(); assert.equal(calls, 0);
+  store.setQuery(query('Failures')); await store.poll(); assert.equal(calls, 0);
+  await store.request(); assert.equal(calls, 1);
+  await store.poll(); assert.equal(calls, 2);
+  store.cancel();
+});
+
 test('reutiliza a resposta compartilhada e evita GET equivalente até atualização explícita', async () => {
   let calls = 0;
   const store = resource(async () => {

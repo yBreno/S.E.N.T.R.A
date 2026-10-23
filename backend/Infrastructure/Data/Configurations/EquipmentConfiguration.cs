@@ -14,6 +14,7 @@ public class EquipmentConfiguration : IEntityTypeConfiguration<Equipment>
         b.Property(x => x.SerialNumber).IsRequired().HasMaxLength(80);
         b.Property(x => x.Brand).IsRequired().HasMaxLength(80);
         b.Property(x => x.Model).IsRequired().HasMaxLength(80);
+        b.Property(x => x.Category).HasMaxLength(80);
 
         b.HasDiscriminator(x => x.Type)
             .HasValue<Camera>(EquipmentType.Camera)

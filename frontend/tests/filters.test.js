@@ -99,14 +99,14 @@ test('filtros vazios mantêm todos os marcadores válidos e contadores independe
     visible: 4
   });
 });
-test('tipo, status e bairro se combinam por interseção somente em equipamentos', () => {
+test('tipo e status filtram equipamentos; bairro filtra também agentes', () => {
   const layers = build({
     equipmentType: 'Camera',
     equipmentStatus: 'Operational',
     neighborhood: neighborhoodFilterValue('MOOCA')
   });
   assert.deepEqual(layers.equipments.filtered.map(item => item.id), ['3']);
-  assert.equal(layers.agents.filtered.length, 4);
+  assert.equal(layers.agents.filtered.length, 0);
   assert.deepEqual(getLayerCounts(layers.equipments, true), {
     received: 6,
     valid: 4,
@@ -137,7 +137,8 @@ test('limpar filtros restaura todos os registros válidos sem alterar camadas', 
     equipmentType: '',
     equipmentStatus: '',
     neighborhood: '',
-    agentAvailability: ''
+    agentAvailability: '',
+    agentRole: ''
   });
   assert.equal(build(createEmptyFilters()).equipments.filtered.length, 4);
   assert.equal(build(createEmptyFilters()).agents.filtered.length, 4);
@@ -150,7 +151,7 @@ test('valores desconhecidos podem ser filtrados sem quebrar a renderização', (
     agentAvailability: UNKNOWN_FILTER_VALUE
   });
   assert.deepEqual(layers.equipments.filtered.map(item => item.id), ['5']);
-  assert.deepEqual(layers.agents.filtered.map(item => item.id), ['d']);
+  assert.deepEqual(layers.agents.filtered.map(item => item.id), []);
 });
 test('bairros normalizam espaços, caixa e acentos sem colidir com desconhecidos', () => {
   assert.equal(neighborhoodFilterValue(' São   José '), neighborhoodFilterValue('sao jose'));

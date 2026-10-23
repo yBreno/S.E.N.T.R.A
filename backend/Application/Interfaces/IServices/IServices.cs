@@ -26,6 +26,10 @@ public interface IEquipmentService : IService<EquipmentResponseDto, CreateEquipm
 
 public interface IMaintenanceService
 {
+    Task<MaintenanceResponseDto> ScheduleAsync(ScheduleMaintenanceDto dto, CancellationToken ct = default);
+    Task<MaintenanceResponseDto> StartAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Prepara ordem e metadados sem salvar; a aceitacao da recomendacao salva a mesma unidade de trabalho.</summary>
+    Task PrepareRecommendationAsync(Guid equipmentId, Guid recommendationId, DateTime date, string description, CancellationToken ct = default);
     Task<MaintenanceResponseDto> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<MaintenanceResponseDto>> GetAllAsync(MaintenanceStatus? status, Guid? equipmentId, CancellationToken ct = default);
     Task<MaintenanceResponseDto> OpenAsync(OpenMaintenanceDto dto, CancellationToken ct = default);
@@ -41,7 +45,7 @@ public interface IAlertService
 
 public interface IDashboardService
 {
-    Task<DashboardDto> GetAsync(CancellationToken ct = default);
+    Task<DashboardDto> GetAsync(CancellationToken ct = default, bool includePredictive = true);
 }
 
 public interface IAuthService

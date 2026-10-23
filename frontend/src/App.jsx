@@ -14,11 +14,11 @@ import './App.css';
 
 function App() {
   const auth = useAuth();
-  const Layout = auth.session && auth.canMonitor ? 'div' : AuthLayout;
+  const Layout = auth.session && auth.canReadEquipments ? 'div' : AuthLayout;
 
   return (
     <Layout
-      className={auth.session && auth.canMonitor ? 'app-dashboard' : 'app-shell'}
+      className={auth.session && auth.canReadEquipments ? 'app-dashboard' : 'app-shell'}
     >
       {apiConfig.error && (
         <p className="message error" role="alert">
@@ -38,16 +38,16 @@ function App() {
               configurationError={apiConfig.error}
             />
           )
-          : !auth.canMonitor
+          : !auth.canReadEquipments
             ? (
               <section className="panel">
                 <h2>Acesso ao monitoramento indisponível</h2>
-                <p role="alert">Seu papel ({auth.session.user.role}) não permite acessar esta tela. É necessário Admin, OperationManager ou CentralOperator.</p>
+                <p role="alert">Seu papel ({auth.session.user.role}) não permite acessar o inventário. É necessário um perfil da equipe interna.</p>
                 <button onClick={() => auth.logout()}>Voltar ao login</button>
               </section>
             )
             : (
-              <DashboardPage session={auth.session} onLogout={auth.logout} />
+              <DashboardPage key={auth.session.token} session={auth.session} onLogout={auth.logout} />
             )}
     </Layout>
   );

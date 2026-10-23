@@ -7,7 +7,7 @@ public static class EquipmentStatusRules
     private static readonly Dictionary<EquipmentStatus, EquipmentStatus[]> Allowed = new()
     {
         [EquipmentStatus.NotInstalled] = [EquipmentStatus.Operational, EquipmentStatus.Deactivated, EquipmentStatus.Stolen],
-        [EquipmentStatus.Operational] = [EquipmentStatus.Malfunctioning, EquipmentStatus.Deactivated, EquipmentStatus.Stolen],
+        [EquipmentStatus.Operational] = [EquipmentStatus.Malfunctioning, EquipmentStatus.UnderMaintenance, EquipmentStatus.Deactivated, EquipmentStatus.Stolen],
         [EquipmentStatus.Malfunctioning] = [EquipmentStatus.UnderMaintenance, EquipmentStatus.Deactivated, EquipmentStatus.Stolen],
         [EquipmentStatus.UnderMaintenance] = [EquipmentStatus.Operational, EquipmentStatus.Deactivated],
         [EquipmentStatus.Deactivated] = [EquipmentStatus.Operational],

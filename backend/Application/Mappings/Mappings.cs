@@ -53,14 +53,19 @@ public static class Mappings
     public static UserResponseDto ToResponse(this User u) => new(u.Id, u.Name, u.Email, Documents.MaskCpf(u.Cpf), u.Role);
 
     public static AlertResponseDto ToResponse(this Domain.Entities.Alert a) =>
-        new(a.Id, a.EquipmentId, a.Type, a.Severity, a.Message, a.Status, a.CreatedAt, a.ResolvedAt);
+        new(a.Id, a.EquipmentId, a.Type, a.Severity, a.Message, a.Status, Utc(a.CreatedAt)!.Value, Utc(a.ResolvedAt));
 
-    public static MaintenanceResponseDto ToResponse(this MaintenanceRecord m) => new(m.Id, m.EquipmentId, m.AgentId, m.InitDate,
-        m.EndDate, m.Description, m.Cost, m.Urgency, m.Status, m.PeriodicityDays);
+    public static MaintenanceResponseDto ToResponse(this MaintenanceRecord m) => new(m.Id, m.EquipmentId, m.AgentId, Utc(m.InitDate),
+        Utc(m.EndDate), m.Description, m.Cost, m.Urgency, m.Status, m.PeriodicityDays, m.Kind, Utc(m.ScheduledDate), m.RecommendationId);
+
+    private static DateTime? Utc(DateTime? value) => value is { } date
+        ? date.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(date, DateTimeKind.Utc) : date.ToUniversalTime() : null;
 
     public static EquipmentResponseDto ToResponse(this Domain.Entities.Equipment e) => new(e.Id, e.Type, e.SerialNumber, e.Brand, e.Model,
-        e.Status, e.MaintenanceNeed, e.NextMaintenanceDate, e.AddressId,
-        e.Address?.Neighborhood, e.Address?.Latitude, e.Address?.Longitude, Attributes(e));
+        e.Status, e.MaintenanceNeed, e.NextMaintenanceDate is { } nextMaintenance
+            ? nextMaintenance.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(nextMaintenance, DateTimeKind.Utc) : nextMaintenance.ToUniversalTime()
+            : null, e.AddressId,
+        e.Address?.Neighborhood, e.Address?.Latitude, e.Address?.Longitude, Attributes(e), e.Category, e.Address?.ToResponse());
 
     private static Dictionary<string, object?> VehicleAttrs(Vehicle v) => new()
     {

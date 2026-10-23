@@ -17,7 +17,8 @@ export function createEmptyFilters() {
     equipmentType: '',
     equipmentStatus: '',
     neighborhood: '',
-    agentAvailability: ''
+    agentAvailability: '',
+    agentRole: ''
   };
 }
 export function enumFilterValue(value, knownValues) {
@@ -51,7 +52,7 @@ export function filterEquipmentMarkers(markers, filters) {
   return markers.filter(record => (!filters.equipmentType || enumFilterValue(record.type, equipmentTypes) === filters.equipmentType) && (!filters.equipmentStatus || enumFilterValue(record.status, equipmentStates) === filters.equipmentStatus) && (!filters.neighborhood || neighborhoodFilterValue(record.neighborhood) === filters.neighborhood));
 }
 export function filterAgentMarkers(markers, filters) {
-  return markers.filter(record => !filters.agentAvailability || enumFilterValue(record.availability, agentStates) === filters.agentAvailability);
+  return markers.filter(record => (!filters.agentAvailability || enumFilterValue(record.availability, agentStates) === filters.agentAvailability) && (!filters.agentRole || record.role === filters.agentRole) && (!filters.neighborhood || neighborhoodFilterValue(record.neighborhood) === filters.neighborhood));
 }
 export function buildOperationalLayers(results, filters) {
   function layer(id, applyFilters) {

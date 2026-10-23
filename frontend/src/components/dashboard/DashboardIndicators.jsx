@@ -20,7 +20,7 @@ export default function DashboardIndicators({ loading, result, error }) {
   ];
 
   return (
-    <section className="dashboard-indicators" aria-label="Indicadores operacionais" aria-busy={loading}>
+    <section className="dashboard-indicators" aria-label="Indicadores operacionais da cidade inteira" aria-busy={loading}>
       <dl className="indicator-list">
         {indicators.map(indicator => (
           <div key={indicator.label} className={`indicator-card indicator-${indicator.tone}`}>

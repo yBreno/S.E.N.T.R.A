@@ -12,6 +12,7 @@ public interface IEquipmentRepository : IRepository<Equipment>
     Task<bool> SerialNumberExistsAsync(string serialNumber, Guid? ignoreId = null, CancellationToken ct = default);
     Task<bool> LicensePlateExistsAsync(string plate, Guid? ignoreId = null, CancellationToken ct = default);
     Task<bool> AgentHasVehicleAsync(Guid agentId, Guid? ignoreVehicleId = null, CancellationToken ct = default);
+    Task<List<Vehicle>> GetVehiclesByAgentAsync(Guid agentId, CancellationToken ct = default);
     Task<bool> HasDependentsAsync(Guid id, CancellationToken ct = default);
     Task<int> CountAsync(CancellationToken ct = default);
     Task<Dictionary<EquipmentStatus, int>> CountByStatusAsync(CancellationToken ct = default);

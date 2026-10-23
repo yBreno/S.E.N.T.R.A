@@ -1,6 +1,8 @@
 // Serviços e utilitários
 import { http, invalidResponse } from './http.js';
 import { normalizeHeatmapResponse } from './heatmap.js';
+import { normalizeAlerts } from './operations.js';
+import { specificFields, addressFields } from '../components/equipment/equipmentModel.js';
 
 function dashboardSummary(data) {
   if (!data || !Number.isFinite(data.totalEquipments) || !Number.isFinite(data.activeAgents) || !Number.isFinite(data.availabilityRatePercent) || !data.byStatus || Array.isArray(data.byStatus) || typeof data.byStatus !== 'object' || !Object.values(data.byStatus).every(Number.isFinite)) {
@@ -20,12 +22,19 @@ function selectFields(records, fields) {
   // Mantém apenas os dados operacionais necessários; CPF e atributos extras não são retidos.
   return records.map(record => Object.fromEntries(fields.map(field => [field, record?.[field]])));
 }
+function equipmentDetails(records) {
+  return selectFields(records, ['id', 'type', 'brand', 'model', 'serialNumber', 'status', 'category', 'maintenanceNeed', 'nextMaintenanceDate', 'neighborhood', 'latitude', 'longitude']).map((record, index) => ({
+    ...record,
+    attributes: selectFields([records[index]?.attributes], (specificFields[record.type] || []).map(field => field.name))[0],
+    address: records[index]?.address ? selectFields([records[index].address], addressFields.map(field => field.name))[0] : null
+  }));
+}
 
 export const verificationEndpoints = [
   {
     id: 'dashboard',
     label: 'Dashboard',
-    path: '/api/dashboard',
+    path: '/api/dashboard?includePredictive=false',
     summarize: dashboardSummary
   },
   {
@@ -33,17 +42,7 @@ export const verificationEndpoints = [
     label: 'Equipamentos',
     path: '/api/equipments',
     summarize: arrayCount,
-    selectItems: records => selectFields(records, [
-      'id',
-      'type',
-      'brand',
-      'model',
-      'serialNumber',
-      'status',
-      'neighborhood',
-      'latitude',
-      'longitude'
-    ])
+    selectItems: equipmentDetails
   },
   {
     id: 'agents',
@@ -70,9 +69,13 @@ export const verificationEndpoints = [
 ];
 export async function loadVerification(token, {
   signal,
+  includeMaintenance = false,
   client = http
 } = {}) {
-  const responses = await Promise.allSettled(verificationEndpoints.map(async endpoint => {
+  const endpoints = [...verificationEndpoints,
+    { id: 'alerts', label: 'Alertas abertos', path: '/api/alerts?status=Open', summarize: data => normalizeAlerts(data).length, selectItems: normalizeAlerts },
+    ...(includeMaintenance ? ['Scheduled', 'Open'].map(status => ({ id: `maintenance${status}`, label: `Manutenções ${status}`, path: `/api/maintenances?status=${status}`, summarize: arrayCount, selectItems: records => selectFields(records, ['id', 'equipmentId', 'status', 'kind', 'scheduledDate', 'initDate']) })) : [])];
+  const responses = await Promise.allSettled(endpoints.map(async endpoint => {
     const data = await client.getJson(endpoint.path, {
       token,
       signal
@@ -97,9 +100,9 @@ export async function loadVerification(token, {
   signal?.throwIfAborted();
 
   return responses.map((response, index) => ({
-    id: verificationEndpoints[index].id,
-    label: verificationEndpoints[index].label,
-    path: verificationEndpoints[index].path,
+    id: endpoints[index].id,
+    label: endpoints[index].label,
+    path: endpoints[index].path,
     ...(response.status === 'fulfilled' ? response.value : {
       error: response.reason
     })

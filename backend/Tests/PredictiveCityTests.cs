@@ -148,7 +148,9 @@ public class PredictiveCityTests
         var eqService = new EquipmentService(eqRepo, addrRepo, agentRepo, alertRepo, maintRepo, db,
             new CreateEquipmentDtoValidator(), new UpdateEquipmentDtoValidator(), new ChangeEquipmentStatusDtoValidator());
         var riskService = new RiskService(incRepo, alertRepo, eqRepo, opts, clock);
-        var recService = new RecommendationService(recRepo, agentRepo, eqRepo, db, opts, clock);
+        var maintenance = new MaintenanceService(maintRepo, eqRepo, agentRepo, alertRepo, db,
+            new OpenMaintenanceDtoValidator(), new CloseMaintenanceDtoValidator(), new ScheduleMaintenanceDtoValidator());
+        var recService = new RecommendationService(recRepo, agentRepo, eqRepo, db, opts, clock, maintenance, maintRepo);
         var incService = new IncidentService(incRepo, eqRepo, eqService, riskService, recService, db,
             new CreateIncidentDtoValidator(), clock);
 

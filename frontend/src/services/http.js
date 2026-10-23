@@ -11,12 +11,14 @@ const statusMessages = {
 export class HttpError extends Error {
   constructor(message, {
     status = null,
-    kind = 'http'
+    kind = 'http',
+    fieldErrors = {}
   } = {}) {
     super(message);
     this.name = 'HttpError';
     this.status = status;
     this.kind = kind;
+    this.fieldErrors = fieldErrors;
   }
 }
 export function isAbortError(error) {
@@ -33,7 +35,8 @@ export function createHttpClient(config = apiConfig, fetchImplementation = globa
   async function request(method, path, {
     token,
     signal,
-    body
+    body,
+    validation = false
   } = {}) {
     if (config.error || !config.baseUrl) {
       throw new HttpError(config.error || 'URL da API não configurada.', {
@@ -62,10 +65,18 @@ export function createHttpClient(config = apiConfig, fetchImplementation = globa
       });
       signal?.throwIfAborted();
       if (!response.ok) {
-        // Corpos de erro podem ser HTML, texto ou dados sensíveis; não os exibimos.
-        await response.body?.cancel();
+        // Apenas formularios opt-in leem chaves de validacao; mensagens/corpos nunca sao reproduzidos.
+        let fieldErrors = {};
+        if (validation && response.status === 400 && response.headers.get('content-type')?.includes('application/problem+json')) {
+          try {
+            const problem = await response.json();
+            if (problem?.errors && typeof problem.errors === 'object' && !Array.isArray(problem.errors))
+              fieldErrors = Object.fromEntries(Object.keys(problem.errors).filter(key => /^[A-Za-z][A-Za-z.]{0,80}$/.test(key)).map(key => [key, true]));
+          } catch { /* Resposta invalida mantem o erro HTTP generico. */ }
+        } else await response.body?.cancel();
         throw new HttpError(statusMessages[response.status] || `A API retornou erro HTTP ${response.status}.`, {
-          status: response.status
+          status: response.status,
+          fieldErrors
         });
       }
       if (response.status === 204) return null;
@@ -88,6 +99,14 @@ export function createHttpClient(config = apiConfig, fetchImplementation = globa
   return {
     getJson: (path, options) => request('GET', path, options),
     postJson: (path, body, options) => request('POST', path, {
+      ...options,
+      body
+    }),
+    putJson: (path, body, options) => request('PUT', path, {
+      ...options,
+      body
+    }),
+    patchJson: (path, body, options) => request('PATCH', path, {
       ...options,
       body
     })

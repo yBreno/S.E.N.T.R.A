@@ -81,7 +81,8 @@ export function displayText(value) {
   return typeof value === 'string' && value.trim() ? value : 'Não informado';
 }
 export function agentRoleLabel(value) {
-  return value === 'TrafficAgent' ? 'Agente de trânsito' : displayText(value);
+  const roles = { TrafficAgent: 'Agente de trânsito', MunicipalGuard: 'Guarda municipal', PoliceOfficer: 'Policial' };
+  return Object.hasOwn(roles, value) ? roles[value] : displayText(value);
 }
 export function formatLocationUpdatedAt(value) {
   if (typeof value !== 'string' || !value.trim()) return 'Não informado';

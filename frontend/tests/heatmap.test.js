@@ -264,7 +264,7 @@ test('verificação compartilha os pontos normalizados de Incidents com uma úni
           intensity: 0.7
         }]);
       }
-      if (path === '/api/dashboard') return {
+      if (path === '/api/dashboard?includePredictive=false') return {
         totalEquipments: 0,
         byStatus: {},
         activeAgents: 0,

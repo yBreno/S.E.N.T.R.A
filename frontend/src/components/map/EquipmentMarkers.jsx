@@ -7,6 +7,8 @@ import MapPopup from './MapPopup.jsx';
 // Serviços e utilitários
 import { displayText, getEquipmentState } from './markerData.js';
 import { getMarkerIcon } from './markerIcons.js';
+import { equipmentTypeLabel } from './operationalFilters.js';
+import { maintenanceAttention } from '../../services/operations.js';
 
 export default function EquipmentMarkers({
   markers,
@@ -15,13 +17,15 @@ export default function EquipmentMarkers({
 }) {
   return markers.map(record => {
     const state = getEquipmentState(record.status);
-    const title = `Equipamento: ${displayText(record.serialNumber)} · ${state.label}`;
+    const attention = maintenanceAttention(record);
+    const badge = attention.immediate ? 'immediate' : attention.upcoming ? 'upcoming' : '';
+    const title = `${equipmentTypeLabel(record.type)}: ${displayText(record.serialNumber)} · ${state.label}${badge ? attention.immediate ? ' · Manutenção imediata' : ' · Manutenção vencida ou próxima' : ''}`;
 
     return (
       <Marker
         key={record.id}
         position={record.position}
-        icon={getMarkerIcon('equipment', state)}
+        icon={getMarkerIcon('equipment', state, record.type, badge)}
         title={title}
         alt={title}
         eventHandlers={{

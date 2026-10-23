@@ -1,4 +1,5 @@
 using Domain.Enums;
+using Application.DTOs.Address;
 namespace Application.DTOs.Equipment;
 
 /// <summary>Campos comuns + campos especificos de cada subtipo (so os do tipo informado sao usados).</summary>
@@ -8,6 +9,12 @@ public abstract record EquipmentWriteDto
     public string Brand { get; init; } = string.Empty;
     public string Model { get; init; } = string.Empty;
     public Guid AddressId { get; init; }
+    public string? Category { get; init; }
+    /// <summary>Alternativa a AddressId: cria uma localizacao exclusiva na mesma unidade de trabalho.</summary>
+    public CreateAddressDto? Address { get; init; }
+    /// <summary>Omitir preserva o planejamento existente em clientes anteriores.</summary>
+    public MaintenanceNeed? MaintenanceNeed { get; init; }
+    public DateTime? NextMaintenanceDate { get; init; }
 
     // Camera
     public bool? HasNightVision { get; init; }
@@ -46,4 +53,4 @@ public record EquipmentSearchDto(EquipmentType? Type, EquipmentStatus? Status, s
 public record EquipmentResponseDto(Guid Id, EquipmentType Type, string SerialNumber, string Brand, string Model,
     EquipmentStatus Status, MaintenanceNeed MaintenanceNeed, DateTime? NextMaintenanceDate,
     Guid AddressId, string? Neighborhood,
-    double? Latitude, double? Longitude, Dictionary<string, object?> Attributes);
+    double? Latitude, double? Longitude, Dictionary<string, object?> Attributes, string? Category = null, AddressResponseDto? Address = null);

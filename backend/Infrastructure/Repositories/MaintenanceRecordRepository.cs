@@ -22,6 +22,6 @@ public class MaintenanceRecordRepository(AppDbContext context) : Repository<Main
     {
         var newEnd = end ?? DateTime.MaxValue;
         return Set.AnyAsync(m => m.EquipmentId == equipmentId && m.Id != ignoreId
-            && m.InitDate <= newEnd && (m.EndDate ?? DateTime.MaxValue) >= start, ct);
+            && m.Status != MaintenanceStatus.Scheduled && m.InitDate <= newEnd && (m.EndDate ?? DateTime.MaxValue) >= start, ct);
     }
 }
