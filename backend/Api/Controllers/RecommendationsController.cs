@@ -19,21 +19,13 @@ public class RecommendationsController(IRecommendationService service) : Control
     public async Task<ActionResult<IReadOnlyList<RecommendationResponseDto>>> GetAll(
         [FromQuery] RecommendationStatus? status, CancellationToken ct)
     {
-        var maintenanceOnly = User.IsInRole(Roles.MaintenanceTechnician)
-            && !User.IsInRole(Roles.Admin)
-            && !User.IsInRole(Roles.OperationManager)
-            && !User.IsInRole(Roles.CentralOperator);
-        return Ok(await service.GetAllAsync(status, maintenanceOnly, ct));
+        return Ok(await service.GetAllAsync(status, User.IsMaintenanceOnly(), ct));
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<RecommendationResponseDto>> Get(Guid id, CancellationToken ct)
     {
-        var maintenanceOnly = User.IsInRole(Roles.MaintenanceTechnician)
-            && !User.IsInRole(Roles.Admin)
-            && !User.IsInRole(Roles.OperationManager)
-            && !User.IsInRole(Roles.CentralOperator);
-        return Ok(await service.GetByIdAsync(id, maintenanceOnly, ct));
+        return Ok(await service.GetByIdAsync(id, User.IsMaintenanceOnly(), ct));
     }
 
     /// <summary>Registra aceite de reforço para avaliação operacional; para equipamento, reutiliza o fluxo de manutenção sem duplicar ordem ativa. Não desloca agentes automaticamente.</summary>

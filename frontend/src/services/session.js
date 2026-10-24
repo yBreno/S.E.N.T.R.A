@@ -1,14 +1,14 @@
 // Serviços e utilitários
 import { apiConfig } from '../config/api.js';
 import { http, isAbortError } from './http.js';
-import { canMonitor } from './auth.js';
+import { canMonitor, isUserRole } from './authorization.js';
 
 const storageKey = 'sentra.session.v1';
 
 export function normalizeSession(value, now = Date.now()) {
   try {
     if (typeof value?.token !== 'string' || typeof value?.expiresAt !== 'string' ||
-      typeof value?.user?.name !== 'string' || typeof value?.user?.role !== 'string') return null;
+      typeof value?.user?.name !== 'string' || !isUserRole(value?.user?.role)) return null;
 
     const parts = value.token.split('.');
     if (parts.length !== 3 || !parts.every(part => /^[A-Za-z0-9_-]+$/.test(part))) return null;

@@ -42,8 +42,7 @@ public class AgentsController(IAgentService service, IAgentLocationService locat
     [HttpPut("{id:guid}/location")]
     public async Task<ActionResult<AgentPositionDto>> UpdateLocation(Guid id, [FromBody] UpdateAgentLocationDto dto, CancellationToken ct)
     {
-        var isStaff = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.OperationManager) || User.IsInRole(Roles.CentralOperator);
-        return Ok(await locationService.UpdateLocationAsync(id, dto, User.GetUserId(), isStaff, ct));
+        return Ok(await locationService.UpdateLocationAsync(id, dto, User.GetUserId(), User.IsMonitoring(), ct));
     }
 
     /// <summary>Historico de posicoes GPS do agente (LGPD: apenas Admin, OperationManager e CentralOperator).</summary>

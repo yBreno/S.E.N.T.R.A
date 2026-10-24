@@ -53,6 +53,17 @@ coverage*.info
 *.coverage
 *.coveragexml
 *.dotCover
+coverage/
+htmlcov/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+.playwright-mcp/
+*.har
+*.trace.zip
+__pycache__/
+*.py[cod]
 _ReSharper*/
 *.[Rr]e[Ss]harper
 
@@ -92,6 +103,13 @@ PublishScripts/
 appsettings.Local.json
 appsettings.*.Local.json
 secrets.json
+http-client.private.env.json
+*.http.private.env.json
+*.p12
+*.pem
+*.key
+id_rsa
+id_ed25519
 
 # =========================================================
 # Databases (SQL Server / SQLite)
@@ -104,6 +122,15 @@ secrets.json
 *.db-wal
 *.sqlite
 *.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3-shm
+*.sqlite3-wal
+*.db3
+*.bak
+*.bacpac
+*.sql.bak
+*.sql.gz
 
 # =========================================================
 # Frontend (Node / Vite / Next / React / Angular)

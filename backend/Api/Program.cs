@@ -1,4 +1,4 @@
-using System.Text;
+using Api.Security;
 using System.Text.Json.Serialization;
 using Api.Middleware;
 using Api.Demo;
@@ -8,8 +8,6 @@ using Application;
 using Application.Predictive;
 using Application.Security;
 using Infrastructure;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,29 +31,8 @@ builder.Services.AddOptions<PredictiveAutomationSettings>()
 if (!isDemo) builder.Services.AddHostedService<PredictiveAutomationWorker>();
 
 // ---- JWT (a Key vem de user-secrets / variavel de ambiente: Jwt__Key)
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 var jwt = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>() ?? new JwtSettings();
-if (string.IsNullOrWhiteSpace(jwt.Key) || jwt.Key.Length < 32)
-    throw new InvalidOperationException("Jwt:Key ausente ou curta (minimo 32 caracteres). Use: dotnet user-secrets set \"Jwt:Key\" \"<chave>\" --project Api");
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(o =>
-    {
-        o.MapInboundClaims = false; // mantem "sub", "email", "role" como no token
-        o.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = jwt.Issuer,
-            ValidateAudience = true,
-            ValidAudience = jwt.Audience,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromSeconds(30),
-            NameClaimType = "sub",
-            RoleClaimType = "role"
-        };
-    });
+builder.Services.AddSentraJwt(jwt);
 builder.Services.AddAuthorization();
 
 // ---- CORS

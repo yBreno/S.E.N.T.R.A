@@ -10,8 +10,13 @@ on:
 
   workflow_dispatch:
 
+concurrency:
+  group: sentra-api-production
+  cancel-in-progress: false
+
 jobs:
   build:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: windows-latest
 
     permissions:
@@ -46,6 +51,7 @@ jobs:
           if-no-files-found: error
 
   deploy:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: windows-latest
     needs: build
 

@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using Api.Controllers;
 using Api.Demo;
 using Api.Middleware;
+using Api.Security;
 using Application;
 using Application.Security;
 using Domain.Entities;
@@ -40,7 +41,7 @@ public sealed class EquipmentTestHost : IAsyncDisposable
             .Features.Get<IServerAddressesFeature>()!.Addresses.Single()) };
     }
 
-    public static async Task<EquipmentTestHost> StartAsync(int port = 0, string? localSqlDatabase = null, bool demo = false, bool interactiveDemo = false)
+    public static async Task<EquipmentTestHost> StartAsync(int port = 0, string? localSqlDatabase = null, bool demo = false, bool interactiveDemo = false, bool validateCurrentUser = false)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Testing", ContentRootPath = Path.GetTempPath(), Args = [] });
         builder.Logging.ClearProviders();
@@ -72,7 +73,8 @@ public sealed class EquipmentTestHost : IAsyncDisposable
         builder.Services.AddScoped<ITelemetryLogRepository, TelemetryLogRepository>();
         builder.Services.AddControllers().AddApplicationPart(typeof(EquipmentsController).Assembly)
             .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
-        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+        if (validateCurrentUser) builder.Services.AddSentraJwt(settings);
+        else builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
         {
             options.MapInboundClaims = false;
             options.TokenValidationParameters = new TokenValidationParameters
@@ -99,6 +101,11 @@ public sealed class EquipmentTestHost : IAsyncDisposable
         if (userId.HasValue) user.Id = userId.Value;
         return new JwtTokenService(Options.Create(jwt)).GenerateToken(user).Token;
     }
+
+    public string SignedToken(IEnumerable<System.Security.Claims.Claim> claims, DateTime? expires = null, string? issuer = null, string? audience = null) =>
+        new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
+            issuer ?? jwt.Issuer, audience ?? jwt.Audience, claims, expires: expires ?? DateTime.UtcNow.AddMinutes(5),
+            signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)), SecurityAlgorithms.HmacSha256)));
 
     public HttpRequestMessage Request(HttpMethod method, string path, UserRole? role, Guid? userId = null)
     {

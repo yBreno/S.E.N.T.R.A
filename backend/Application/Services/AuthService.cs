@@ -34,7 +34,7 @@ public class AuthService(IUserRepository users, IUnitOfWork uow, IPasswordHasher
     {
         await lv.ValidateAndThrowAsync(dto, ct);
         var user = await users.GetByEmailAsync(dto.Email, ct);
-        if (user is null || !hasher.Verify(dto.Password, user.PasswordHash))
+        if (user is null || !Enum.IsDefined(user.Role) || !hasher.Verify(dto.Password, user.PasswordHash))
             throw new UnauthorizedException("Credenciais invalidas.");
         var token = tokens.GenerateToken(user);
         return new AuthResponseDto(token.Token, token.ExpiresAt, user.ToResponse());

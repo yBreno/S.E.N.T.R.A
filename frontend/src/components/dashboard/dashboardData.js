@@ -1,3 +1,5 @@
+export { userRoleLabel } from '../../services/authorization.js';
+
 const statuses = {
   Operational: { label: 'Operacionais', color: '#26c66b' },
   Malfunctioning: { label: 'Em falha', color: '#f3ad31' },
@@ -38,10 +40,4 @@ export function userInitials(name) {
   return typeof name === 'string' && name.trim()
     ? name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toLocaleUpperCase('pt-BR')
     : '?';
-}
-
-export function userRoleLabel(role) {
-  const labels = { Admin: 'Administrador', OperationManager: 'Gestor de operações', CentralOperator: 'Operador da central', MaintenanceTechnician: 'Técnico de manutenção' };
-
-  return Object.hasOwn(labels, role) ? labels[role] : role;
 }

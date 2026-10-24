@@ -70,33 +70,54 @@ docs/reports/             Relatórios de revisão das sprints
 - Atualização automática da Central e atualização manual, dados anteriores sinalizados como desatualizados durante falhas,
   mensagens de erro/vazio e layout responsivo; mudanças de filtros preservam a instância do mapa.
 - `locationUpdatedAt` explícito em UTC no DTO e apresentação no fuso do navegador;
-  categorias apresentadas como Agente de trânsito, Guarda municipal e Policial, inclusive no mapa.
+  categorias apresentadas como Agente de trânsito, Guarda municipal e Policial militar, inclusive no mapa.
 
 **Cartografia:** o bloqueio OpenStreetMap por ausência de Referer foi corrigido com
 `strict-origin-when-cross-origin` no HTML e no TileLayer. A correção foi validada no site
 publicado pelo responsável do projeto, conforme informado por ele. URL HTTPS oficial e
 atribuição foram mantidas. A disponibilidade dos tiles depende do provedor e de sua política.
 
+## Cargos, autorização e sessões
+
+Os cargos de login são exclusivamente `Admin`, `OperationManager`, `CentralOperator`,
+`MaintenanceTechnician` e `Agent`. As categorias profissionais `TrafficAgent`,
+`MunicipalGuard` e `PoliceOfficer` pertencem ao agente, não concedem permissões e
+mantêm seus nomes persistidos; o último rótulo visual é **Policial militar**.
+
+O backend valida assinatura/expiração do JWT e consulta a existência e o cargo atual
+do usuário em cada requisição autenticada. Tokens com cargo antigo ou usuário removido
+recebem 401. Tokens válidos existentes com o mesmo usuário/cargo continuam compatíveis.
+Não há campo de desativação nem revogação definitiva por versão de sessão nesta etapa;
+esses mecanismos precisam integrar a futura Administração de Usuários.
+
+O cadastro público existente continua limitado a `Agent`; criar cargos elevados exige
+Admin atual. Não há tela ou endpoints gerais de administração de usuários/cargos/senhas.
+Senhas de cadastro/login devem respeitar o limite de **72 bytes UTF-8** do BCrypt;
+credenciais antigas maiores exigem revisão privada e troca segura, sem ajuste automático.
+Veja matrizes reais/desejadas, correções e pendências na
+[revisão de arquitetura e RBAC](docs/reports/revisao-arquitetura-rbac.md).
+
 ## Execução local
 
 ### CI/CD de produção pela `main`
 
-Backend e frontend publicam exclusivamente pela `main` nos workflows atuais. O backend usa
-`backend/Api/Api.csproj`, artefato `sentra-api` e pacote `./publish`; o frontend usa `./frontend`,
-saída `dist` e `production_branch: main` no Azure Static Web Apps. Há somente um workflow publicando
-no App Service `sentra-api`. O nome histórico `finish-setup_sentra-api.yml` foi mantido para preservar
-o arquivo existente; os gatilhos e jobs exigem `refs/heads/main`.
+Os pushes de backend e frontend usam `main`. O workflow `main_sentra-api.yml` compila
+`backend/Api/Api.csproj`, gera o artefato `sentra-api` e publica o pacote `./publish`.
+O frontend usa `./frontend`, saída `dist` e `production_branch: main` no Azure Static Web Apps.
+Há um publicador por serviço; os arquivos atuais ficam em `.github/workflows/`.
 
-Pushes publicam somente quando alteram a pasta do respectivo serviço ou seu workflow. PRs e alterações
-somente em documentação não publicam. O disparo manual do backend também exige `main`; cada serviço
-possui grupo de concorrência próprio, sem cancelar uma publicação já em andamento. Secrets, referências
-de identidades Azure, recursos e URL da API foram preservados, sem migrations automáticas.
+Os filtros incluem a pasta de cada serviço e seu workflow. Alterações somente no README
+da raiz ou em `docs/` não disparam publicação; documentação dentro de `frontend/` ou
+`backend/` também corresponde aos filtros dessas pastas. Não há gatilho de pull request.
 
-Antes de publicar, conferir no Azure a credencial federada OIDC para `main` e a origem de produção do
-Static Web Apps/Deployment Center; esses controles privados não foram alterados nem validados por login.
-Cópias antigas dos workflows em outras branches e execuções anteriores não são modificadas por este commit.
-Após revisar o diff: `git add .github/workflows README.md`, `git commit -m "Configura CI/CD exclusivo pela main"`
-e `git push origin main`. O push poderá disparar ambos os deploys; nenhum desses comandos foi executado pelo agente.
+O backend permite `workflow_dispatch` somente em `refs/heads/main`, com condição nos
+jobs de build e deploy. Cada serviço tem grupo de concorrência próprio e
+`cancel-in-progress: false`, preservando publicações em andamento. A revisão RBAC
+acrescentou os controles do backend e preservou secrets, recursos, URLs e o workflow frontend.
+Não há migrations nos comandos de publicação.
+
+Credenciais federadas e controles privados do Azure não foram acessados nesta revisão.
+Consulte os resultados e limites na [revisão de arquitetura e RBAC](docs/reports/revisao-arquitetura-rbac.md).
 
 Pré-requisitos: .NET 10 SDK, Node compatível com Vite 8 (22.12+ na linha 22, ou 20.19+ na
 linha 20) e npm. A validação local utilizou Node 26.7.0 e npm 11.16.0.
@@ -157,9 +178,9 @@ controlador de acesso; não cria uma classe de atuador nem um serviço de aciona
 Os campos técnicos próprios continuam nos atributos existentes. Sugestões no formulário são rótulos,
 não equipamentos ou dados operacionais fictícios.
 
-O modo HTTP **Demo permanece somente leitura**, salvo login; tentativas de salvar recebem uma mensagem
-específica de ambiente de consulta. Ele não serve para validar os fluxos de escrita desta sprint.
-O script `scripts/Start-DemoApi.ps1` citado em documentação antiga não está nesta cópia.
+O modo HTTP **Demo é somente leitura por padrão**, salvo login. A Sprint 07 oferece um opt-in
+local restrito ao aceite preventivo do cenário C, conforme a [preparação DEMO](docs/demo/preparacao-ambiente.md).
+Cadastro e edição continuam bloqueados nesse host; use o ambiente local autorizado para esses fluxos.
 Os perfis normais Development podem executar seeders/simulação; o exemplo SprintLocal acima os desativa.
 
 O [relatório de revisão](docs/reports/sprint-01-equipamentos.md) contém arquivos alterados, endpoints,
@@ -177,7 +198,7 @@ manutenção não recebe acesso ao módulo de agentes. O perfil Agent mantém os
 sem ganhar acesso à gestão geral pela interface.
 
 Em **Novo agente**, informe nome, CPF, matrícula, categoria profissional, disponibilidade, bairro e GPS.
-Há três categorias: Agente de trânsito, Guarda municipal e Policial. O CPF é enviado somente no cadastro,
+Há três categorias: Agente de trânsito, Guarda municipal e Policial militar. O CPF é enviado somente no cadastro,
 não pode ser editado e aparece mascarado nos detalhes. O cadastro do profissional não cria uma conta de
 login; um vínculo de conta já existente é preservado na edição, sem gestão de usuários nesta sprint.
 
@@ -385,7 +406,7 @@ dotnet build backend/Solution/Solution.slnx --no-restore
 dotnet test backend/Tests/Tests.csproj --no-build --no-restore
 ```
 
-A validação da Sprint 07 aprovou build/lint frontend, **166 testes frontend** e **267 testes
+A revisão de arquitetura/RBAC aprovou build/lint frontend, **176 testes frontend** e **304 testes
 backend**. A suíte HTTP usa controllers reais, JWT e Kestrel com persistência InMemory, sem iniciar a API
 normal ou acessar conexões privadas. Modelo SQL e snapshot também são conferidos sem conexão.
 Na Sprint 07, bancos novos exclusivos LocalDB e a API DEMO real confirmaram integridade,

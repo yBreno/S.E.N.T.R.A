@@ -1,4 +1,5 @@
 using Domain.Enums;
+using Domain.Exceptions;
 namespace Domain.Entities;
 
 public class User : BaseEntity
@@ -11,15 +12,23 @@ public class User : BaseEntity
 
     private User() { } // EF Core
 
-    public static User Create(string name, string email, string cpf, string passwordHash, UserRole role) => new()
+    public static User Create(string name, string email, string cpf, string passwordHash, UserRole role)
     {
-        Name = name.Trim(),
-        Email = email.Trim().ToLowerInvariant(),
-        Cpf = new string(cpf.Where(char.IsDigit).ToArray()),
-        PasswordHash = passwordHash,
-        Role = role
-    };
+        CheckRole(role);
+        return new()
+        {
+            Name = name.Trim(),
+            Email = email.Trim().ToLowerInvariant(),
+            Cpf = new string(cpf.Where(char.IsDigit).ToArray()),
+            PasswordHash = passwordHash,
+            Role = role
+        };
+    }
 
-    public void ChangeRole(UserRole role) => Role = role;
+    public void ChangeRole(UserRole role) { CheckRole(role); Role = role; }
     public void ChangePasswordHash(string passwordHash) => PasswordHash = passwordHash;
+    private static void CheckRole(UserRole role)
+    {
+        if (!Enum.IsDefined(role)) throw new BusinessRuleException("Cargo de autorização desconhecido.");
+    }
 }

@@ -1,25 +1,8 @@
 // Serviços e utilitários
 import { http, invalidResponse } from './http.js';
 
-const monitoringRoles = new Set(['Admin', 'OperationManager', 'CentralOperator']);
-export function canMonitor(user) {
-  return monitoringRoles.has(user?.role);
-}
-export function canReadEquipments(user) {
-  return canMonitor(user) || user?.role === 'MaintenanceTechnician';
-}
-export function canManageEquipments(user) {
-  return user?.role === 'Admin' || user?.role === 'OperationManager';
-}
-export function canReadAgents(user) {
-  return canMonitor(user);
-}
-export function canManageAgents(user) {
-  return canManageEquipments(user);
-}
-export function canMaintain(user) {
-  return canManageEquipments(user) || user?.role === 'MaintenanceTechnician';
-}
+import { isUserRole } from './authorization.js';
+export { canMonitor, canReadEquipments, canManageEquipments, canReadAgents, canManageAgents, canMaintain } from './authorization.js';
 export async function login(credentials, {
   signal,
   client = http
@@ -31,7 +14,7 @@ export async function login(credentials, {
     signal
   });
   const expiresAt = Date.parse(data?.expiresAt);
-  if (typeof data?.token !== 'string' || !data.token.trim() || typeof data?.expiresAt !== 'string' || !Number.isFinite(expiresAt) || expiresAt <= Date.now() || typeof data?.user?.name !== 'string' || typeof data?.user?.role !== 'string') {
+  if (typeof data?.token !== 'string' || !data.token.trim() || typeof data?.expiresAt !== 'string' || !Number.isFinite(expiresAt) || expiresAt <= Date.now() || typeof data?.user?.name !== 'string' || !isUserRole(data?.user?.role)) {
     throw invalidResponse();
   }
   // A senha nunca integra o estado da sessão.

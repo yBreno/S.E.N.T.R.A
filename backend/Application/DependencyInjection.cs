@@ -15,6 +15,7 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserSessionValidator, UserSessionValidator>();
         services.AddScoped<IAddressService, AddressService>();
         services.AddScoped<IAgentService, AgentService>();
         services.AddScoped<IAgentVehicleService, AgentVehicleService>();

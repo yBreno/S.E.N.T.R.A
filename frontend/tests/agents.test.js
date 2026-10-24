@@ -12,7 +12,7 @@ const mobile = { id: 'vehicle-id', type: 'Motorcycle', serialNumber: 'MOTO-01', 
 const validForm = () => ({ ...createAgentForm(), name: 'Profissional', cpf: '529.982.247-25', badgeNumber: 'MAT-01', neighborhood: 'Centro', latitude: '0', longitude: '0', availability: 'Available' });
 
 test('cadastro representa as três categorias, normaliza CPF e preserva GPS zero sem criar usuário', () => {
-  assert.deepEqual(Object.values(agentRoles), ['Agente de trânsito', 'Guarda municipal', 'Policial']);
+  assert.deepEqual(Object.values(agentRoles), ['Agente de trânsito', 'Guarda municipal', 'Policial militar']);
   for (const role of Object.keys(agentRoles)) {
     const { payload, errors } = buildAgentPayload({ ...validForm(), role, userId: 'forged-user', password: 'ignored' });
     assert.deepEqual(errors, {});
@@ -108,7 +108,7 @@ test('dados de agentes alimentam marcadores com categoria, disponibilidade e coo
   const layers = buildOperationalLayers([{ id: 'agents', data: 1, items }], { agentAvailability: 'Busy' });
   const marker = layers.agents.filtered[0];
   assert.deepEqual(marker.position, [-23.56, -46.60]);
-  assert.equal(agentRoleLabel(marker.role), 'Policial'); assert.equal(getAgentState(marker.availability).label, 'Ocupado');
+  assert.equal(agentRoleLabel(marker.role), 'Policial militar'); assert.equal(getAgentState(marker.availability).label, 'Ocupado');
   assert.ok(!Object.hasOwn(marker, 'cpf')); assert.ok(!Object.hasOwn(marker, 'maskedCpf'));
 });
 
