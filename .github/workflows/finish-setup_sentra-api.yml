@@ -3,15 +3,20 @@ name: Build and deploy S.E.N.T.R.A. API
 on:
   push:
     branches:
-      - finish-setup
+      - main
     paths:
       - "backend/**"
       - ".github/workflows/finish-setup_sentra-api.yml"
 
   workflow_dispatch:
 
+concurrency:
+  group: sentra-api-production
+  cancel-in-progress: false
+
 jobs:
   build:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: windows-latest
     permissions:
       contents: read
@@ -44,6 +49,7 @@ jobs:
           path: ${{ runner.temp }}/sentra-api
 
   deploy:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: windows-latest
     needs: build
 

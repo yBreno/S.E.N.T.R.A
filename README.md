@@ -79,18 +79,24 @@ atribuição foram mantidas. A disponibilidade dos tiles depende do provedor e d
 
 ## Execução local
 
-### Deploy temporário pela `finish-setup`
+### CI/CD de produção pela `main`
 
-Os dois workflows desta branch publicam a partir de `finish-setup`: backend quando há alteração em
-`backend/**` ou no seu workflow; frontend quando há alteração em `frontend/**` ou no seu workflow.
-PRs não publicam. O disparo manual existente do backend também exige selecionar `finish-setup`.
-Secrets, recursos e URLs foram preservados; o Static Web Apps usa `production_branch: finish-setup`.
+Backend e frontend publicam exclusivamente pela `main` nos workflows atuais. O backend usa
+`backend/Api/Api.csproj`, artefato `sentra-api` e pacote `./publish`; o frontend usa `./frontend`,
+saída `dist` e `production_branch: main` no Azure Static Web Apps. Há somente um workflow publicando
+no App Service `sentra-api`. O nome histórico `finish-setup_sentra-api.yml` foi mantido para preservar
+o arquivo existente; os gatilhos e jobs exigem `refs/heads/main`.
 
-Essa configuração só passa a valer no GitHub depois de commit/push pelo responsável. **Alterar esta
-branch não desativa as definições antigas em outras branches**: a cópia remota em `main` ainda precisa
-ser restringida antes de garantir exclusividade. Webhooks, Deployment Center e credencial federada
-OIDC também exigem conferência autenticada. Nenhum deploy/migration foi executado nesta configuração.
-Veja o [relatório e os comandos de publicação](docs/reports/configuracao-branch-finish-setup.md).
+Pushes publicam somente quando alteram a pasta do respectivo serviço ou seu workflow. PRs e alterações
+somente em documentação não publicam. O disparo manual do backend também exige `main`; cada serviço
+possui grupo de concorrência próprio, sem cancelar uma publicação já em andamento. Secrets, referências
+de identidades Azure, recursos e URL da API foram preservados, sem migrations automáticas.
+
+Antes de publicar, conferir no Azure a credencial federada OIDC para `main` e a origem de produção do
+Static Web Apps/Deployment Center; esses controles privados não foram alterados nem validados por login.
+Cópias antigas dos workflows em outras branches e execuções anteriores não são modificadas por este commit.
+Após revisar o diff: `git add .github/workflows README.md`, `git commit -m "Configura CI/CD exclusivo pela main"`
+e `git push origin main`. O push poderá disparar ambos os deploys; nenhum desses comandos foi executado pelo agente.
 
 Pré-requisitos: .NET 10 SDK, Node compatível com Vite 8 (22.12+ na linha 22, ou 20.19+ na
 linha 20) e npm. A validação local utilizou Node 26.7.0 e npm 11.16.0.
