@@ -65,4 +65,11 @@ public interface IPredictiveAnalysisService
 {
     /// <summary>Roda anomalias + previsao MTBF + risco e gera alertas preventivos e recomendacoes (sem duplicar pendentes).</summary>
     Task<PredictiveAnalysisResultDto> RunAsync(CancellationToken ct = default);
+    Task<PredictiveAnalysisResultDto> RunAutomaticAsync(CancellationToken ct = default);
+}
+
+public interface IPredictiveOperationsService
+{
+    PredictiveAutomationStatusDto GetStatus();
+    Task<PredictiveOperationsDto> GetAsync(CancellationToken ct = default);
 }

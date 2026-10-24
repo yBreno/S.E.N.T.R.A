@@ -10,6 +10,7 @@ import './Markers.css';
 // Componentes
 import EquipmentMarkers from './EquipmentMarkers.jsx';
 import AgentMarkers from './AgentMarkers.jsx';
+import NeighborhoodRiskMarkers from './NeighborhoodRiskMarkers.jsx';
 import MapLayersControl from './MapLayersControl.jsx';
 import OperationalFilters from './OperationalFilters.jsx';
 import RecordInspection from './RecordInspection.jsx';
@@ -54,14 +55,14 @@ function MapResizeObserver() {
 
 export default function MapView({
   verification,
-  heatmap, filters, onFiltersChange, navigation
+  heatmap, filters, onFiltersChange, navigation, predictiveResult
 }) {
   const [heatmapError, setHeatmapError] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(() =>
     typeof window === 'undefined' || window.matchMedia('(min-width: 761px)').matches);
   const setFilters = onFiltersChange;
 
-  const layers = useOperationalMarkers(verification, filters);
+  const layers = useOperationalMarkers(verification, filters, predictiveResult);
 
   const [showEquipments, setShowEquipments] = useState(true);
   const [showAgents, setShowAgents] = useState(true);
@@ -136,6 +137,7 @@ export default function MapView({
         aria-label="Mapa interativo de São Paulo"
         aria-describedby="map-instructions"
       >
+        <p className="map-instructions">P: risco preditivo alto, independente da cor de situação. Círculo tracejado: bairro com índice alto/crítico. {predictiveResult?.data ? `Avaliação: ${new Date(predictiveResult.data.evaluatedAt).toLocaleString('pt-BR')}.` : 'Consulta preditiva ainda indisponível.'}{(predictiveResult?.stale || predictiveResult?.error) && ' Leitura preditiva desatualizada; confira antes de agir.'}</p>
         <MapContainer
           className="operational-map"
           center={saoPauloCenter}
@@ -167,6 +169,7 @@ export default function MapView({
               selection={selection}
             />
           )}
+          <NeighborhoodRiskMarkers result={predictiveResult} onNeighborhood={navigation?.neighborhood} />
           {showAgents && (
             <AgentMarkers
               markers={layers.agents.filtered}

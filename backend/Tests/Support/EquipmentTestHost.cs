@@ -48,14 +48,15 @@ public sealed class EquipmentTestHost : IAsyncDisposable
         builder.Services.AddApplication();
         builder.Services.Configure<JwtSettings>(options => { options.Key = settings.Key; options.Issuer = settings.Issuer; options.Audience = settings.Audience; });
         var databaseName = $"Sprint01_{Guid.NewGuid():N}";
-        if (localSqlDatabase is not null && !System.Text.RegularExpressions.Regex.IsMatch(localSqlDatabase, "^SENTRA_Sprint0[345]_[A-Za-z0-9_]+$"))
-            throw new ArgumentException("O banco de teste deve ter um nome exclusivo com prefixo SENTRA_Sprint03_, SENTRA_Sprint04_ ou SENTRA_Sprint05_.");
+        if (localSqlDatabase is not null && !System.Text.RegularExpressions.Regex.IsMatch(localSqlDatabase, "^SENTRA_Sprint0[3456]_[A-Za-z0-9_]+$"))
+            throw new ArgumentException("O banco de teste deve ter um nome exclusivo com prefixo SENTRA_Sprint03_, SENTRA_Sprint04_, SENTRA_Sprint05_ ou SENTRA_Sprint06_.");
         builder.Services.AddDbContext<AppDbContext>(options =>
         {
             if (localSqlDatabase is null) options.UseInMemoryDatabase(databaseName);
             else options.UseSqlServer($"Server=(localdb)\\MSSQLLocalDB;Database={localSqlDatabase};Trusted_Connection=True;TrustServerCertificate=True");
         });
         builder.Services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
+        if (localSqlDatabase is not null) builder.Services.AddScoped<Application.Interfaces.IServices.IPredictiveWriteCoordinator, SqlPredictiveWriteCoordinator>();
         builder.Services.AddScoped<IEquipmentRepository, EquipmentRepository>();
         builder.Services.AddScoped<IAddressRepository, AddressRepository>();
         builder.Services.AddScoped<IAgentRepository, AgentRepository>();

@@ -1,0 +1,5 @@
+.predictive-operations > p, .predictive-operations > details, .predictive-operations > h3, .predictive-operations > .inventory-actions { margin: 16px; }
+.predictive-operations > p, .predictive-operations > details { line-height: 1.65; overflow-wrap: anywhere; }
+.predictive-operations .predictive-neighborhoods { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.predictive-operations summary { cursor: pointer; }
+.predictive-operations summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }

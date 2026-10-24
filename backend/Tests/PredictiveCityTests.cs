@@ -150,7 +150,8 @@ public class PredictiveCityTests
         var riskService = new RiskService(incRepo, alertRepo, eqRepo, opts, clock);
         var maintenance = new MaintenanceService(maintRepo, eqRepo, agentRepo, alertRepo, db,
             new OpenMaintenanceDtoValidator(), new CloseMaintenanceDtoValidator(), new ScheduleMaintenanceDtoValidator());
-        var recService = new RecommendationService(recRepo, agentRepo, eqRepo, db, opts, clock, maintenance, maintRepo);
+        using var coordination = new InProcessPredictiveWriteCoordinator();
+        var recService = new RecommendationService(recRepo, agentRepo, eqRepo, db, opts, clock, maintenance, maintRepo, coordination);
         var incService = new IncidentService(incRepo, eqRepo, eqService, riskService, recService, db,
             new CreateIncidentDtoValidator(), clock);
 

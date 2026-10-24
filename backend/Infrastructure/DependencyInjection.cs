@@ -14,6 +14,7 @@ public static class DependencyInjection
                  ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection nao configurada.");
         services.AddDbContext<AppDbContext>(o => o.UseSqlServer(cs));
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
+        services.AddScoped<Application.Interfaces.IServices.IPredictiveWriteCoordinator, SqlPredictiveWriteCoordinator>();
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IAddressRepository, AddressRepository>();

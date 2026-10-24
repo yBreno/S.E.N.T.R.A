@@ -24,6 +24,7 @@ export default function OperationalRecordDetails({
     ['Marca / modelo', `${displayText(record.brand)} / ${displayText(record.model)}`],
     ['Número de série', displayText(record.serialNumber)],
     ['Status', getEquipmentState(record.status).label],
+    ...(record.predictiveRisk ? [['Risco preditivo', `Alto · ${record.predictiveRisk.score}/100${record.predictiveRisk.stale ? ' · desatualizado' : ''}`], ['Avaliação de risco', formatLocationUpdatedAt(record.predictiveRisk.evaluatedAt)]] : []),
     ['Bairro', displayText(record.neighborhood)],
     ['Categoria de uso', displayText(record.category)],
     ['GPS', typeof record.latitude === 'number' && typeof record.longitude === 'number' ? `${record.latitude}, ${record.longitude}` : 'Não informado'],
@@ -58,6 +59,7 @@ export default function OperationalRecordDetails({
           </div>
         ))}
       </dl>
+      {equipment && record.predictiveRisk && <p>{record.predictiveRisk.summary} Risco preditivo não altera a situação operacional. {navigation?.predictive && <button className="secondary" onClick={navigation.predictive}>Ver fatores preditivos</button>}</p>}
       {equipment && (attention.immediate || attention.upcoming) && <p>{attention.immediate ? 'Manutenção imediata necessária.' : attention.overdue ? 'Previsão de manutenção vencida.' : `Manutenção prevista nos próximos ${MAINTENANCE_LOOKAHEAD_DAYS} dias.`}</p>}
       {navigation && <div className="operational-detail-actions"><button className="secondary" onClick={() => equipment ? navigation.equipment(record.id) : navigation.agent(record.id)}>Abrir detalhes completos</button>{equipment && navigation.maintenance && <button className="secondary" onClick={() => navigation.maintenance(record.id)}>Consultar manutenções</button>}</div>}
     </div>

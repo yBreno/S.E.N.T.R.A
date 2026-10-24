@@ -23,7 +23,7 @@ function factors(values) {
 function assessment(value, equipment) {
   if (!value || !score(value.score) || !Object.hasOwn(riskLabels, value.level) || !date(value.evaluatedAt) || !text(value.neighborhood) || !text(value.summary)) throw invalidResponse();
   const common = { score: value.score, level: value.level, evaluatedAt: value.evaluatedAt, neighborhood: value.neighborhood, summary: value.summary, factors: factors(value.factors) };
-  if (!equipment) return { ...common, incidentWindowFrom: value.incidentWindowFrom, failureWindowFrom: value.failureWindowFrom };
+  if (!equipment) return { ...common, latitude: value.latitude, longitude: value.longitude, incidentWindowFrom: value.incidentWindowFrom, failureWindowFrom: value.failureWindowFrom };
   if (!text(value.equipmentId) || !text(value.serialNumber) || !text(value.equipmentType) || !text(value.status) || !date(value.windowFrom) || typeof value.hasSufficientHistory !== 'boolean' || !text(value.historyDescription)) throw invalidResponse();
   return { ...common, equipmentId: value.equipmentId, serialNumber: value.serialNumber, equipmentType: value.equipmentType, status: value.status,
     windowFrom: value.windowFrom, hasSufficientHistory: value.hasSufficientHistory, historyDescription: value.historyDescription,
@@ -52,10 +52,39 @@ function anomaly(value) {
     current: value.current, recordCount: value.recordCount, equipmentId: text(value.equipmentId) ? value.equipmentId : null };
 }
 const normalizers = { equipment: value => assessment(value, true), neighborhoods: value => assessment(value, false), recommendations: recommendation, failures: failure, anomalies: anomaly };
+export function normalizeExecutionStatus(value) {
+  const execution = value?.execution;
+  if (typeof value?.enabled !== 'boolean' || !Number.isInteger(value.intervalMinutes) || typeof value.multipleInstancesSupported !== 'boolean' ||
+      !execution || !['NotRun', 'Running', 'Completed', 'Failed'].includes(execution.status) || ![null, 'Manual', 'Automatic'].includes(execution.origin) || execution.scope !== 'InstanceMemory') throw invalidResponse();
+  for (const field of ['startedAt', 'finishedAt', 'lastCompletedAt', 'lastAutomaticCompletedAt']) if (execution[field] != null && !date(execution[field])) throw invalidResponse();
+  for (const field of ['recommendationsCreated', 'preventiveAlertsCreated']) if (execution[field] != null && (!Number.isInteger(execution[field]) || execution[field] < 0)) throw invalidResponse();
+  return { enabled: value.enabled, intervalMinutes: value.intervalMinutes, multipleInstancesSupported: value.multipleInstancesSupported,
+    execution: Object.fromEntries(['status', 'origin', 'startedAt', 'finishedAt', 'lastCompletedAt', 'lastAutomaticCompletedAt', 'recommendationsCreated', 'preventiveAlertsCreated', 'scope'].map(field => [field, execution[field]])) };
+}
+export function normalizePredictiveOperations(value) {
+  if (!value || !date(value.evaluatedAt) || !Array.isArray(value.equipmentRisks) || !Array.isArray(value.neighborhoods) || !Array.isArray(value.recommendations)) throw invalidResponse();
+  return { evaluatedAt: value.evaluatedAt, equipmentRisks: value.equipmentRisks.map(item => assessment(item, true)),
+    neighborhoods: value.neighborhoods.map(item => assessment(item, false)), recommendations: value.recommendations.map(recommendation), automation: normalizeExecutionStatus(value.automation) };
+}
+export function attachPredictiveRisk(records, result) {
+  const risks = new Map((result?.data?.equipmentRisks ?? []).filter(item => item.level === 'High').map(item => [item.equipmentId, item]));
+  return records.map(record => {
+    const risk = risks.get(record.id);
+    return { ...record, predictiveRisk: risk ? { score: risk.score, evaluatedAt: risk.evaluatedAt, summary: risk.summary, stale: Boolean(result.stale || result.error) } : null };
+  });
+}
 const permitted = allowed => { if (!allowed) throw new Error('Seu perfil não tem permissão para esta ação.'); };
 export function createPredictiveApi(session, client = http) {
   const options = signal => ({ token: session.token, signal });
   return {
+    async operations(signal) {
+      permitted(canMonitor(session.user));
+      return normalizePredictiveOperations(await client.getJson('/api/dashboard/predictive', options(signal)));
+    },
+    async executionStatus(signal) {
+      permitted(canMonitor(session.user));
+      return normalizeExecutionStatus(await client.getJson('/api/predictions/execution-status', options(signal)));
+    },
     async load(signal) {
       permitted(canMonitor(session.user));
       return Promise.all(predictiveEndpoints.map(async endpoint => {

@@ -3,8 +3,8 @@ import { divIcon } from 'leaflet';
 import { markerPresentation } from './markerPresentation.js';
 
 const icons = new Map();
-export function getMarkerIcon(kind, state, type, attention = '') {
-  const presentation = markerPresentation(kind, type, state, attention);
+export function getMarkerIcon(kind, state, type, attention = '', predictive = false, stale = false) {
+  const presentation = markerPresentation(kind, type, state, attention, predictive, stale);
   const key = presentation.key;
   if (!icons.has(key)) {
     // HTML estático e classes vindas exclusivamente das tabelas de estados locais.

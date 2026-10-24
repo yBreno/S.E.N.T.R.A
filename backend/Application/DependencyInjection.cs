@@ -26,6 +26,9 @@ public static class DependencyInjection
         services.AddScoped<IRiskService, RiskService>();
         services.AddScoped<IEquipmentRiskService, EquipmentRiskService>();
         services.AddSingleton<PredictiveExecutionGate>();
+        services.AddSingleton<PredictiveExecutionState>();
+        services.TryAddSingleton<IPredictiveWriteCoordinator, InProcessPredictiveWriteCoordinator>();
+        services.AddScoped<IPredictiveOperationsService, PredictiveOperationsService>();
         services.AddScoped<IHeatmapService, HeatmapService>();
         services.AddScoped<IAnomalyService, AnomalyService>();
         services.AddScoped<IFailurePredictionService, FailurePredictionService>();

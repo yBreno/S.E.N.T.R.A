@@ -7,6 +7,7 @@ import DashboardHeader from '../components/dashboard/DashboardHeader.jsx';
 import DashboardIndicators from '../components/dashboard/DashboardIndicators.jsx';
 import ModuleBoundary from '../components/ModuleBoundary.jsx';
 import NetworkStatus from '../components/dashboard/NetworkStatus.jsx';
+import PredictiveOperations from '../components/dashboard/PredictiveOperations.jsx';
 import RecentAlerts from '../components/dashboard/RecentAlerts.jsx';
 const MapView = lazy(() => import('../components/map/MapView.jsx'));
 const EquipmentPage = lazy(() => import('./EquipmentPage.jsx'));
@@ -20,6 +21,7 @@ import { canMonitor, canMaintain } from '../services/auth.js';
 // Hooks personalizados
 import { useEndpointVerification } from '../hooks/useEndpointVerification.js';
 import { useHeatmap } from '../hooks/useHeatmap.js';
+import { usePredictiveOperations } from '../hooks/usePredictiveOperations.js';
 
 // Estilos
 import './DashboardPage.css';
@@ -33,6 +35,8 @@ export default function DashboardPage({ session, onLogout }) {
   const agents = active === 'agentes';
   const maintenance = active === 'manutencoes';
   const predictive = active === 'cidade-preditiva';
+  const central = monitoring && !inventory && !agents && !maintenance && !predictive;
+  const prevention = usePredictiveOperations(session, onLogout, central);
   const [inventorySaving, setInventorySaving] = useState(false);
   const verification = useEndpointVerification(session.token, onLogout, monitoring && !inventory && !agents && !maintenance && !predictive, canMaintain(session.user));
   const [mapFilters, setMapFilters] = useState(createEmptyFilters);
@@ -68,6 +72,11 @@ export default function DashboardPage({ session, onLogout }) {
     setRelatedEquipment(id); setActive(target); setMobileOpen(false); window.location.hash = target;
   }
 
+  function focusNeighborhood(label) {
+    setMapFilters(previous => ({ ...previous, neighborhood: label === 'Bairro não informado' ? UNKNOWN_FILTER_VALUE : neighborhoodFilterValue(label) }));
+    document.getElementById('mapa-operacional')?.scrollIntoView({ block: 'start' });
+  }
+
   return (
     <div className={`dashboard-layout ${collapsed ? 'sidebar-is-collapsed' : ''}`} id="dashboard">
       <a className="skip-link" href="#conteudo-operacional">Ir para o conteúdo</a>
@@ -84,7 +93,7 @@ export default function DashboardPage({ session, onLogout }) {
           <div className="operations-sync" aria-live="polite"><p>Indicadores da cidade inteira · Sincronização automática a cada {verification.intervalMs / 1000} s após cada ciclo.</p><p>{verification.updatedAt ? <>Último ciclo completo bem-sucedido: <time dateTime={verification.updatedAt.toISOString()}>{verification.updatedAt.toLocaleString('pt-BR')}</time></> : 'Ainda sem ciclo completo bem-sucedido.'}</p>{verification.error && <p role="alert">{verification.error}</p>}</div>
           <div className="operations-grid">
             <section className="map-panel" id="mapa-operacional" aria-labelledby="map-heading">
-              <MapView verification={verification} heatmap={heatmap} filters={mapFilters} onFiltersChange={setMapFilters} navigation={{ equipment: id => related('equipamentos', id), agent: id => related('agentes', id), maintenance: canMaintain(session.user) ? id => related('manutencoes', id) : null }} />
+              <MapView verification={verification} predictiveResult={prevention.result} heatmap={heatmap} filters={mapFilters} onFiltersChange={setMapFilters} navigation={{ equipment: id => related('equipamentos', id), agent: id => related('agentes', id), maintenance: canMaintain(session.user) ? id => related('manutencoes', id) : null, predictive: () => related('cidade-preditiva', ''), neighborhood: focusNeighborhood }} />
             </section>
             <aside className="dashboard-secondary" aria-label="Resumo da operação">
               <RecentAlerts result={verification.results.find(item => item.id === 'alerts')} equipments={verification.results.find(item => item.id === 'equipments')?.items} loading={verification.loading} onEquipment={id => related('equipamentos', id)} />
@@ -92,12 +101,13 @@ export default function DashboardPage({ session, onLogout }) {
               <NetworkStatus result={dashboardResult} loading={verification.loading} />
             </aside>
           </div>
-          <CityOverview verification={verification} onNeighborhood={label => { setMapFilters(previous => ({ ...previous, neighborhood: label === 'Bairro não informado' ? UNKNOWN_FILTER_VALUE : neighborhoodFilterValue(label) })); document.getElementById('mapa-operacional')?.scrollIntoView({ block: 'start' }); }} />
+          <PredictiveOperations resource={prevention} onEquipment={id => related('equipamentos', id)} onNeighborhood={focusNeighborhood} onMaintenance={canMaintain(session.user) ? id => related('manutencoes', id) : null} onPredictive={() => related('cidade-preditiva', '')} />
+          <CityOverview verification={verification} onNeighborhood={focusNeighborhood} />
           </>}
           </Suspense></ModuleBoundary>
           <footer className="dashboard-footer">
             <span><span className="footer-location" />São Paulo, SP</span>
-            <span>{inventory || agents || maintenance ? 'Atualização manual do módulo' : 'Sincronização automática da Central'}{verification.updatedAt && <> · Último sucesso da Central: <time dateTime={verification.updatedAt.toISOString()}>
+            <span>{inventory || agents || maintenance || predictive ? 'Atualização manual do módulo' : 'Sincronização automática da Central'}{verification.updatedAt && <> · Último sucesso da Central: <time dateTime={verification.updatedAt.toISOString()}>
               {verification.updatedAt.toLocaleString('pt-BR')}
             </time></>}</span>
           </footer>

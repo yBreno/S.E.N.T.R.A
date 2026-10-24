@@ -19,13 +19,13 @@ export default function EquipmentMarkers({
     const state = getEquipmentState(record.status);
     const attention = maintenanceAttention(record);
     const badge = attention.immediate ? 'immediate' : attention.upcoming ? 'upcoming' : '';
-    const title = `${equipmentTypeLabel(record.type)}: ${displayText(record.serialNumber)} · ${state.label}${badge ? attention.immediate ? ' · Manutenção imediata' : ' · Manutenção vencida ou próxima' : ''}`;
+    const title = `${equipmentTypeLabel(record.type)}: ${displayText(record.serialNumber)} · ${state.label}${record.predictiveRisk ? ` · Risco preditivo alto${record.predictiveRisk.stale ? ' (leitura desatualizada)' : ''}` : ''}${badge ? attention.immediate ? ' · Manutenção imediata' : ' · Manutenção vencida ou próxima' : ''}`;
 
     return (
       <Marker
         key={record.id}
         position={record.position}
-        icon={getMarkerIcon('equipment', state, record.type, badge)}
+        icon={getMarkerIcon('equipment', state, record.type, badge, Boolean(record.predictiveRisk), record.predictiveRisk?.stale)}
         title={title}
         alt={title}
         eventHandlers={{

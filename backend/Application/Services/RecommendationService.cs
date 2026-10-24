@@ -14,8 +14,9 @@ namespace Application.Services;
 
 public class RecommendationService(IRecommendationRepository repo, IAgentRepository agents, IEquipmentRepository equipments,
     IUnitOfWork uow, IOptions<PredictiveSettings> options, TimeProvider clock, IMaintenanceService maintenance,
-    IMaintenanceRecordRepository maintenanceRecords) : IRecommendationService
+    IMaintenanceRecordRepository maintenanceRecords, IPredictiveWriteCoordinator coordinator) : IRecommendationService
 {
+    private Task<T> CoordinatedAsync<T>(Func<Task<T>> action, CancellationToken ct) => coordinator.ExecuteAsync(action, ct);
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
     private async Task<Recommendation> LoadAsync(Guid id, CancellationToken ct) =>
@@ -73,7 +74,9 @@ public class RecommendationService(IRecommendationRepository repo, IAgentReposit
         ExplanationJson = JsonSerializer.Serialize(explanation, Json)
     };
 
-    public async Task<IReadOnlyList<RecommendationResponseDto>> GenerateForRiskAsync(NeighborhoodRiskDto risk, CancellationToken ct = default)
+    public Task<IReadOnlyList<RecommendationResponseDto>> GenerateForRiskAsync(NeighborhoodRiskDto risk, CancellationToken ct = default) =>
+        CoordinatedAsync(() => GenerateForRiskCoreAsync(risk, ct), ct);
+    private async Task<IReadOnlyList<RecommendationResponseDto>> GenerateForRiskCoreAsync(NeighborhoodRiskDto risk, CancellationToken ct)
     {
         var s = options.Value;
         var created = new List<Recommendation>();
@@ -109,7 +112,9 @@ public class RecommendationService(IRecommendationRepository repo, IAgentReposit
         return await SaveAsync(created, ct);
     }
 
-    public async Task<RecommendationResponseDto?> CreateForAnomalyAsync(AnomalyDto a, CancellationToken ct = default)
+    public Task<RecommendationResponseDto?> CreateForAnomalyAsync(AnomalyDto a, CancellationToken ct = default) =>
+        CoordinatedAsync(() => CreateForAnomalyCoreAsync(a, ct), ct);
+    private async Task<RecommendationResponseDto?> CreateForAnomalyCoreAsync(AnomalyDto a, CancellationToken ct)
     {
         var type = a.Kind == "RepeatedFailure" ? RecommendationType.SendMaintenance : RecommendationType.DeployAgent;
         if (type == RecommendationType.SendMaintenance && a.EquipmentId is { } id && await HasMaintenanceAsync(id, ct)) return null;
@@ -139,7 +144,9 @@ public class RecommendationService(IRecommendationRepository repo, IAgentReposit
         return eq.Count > 0 ? (eq.Average(e => e.Address.Latitude), eq.Average(e => e.Address.Longitude)) : null;
     }
 
-    public async Task<RecommendationResponseDto?> CreateForPredictionAsync(FailurePredictionDto p, CancellationToken ct = default)
+    public Task<RecommendationResponseDto?> CreateForPredictionAsync(FailurePredictionDto p, CancellationToken ct = default) =>
+        CoordinatedAsync(() => CreateForPredictionCoreAsync(p, ct), ct);
+    private async Task<RecommendationResponseDto?> CreateForPredictionCoreAsync(FailurePredictionDto p, CancellationToken ct)
     {
         if (await HasMaintenanceAsync(p.EquipmentId, ct)) return null;
         if (await repo.ExistsPendingAsync(RecommendationType.SendMaintenance, p.Neighborhood, p.EquipmentId, ct)) return null;
@@ -152,7 +159,9 @@ public class RecommendationService(IRecommendationRepository repo, IAgentReposit
     private async Task<bool> HasMaintenanceAsync(Guid equipmentId, CancellationToken ct) =>
         (await maintenanceRecords.GetByEquipmentAsync(equipmentId, ct)).Any(m => m.Status != MaintenanceStatus.Closed);
 
-    public async Task<RecommendationResponseDto?> CreateForEquipmentRiskAsync(EquipmentRiskDto risk, CancellationToken ct = default)
+    public Task<RecommendationResponseDto?> CreateForEquipmentRiskAsync(EquipmentRiskDto risk, CancellationToken ct = default) =>
+        CoordinatedAsync(() => CreateForEquipmentRiskCoreAsync(risk, ct), ct);
+    private async Task<RecommendationResponseDto?> CreateForEquipmentRiskCoreAsync(EquipmentRiskDto risk, CancellationToken ct)
     {
         if (risk.Level != RiskLevel.High || risk.Status is not (EquipmentStatus.Operational or EquipmentStatus.Malfunctioning)) return null;
         if (await HasMaintenanceAsync(risk.EquipmentId, ct) ||

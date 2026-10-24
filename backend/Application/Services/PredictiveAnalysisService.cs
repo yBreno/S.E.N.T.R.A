@@ -7,12 +7,22 @@ namespace Application.Services;
 
 public class PredictiveAnalysisService(IFailurePredictionService predictions, IAnomalyService anomalies, IRiskService risk,
     IRecommendationService recommendations, IAlertRepository alerts, IUnitOfWork uow,
-    IEquipmentRiskService equipmentRisk, PredictiveExecutionGate gate) : IPredictiveAnalysisService
+    IEquipmentRiskService equipmentRisk, PredictiveExecutionGate gate, IPredictiveWriteCoordinator coordinator,
+    PredictiveExecutionState state) : IPredictiveAnalysisService
 {
-    public async Task<PredictiveAnalysisResultDto> RunAsync(CancellationToken ct = default)
+    public Task<PredictiveAnalysisResultDto> RunAsync(CancellationToken ct = default) => RunAsync("Manual", ct);
+    public Task<PredictiveAnalysisResultDto> RunAutomaticAsync(CancellationToken ct = default) => RunAsync("Automatic", ct);
+    private async Task<PredictiveAnalysisResultDto> RunAsync(string origin, CancellationToken ct)
     {
         await gate.Semaphore.WaitAsync(ct);
-        try { return await AnalyzeAsync(ct); }
+        state.Start(origin);
+        try
+        {
+            var result = await coordinator.ExecuteAsync(() => AnalyzeAsync(ct), ct);
+            state.Complete(result);
+            return result;
+        }
+        catch { state.Fail(); throw; }
         finally { gate.Semaphore.Release(); }
     }
 

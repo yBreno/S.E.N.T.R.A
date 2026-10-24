@@ -12,11 +12,12 @@ export const markerSymbols = Object.freeze({
   PoliceOfficer: '<path d="m12 2 3 5 6 1-4 5 1 7-6-3-6 3 1-7-4-5 6-1z"/>',
   Unknown: '<rect x="4" y="4" width="16" height="16"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4m0 3v1"/>'
 });
-export function markerPresentation(kind, type, state, attention = '') {
+export function markerPresentation(kind, type, state, attention = '', predictive = false, stale = false) {
   const group = kind === 'equipment' ? 'equipment' : 'agent';
   const known = group === 'equipment' ? ['Camera', 'Radar', 'Sensor', 'Vehicle', 'ElectricalScooter', 'ParkingMeter', 'Motorcycle', 'AutonomousVehicle'] : ['TrafficAgent', 'MunicipalGuard', 'PoliceOfficer'];
   const name = known.includes(type) ? type : 'Unknown';
   const tone = ['operational', 'malfunctioning', 'maintenance', 'deactivated', 'stolen', 'not-installed', 'available', 'busy', 'offline'].includes(state?.tone) ? state.tone : 'unknown';
   const badge = ['immediate', 'upcoming'].includes(attention) ? attention : '';
-  return { key: `${group}:${name}:${tone}:${badge}`, className: `operational-marker marker-${group} type-${name} state-${tone}${badge ? ` attention-${badge}` : ''}`, html: `<svg viewBox="0 0 24 24" aria-hidden="true">${markerSymbols[name]}</svg>` };
+  const prediction = group === 'equipment' && predictive === true;
+  return { key: `${group}:${name}:${tone}:${badge}${prediction ? stale ? ':predictive-stale' : ':predictive' : ''}`, className: `operational-marker marker-${group} type-${name} state-${tone}${badge ? ` attention-${badge}` : ''}${prediction ? ` predictive-high${stale ? ' predictive-stale' : ''}` : ''}`, html: `<svg viewBox="0 0 24 24" aria-hidden="true">${markerSymbols[name]}</svg>${prediction ? '<span class="predictive-marker-badge" aria-hidden="true">P</span>' : ''}` };
 }

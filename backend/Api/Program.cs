@@ -25,6 +25,12 @@ DemoApiConfiguration.RegisterReadOnlyPersistence(builder.Services, isDemo);
 builder.Services.Configure<PredictiveSettings>(builder.Configuration.GetSection(PredictiveSettings.SectionName));
 builder.Services.Configure<SimulationSettings>(builder.Configuration.GetSection(SimulationSettings.SectionName));
 DemoApiConfiguration.RegisterSimulation(builder.Services, isDemo);
+builder.Services.AddOptions<PredictiveAutomationSettings>()
+    .Bind(builder.Configuration.GetSection(PredictiveAutomationSettings.SectionName))
+    .Validate(s => s.HasValidInterval, "PredictiveAutomation:IntervalMinutes deve estar entre 15 e 1440 minutos.")
+    .Validate(s => !isDemo || !s.Enabled, "Ambiente Demo nao permite automacao preditiva.")
+    .ValidateOnStart();
+if (!isDemo) builder.Services.AddHostedService<PredictiveAutomationWorker>();
 
 // ---- JWT (a Key vem de user-secrets / variavel de ambiente: Jwt__Key)
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));

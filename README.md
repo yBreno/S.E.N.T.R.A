@@ -300,9 +300,42 @@ na sidebar ou `http://127.0.0.1:5173/#cidade-preditiva`. A consulta inicial é s
 
 Sem migration nova. Use frontend e backend desta versão juntos. Mantenha `Simulation__Enabled=false`
 em uma operação real: os eventos já persistidos não têm marca de procedência e podem incluir simulação
-anterior. A análise é serializada nesta instância, sem lock distribuído para múltiplas réplicas.
+anterior. A Sprint 06 acrescenta a coordenação SQL entre instâncias, descrita abaixo.
 Decisões, limites, arquivos, endpoints e testes estão no
 [relatório da Sprint 05](docs/reports/sprint-05-cidade-preditiva.md).
+
+### Automação e Central preditiva — Sprint 06
+
+A Central agora consulta riscos e recomendações sem executar análises. **Prevenção operacional**
+mostra equipamentos de risco alto, bairros prioritários, recomendações e estado da execução.
+No mapa, **P** indica risco preditivo alto; a cor continua representando a situação operacional.
+Círculos tracejados indicam bairros de índice alto/crítico. Dados preditivos têm horário próprio,
+atualização manual e periódica a cada cinco minutos; falhas preservam a leitura anterior com aviso.
+
+A automação permanece **desligada por padrão**, independentemente da consulta das páginas:
+
+```text
+PredictiveAutomation__Enabled=false
+PredictiveAutomation__IntervalMinutes=60
+```
+
+Intervalos aceitos: 15–1440 minutos, validados na inicialização. Alterações exigem restart.
+Se habilitada conscientemente em ambiente validado, a primeira análise só ocorre após um intervalo
+completo; o próximo intervalo começa depois do ciclo anterior. Falha/cancelamento não derruba a API.
+O ambiente Demo proíbe automação. Nenhuma configuração Azure foi modificada ou ativada nesta sprint.
+
+SQL Server coordena análise e geração de recomendações com bloqueio transacional compartilhado
+entre processos, sem migration nova. Conflito de bloqueio retorna 409; não há fallback inseguro.
+Provedor sem coordenação distribuída não inicia o worker. Todas as instâncias que gravam recomendações
+precisam estar nesta versão antes de habilitá-lo; leituras não criam ordens ou aceitam recomendações.
+
+`GET /api/predictions/execution-status` e `GET /api/dashboard/predictive` exigem Monitoring.
+O estado da última execução é **em memória da instância**, perdido no restart e sem visão global
+de outras réplicas. O agendamento também é local: não garante uma única execução global por intervalo
+nem recupera ciclos perdidos com a aplicação suspensa. A proteção SQL impede sobreposição das escritas
+participantes e reaproveita pendências, mas não remove duplicatas legadas.
+Veja testes, limitações e checklist de produção no
+[relatório da Sprint 06](docs/reports/sprint-06-automacao-preditiva.md).
 
 ### Configuração privada
 
@@ -329,9 +362,12 @@ dotnet build backend/Solution/Solution.slnx --no-restore
 dotnet test backend/Tests/Tests.csproj --no-build --no-restore
 ```
 
-A validação da Sprint 05 aprovou build/lint frontend, **156 testes frontend** e **215 testes
+A validação da Sprint 06 aprovou build/lint frontend, **164 testes frontend** e **235 testes
 backend**. A suíte HTTP usa controllers reais, JWT e Kestrel com persistência InMemory, sem iniciar a API
 normal ou acessar conexões privadas. Modelo SQL e snapshot também são conferidos sem conexão.
+Na Sprint 06, dois processos independentes no mesmo LocalDB confirmaram bloqueio SQL, repetição sem
+novas pendências e rollback em falha/cancelamento. No Chrome, a Central preservou situação operacional,
+exibiu riscos por equipamento/bairro e passou por carga, vazio, erro/recuperação e permissões.
 Na Sprint 05, o Chrome com API real e banco novo exclusivo no SQL Server LocalDB validou riscos,
 fatores, análise repetida, aceite sem duplicação de ordem, navegação à manutenção, permissões,
 carregamento, falha parcial/recuperação e larguras 320/390/768/1440 px, sem exceções JavaScript.
@@ -373,8 +409,8 @@ exceções JavaScript ou transbordamento horizontal da página. Isso não homolo
 - Os índices preditivos são heurísticos; MTBF e anomalias de volume usam estatística descritiva,
   sem modelo calibrado, garantia de ocorrência futura ou análise numérica de payloads de sensores.
   Cobertura de agentes usa posição/disponibilidade declaradas; despacho automático não foi implementado.
-  Unicidade de recomendações entre múltiplas instâncias exige coordenação distribuída ou índice SQL
-  após auditoria das pendências existentes. Ordens ativas continuam protegidas pelo índice SQL existente.
+  A coordenação SQL da Sprint 06 exige todos os escritores atualizados e o mesmo banco/recurso de bloqueio.
+  Duplicatas legadas exigem auditoria; ordens ativas continuam protegidas pelo índice SQL existente.
 - A janela padrão de ocorrências do calor é de sete dias. Dados DEMO antigos podem deixar de aparecer;
   a carga idempotente não renova datas já persistidas.
 - Confirmar requisitos no enunciado oficial antes de ampliar tipos de equipamento ou funcionalidades opcionais.

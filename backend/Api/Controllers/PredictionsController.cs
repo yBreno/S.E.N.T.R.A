@@ -11,8 +11,12 @@ namespace Api.Controllers;
 public class PredictionsController(
     IAnomalyService anomalies,
     IFailurePredictionService failures,
-    IPredictiveAnalysisService analysis, IEquipmentRiskService equipmentRisk) : ControllerBase
+    IPredictiveAnalysisService analysis, IEquipmentRiskService equipmentRisk, IPredictiveOperationsService operations) : ControllerBase
 {
+    [HttpGet("execution-status")]
+    [Authorize(Roles = Roles.Monitoring)]
+    public ActionResult<PredictiveAutomationStatusDto> GetExecutionStatus() => Ok(operations.GetStatus());
+
     /// <summary>Índice heurístico por equipamento (0–100), fatores e suficiência do histórico; não é probabilidade.</summary>
     [HttpGet("equipment-risk")]
     public async Task<ActionResult<IReadOnlyList<EquipmentRiskDto>>> GetEquipmentRisk(CancellationToken ct) =>
