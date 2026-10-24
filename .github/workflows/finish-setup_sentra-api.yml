@@ -1,53 +1,63 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy ASP.Net Core app to Azure Web App - sentra-api
+name: Build and deploy S.E.N.T.R.A. API
 
 on:
   push:
     branches:
-      - 'finish-setup'
+      - finish-setup
+    paths:
+      - "backend/**"
+      - ".github/workflows/finish-setup_sentra-api.yml"
+
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up .NET Core
+      - name: Show deployed commit
+        run: git rev-parse HEAD
+
+      - name: Set up .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.x'
+          dotnet-version: "10.x"
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
+      - name: Restore dependencies
+        run: dotnet restore backend/Api/Api.csproj
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+      - name: Build API
+        run: dotnet build backend/Api/Api.csproj --configuration Release --no-restore
 
-      - name: Upload artifact for deployment job
+      - name: Publish API
+        run: dotnet publish backend/Api/Api.csproj --configuration Release --no-restore --output "${{ runner.temp }}/sentra-api"
+
+      - name: Upload deployment artifact
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          name: sentra-api
+          path: ${{ runner.temp }}/sentra-api
 
   deploy:
     runs-on: windows-latest
     needs: build
+
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
-      - name: Download artifact from build job
+      - name: Download deployment artifact
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
-      
+          name: sentra-api
+          path: ./publish
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -55,11 +65,9 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_72B31B8F6CEA40368C2D41D6DE1D8CB4 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_74ECA71096924530BC85011EF2E91653 }}
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
+      - name: Deploy S.E.N.T.R.A. API
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'sentra-api'
-          slot-name: 'Production'
-          package: .
-          
+          app-name: sentra-api
+          slot-name: Production
+          package: ./publish
