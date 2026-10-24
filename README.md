@@ -349,6 +349,29 @@ Veja testes, limitações e checklist de produção no
 - Ferramentas DEMO são manuais e possuem verificações próprias de ambiente/destino.
   Não execute cargas, provisionamento ou migrations como parte de uma simples inicialização.
 
+## Demonstração para avaliação — Sprint 07
+
+O perfil manual `evaluation` reutiliza o carregador DEMO com 12 equipamentos,
+nove agentes, cinco bairros e históricos relacionados: falha com resposta corretiva,
+câmera operacional com risco explicado de 85/100, bairro prioritário e ordens
+agendadas/em andamento/concluídas. São 79 registros operacionais e cinco contas
+fictícias provisionadas separadamente. Nenhum dado é carregado ao iniciar a API.
+
+```powershell
+dotnet run --project backend/DemoData --no-build --no-restore -- --plan --profile evaluation
+```
+
+Esse comando apenas calcula o plano, sem acessar banco. A preparação exige banco
+LocalDB **novo**, prefixo `SENTRA_DEMO_Avaliacao_` e confirmação explícita; Azure e
+destinos remotos são recusados. O host DEMO mantém leitura por padrão. Um opt-in
+local permite somente o aceite preventivo do cenário C, com os roles existentes,
+gerando uma ordem sem duplicação. O frontend local com `VITE_DEMO_MODE=true` exibe
+**DEMO · DADOS SINTÉTICOS**; não alterar as variáveis de produção para o ensaio.
+
+Consulte a [preparação segura](docs/demo/preparacao-ambiente.md), o
+[roteiro de 6min30](docs/demo/roteiro-apresentacao.md) e o
+[relatório da Sprint 07](docs/reports/sprint-07-cenarios-demo.md).
+
 ## Build e testes
 
 Na raiz, após restaurar as dependências quando necessário (`npm.cmd ci --prefix frontend`
@@ -362,9 +385,12 @@ dotnet build backend/Solution/Solution.slnx --no-restore
 dotnet test backend/Tests/Tests.csproj --no-build --no-restore
 ```
 
-A validação da Sprint 06 aprovou build/lint frontend, **164 testes frontend** e **235 testes
+A validação da Sprint 07 aprovou build/lint frontend, **166 testes frontend** e **267 testes
 backend**. A suíte HTTP usa controllers reais, JWT e Kestrel com persistência InMemory, sem iniciar a API
 normal ou acessar conexões privadas. Modelo SQL e snapshot também são conferidos sem conexão.
+Na Sprint 07, bancos novos exclusivos LocalDB e a API DEMO real confirmaram integridade,
+carga repetida sem inserções, aceite único preservado na recarga, roles e navegação
+no Chrome em 320/390/768/1440 px. Nenhum banco Azure foi acessado.
 Na Sprint 06, dois processos independentes no mesmo LocalDB confirmaram bloqueio SQL, repetição sem
 novas pendências e rollback em falha/cancelamento. No Chrome, a Central preservou situação operacional,
 exibiu riscos por equipamento/bairro e passou por carga, vazio, erro/recuperação e permissões.
@@ -414,7 +440,8 @@ exceções JavaScript ou transbordamento horizontal da página. Isso não homolo
 - A janela padrão de ocorrências do calor é de sete dias. Dados DEMO antigos podem deixar de aparecer;
   a carga idempotente não renova datas já persistidas.
 - Confirmar requisitos no enunciado oficial antes de ampliar tipos de equipamento ou funcionalidades opcionais.
-- Concluir documentação de entrega, declaração das ferramentas de IA utilizadas e roteiro de demonstração.
+- Concluir documentação final de entrega e declaração das ferramentas de IA utilizadas;
+  o roteiro e a preparação DEMO estão disponíveis em `docs/demo/`.
 
 O [índice de documentação](docs/README.md) contextualiza os relatórios históricos e as
 mudanças posteriores. As contagens e autorizações antigas não devem ser tratadas como estado atual.

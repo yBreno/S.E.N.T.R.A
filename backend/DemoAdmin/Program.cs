@@ -4,9 +4,10 @@ using Infrastructure.Demo;
 using Microsoft.EntityFrameworkCore;
 
 // Manual provisioning only. No API startup, seeders, migrations, or JWT generation.
-if (args is not ["--create-admin", "--confirm", "SENTRA_DEMO_Stage73"])
+var evaluation = args is ["--create-evaluation-users", "--database", _, "--confirm", "DEMO"];
+if (!evaluation && args is not ["--create-admin", "--confirm", "SENTRA_DEMO_Stage73"])
 {
-    Console.Error.WriteLine("Use --create-admin --confirm SENTRA_DEMO_Stage73 somente apos autorizacao.");
+    Console.Error.WriteLine("Use --create-admin --confirm SENTRA_DEMO_Stage73 ou --create-evaluation-users --database SENTRA_DEMO_Avaliacao_<nome> --confirm DEMO somente apos autorizacao.");
     return 2;
 }
 try
@@ -16,17 +17,26 @@ try
     if (environment != "Demo" || (aspEnvironment is not null && aspEnvironment != "Demo"))
         throw new InvalidOperationException("Ambiente Demo obrigatorio.");
     var cs = Environment.GetEnvironmentVariable("SENTRA_DEMO_CONNECTION_STRING") ?? "";
-    DemoTargetGuard.Validate(environment, cs, DemoAdminProvisioner.Database);
+    if (evaluation) DemoEvaluationTargetGuard.Validate(environment, cs, args[2]);
+    else DemoTargetGuard.Validate(environment, cs, DemoAdminProvisioner.Database);
     var password = Environment.GetEnvironmentVariable("SENTRA_DEMO_ADMIN_PASSWORD");
     if (string.IsNullOrEmpty(password))
     {
         if (Console.IsInputRedirected) throw new InvalidOperationException("Use terminal interativo ou configuracao privada temporaria.");
-        password = ReadSecret("Senha do Admin DEMO: ");
+        password = ReadSecret(evaluation ? "Senha local das contas DEMO S07: " : "Senha do Admin DEMO: ");
         if (password != ReadSecret("Confirme a senha: ")) throw new InvalidOperationException("Confirmacao divergente.");
     }
     await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(cs).Options);
-    await DemoAdminProvisioner.CreateAsync(db, password, environment, confirmed: true);
-    Console.WriteLine("Admin DEMO criado. Login: admin.demo@sentra.invalid. Nenhuma senha ou token sera exibido.");
+    if (evaluation)
+    {
+        var count = await DemoAdminProvisioner.CreateEvaluationUsersAsync(db, password, environment, true);
+        Console.WriteLine($"Contas DEMO S07 inseridas: {count}. Logins: <role-em-minusculas>.s07@sentra.invalid. Senhas existentes preservadas; nenhuma senha ou token será exibido.");
+    }
+    else
+    {
+        await DemoAdminProvisioner.CreateAsync(db, password, environment, confirmed: true);
+        Console.WriteLine("Admin DEMO criado. Login: admin.demo@sentra.invalid. Nenhuma senha ou token sera exibido.");
+    }
     return 0;
 }
 catch (Exception ex)

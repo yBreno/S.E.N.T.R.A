@@ -20,18 +20,20 @@ public static class DemoApiConfiguration
         var enabled = configuration.GetValue<bool>("Demo:Enabled");
         if (!demo)
         {
-            if (enabled || !string.IsNullOrWhiteSpace(configuration["SENTRA_DEMO_CONNECTION_STRING"]) ||
+            if (enabled || configuration.GetValue<bool>("Demo:InteractiveAcceptance") || !string.IsNullOrWhiteSpace(configuration["SENTRA_DEMO_DATABASE"]) || !string.IsNullOrWhiteSpace(configuration["SENTRA_DEMO_CONNECTION_STRING"]) ||
                 !string.IsNullOrWhiteSpace(configuration["SENTRA_DEMO_JWT_KEY"]))
                 throw new InvalidOperationException("Configuracao dedicada DEMO exige ambiente Demo.");
             return false;
         }
         if (!enabled) throw new InvalidOperationException("Ambiente Demo exige Demo:Enabled explicito.");
-        if (configuration.GetValue<bool>("Simulation:Enabled", true) || configuration.GetValue<bool>("SeedAdmin:Enabled"))
+        if (configuration.GetValue<bool>("Simulation:Enabled", true) || configuration.GetValue<bool>("SeedAdmin:Enabled") || configuration.GetValue<bool>("PredictiveAutomation:Enabled"))
             throw new InvalidOperationException("Demo exige Simulation:Enabled e SeedAdmin:Enabled desativados.");
         var connection = configuration["SENTRA_DEMO_CONNECTION_STRING"];
         if (string.IsNullOrWhiteSpace(connection))
             throw new InvalidOperationException("Configure a conexao DEMO dedicada; nao ha fallback para a API existente.");
-        DemoTargetGuard.Validate("Demo", connection, Database);
+        var database = configuration["SENTRA_DEMO_DATABASE"] ?? Database;
+        DemoTargetGuard.Validate("Demo", connection, database);
+        if (configuration.GetValue<bool>("Demo:InteractiveAcceptance")) DemoEvaluationTargetGuard.Validate("Demo", connection, database);
         var key = configuration["SENTRA_DEMO_JWT_KEY"];
         if (string.IsNullOrWhiteSpace(key) || !ValidKey(key))
             throw new InvalidOperationException("Configure SENTRA_DEMO_JWT_KEY com pelo menos 32 bytes aleatorios em Base64.");
@@ -52,9 +54,13 @@ public static class DemoApiConfiguration
         if (!demo) services.AddHostedService<TelemetrySimulationWorker>();
     }
 
-    public static void RegisterReadOnlyPersistence(IServiceCollection services, bool demo)
+    public static void RegisterReadOnlyPersistence(IServiceCollection services, bool demo, bool interactiveAcceptance = false)
     {
-        if (demo) services.AddDbContext<AppDbContext>(options => options.AddInterceptors(new DemoReadOnlyInterceptor()));
+        if (!demo) return;
+        services.AddHttpContextAccessor();
+        services.Configure<DemoInteractionSettings>(settings => settings.InteractiveAcceptance = interactiveAcceptance);
+        services.AddDbContext<AppDbContext>((provider, options) => options.AddInterceptors(new DemoReadOnlyInterceptor(() =>
+            DemoInteractionSettings.CanPersist(provider.GetRequiredService<IHttpContextAccessor>().HttpContext, interactiveAcceptance))));
     }
 
     public static bool RunDevelopmentSeeders(IHostEnvironment environment, bool demo) => !demo && environment.IsDevelopment();

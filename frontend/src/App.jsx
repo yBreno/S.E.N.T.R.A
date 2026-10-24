@@ -11,12 +11,15 @@ import { apiConfig } from './config/api.js';
 
 // Estilos
 import './App.css';
+import './DemoBanner.css';
 
 function App() {
   const auth = useAuth();
   const Layout = auth.session && auth.canReadEquipments ? 'div' : AuthLayout;
 
   return (
+    <div className={apiConfig.demoMode ? 'demo-app' : undefined}>
+    {apiConfig.demoMode && <aside className="demo-banner" aria-label="Ambiente de demonstração"><strong>DEMO · DADOS SINTÉTICOS</strong><span>Ambiente local · não representa operação real</span></aside>}
     <Layout
       className={auth.session && auth.canReadEquipments ? 'app-dashboard' : 'app-shell'}
     >
@@ -50,6 +53,7 @@ function App() {
               <DashboardPage key={auth.session.token} session={auth.session} onLogout={auth.logout} />
             )}
     </Layout>
+    </div>
   );
 }
 

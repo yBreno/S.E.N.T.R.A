@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
 using Api.Controllers;
+using Api.Demo;
 using Api.Middleware;
 using Application;
 using Application.Security;
@@ -39,13 +40,15 @@ public sealed class EquipmentTestHost : IAsyncDisposable
             .Features.Get<IServerAddressesFeature>()!.Addresses.Single()) };
     }
 
-    public static async Task<EquipmentTestHost> StartAsync(int port = 0, string? localSqlDatabase = null)
+    public static async Task<EquipmentTestHost> StartAsync(int port = 0, string? localSqlDatabase = null, bool demo = false, bool interactiveDemo = false)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Testing", ContentRootPath = Path.GetTempPath(), Args = [] });
         builder.Logging.ClearProviders();
         builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
         var settings = new JwtSettings { Key = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)), Issuer = "sentra-sprint-tests", Audience = "sentra-sprint-tests" };
         builder.Services.AddApplication();
+        if (interactiveDemo && !demo) throw new ArgumentException("Interação de teste exige middleware Demo.");
+        if (demo) builder.Services.Configure<DemoInteractionSettings>(settings => settings.InteractiveAcceptance = interactiveDemo);
         builder.Services.Configure<JwtSettings>(options => { options.Key = settings.Key; options.Issuer = settings.Issuer; options.Audience = settings.Audience; });
         var databaseName = $"Sprint01_{Guid.NewGuid():N}";
         if (localSqlDatabase is not null && !System.Text.RegularExpressions.Regex.IsMatch(localSqlDatabase, "^SENTRA_Sprint0[3456]_[A-Za-z0-9_]+$"))
@@ -83,7 +86,9 @@ public sealed class EquipmentTestHost : IAsyncDisposable
         builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy.WithOrigins("http://127.0.0.1:5405").AllowAnyHeader().AllowAnyMethod()));
         var app = builder.Build();
         app.UseMiddleware<ExceptionHandlingMiddleware>();
-        app.UseCors(); app.UseAuthentication(); app.UseAuthorization(); app.MapControllers();
+        app.UseCors();
+        if (demo) app.UseMiddleware<DemoReadOnlyMiddleware>(); // Interceptor é validado separadamente e no host SQL real; carga InMemory permanece fora do HTTP.
+        app.UseAuthentication(); app.UseAuthorization(); app.MapControllers();
         await app.StartAsync();
         return new EquipmentTestHost(app, settings);
     }

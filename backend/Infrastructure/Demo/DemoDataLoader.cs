@@ -1,13 +1,16 @@
 using System.Data;
 using Domain.Entities;
+using Domain.Enums;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Demo;
 
-public sealed record DemoLoadResult(int Addresses, int Equipments, int Agents, int Incidents, int Alerts, int Maintenances)
+public enum DemoDataProfile { Legacy, Evaluation }
+public sealed record DemoLoadResult(int Addresses, int Equipments, int Agents, int Incidents, int Alerts, int Maintenances,
+    int Telemetry = 0, int Recommendations = 0)
 {
-    public int TotalInserted => Addresses + Equipments + Agents + Incidents + Alerts + Maintenances;
+    public int TotalInserted => Addresses + Equipments + Agents + Incidents + Alerts + Maintenances + Telemetry + Recommendations;
 }
 
 /// <summary>Explicit manual loader. Not registered in DI or called by API startup.</summary>
@@ -15,17 +18,17 @@ public static class DemoDataLoader
 {
     public static async Task<DemoLoadResult> ValidateAsync(AppDbContext db, DateTime utcNow,
         string environment, bool confirmed, CancellationToken ct = default,
-        Action<string>? targetValidator = null)
+        Action<string>? targetValidator = null, DemoDataProfile profile = DemoDataProfile.Legacy)
     {
         if (environment != "Demo" || !confirmed)
             throw new InvalidOperationException("Ambiente Demo e confirmacao explicita sao obrigatorios.");
         var sql = db.Database.IsSqlServer();
-        if (sql) (targetValidator ?? (connection => DemoTargetGuard.Validate(environment, connection)))(db.Database.GetConnectionString() ?? "");
+        if (sql) ValidateTarget(db, environment, targetValidator, profile);
         else if (db.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
             throw new InvalidOperationException("Provider nao autorizado para DEMO.");
         if (db.ChangeTracker.HasChanges())
             throw new InvalidOperationException("Use um contexto exclusivo, sem alteracoes pendentes.");
-        var plan = DemoDataPlan.Create(utcNow);
+        var plan = Plan(utcNow, profile);
         if (sql)
         {
             if (!await db.Database.CanConnectAsync(ct))
@@ -34,6 +37,7 @@ public static class DemoDataLoader
                 throw new InvalidOperationException("Schema pendente. A ferramenta nao executa migrations.");
         }
         await CheckUniqueKeysAsync(db, plan, ct);
+        await CheckEvaluationIsolationAsync(db, plan, ct);
         var addresses = await MissingAsync(db.Addresses, plan.Addresses,
             (a, b) => a.LocationReference == b.LocationReference, ct);
         var equipments = await MissingAsync(db.Equipments, plan.Equipments,
@@ -46,25 +50,27 @@ public static class DemoDataLoader
         var alerts = await MissingAsync(db.Alerts, plan.Alerts,
             (a, b) => a.Message == b.Message && a.EquipmentId == b.EquipmentId, ct);
         var maintenances = await MissingAsync(db.MaintenanceRecords, plan.Maintenances,
-            (a, b) => a.Description == b.Description && a.EquipmentId == b.EquipmentId && a.AgentId == null, ct);
-        return new(addresses.Count, equipments.Count, agents.Count, incidents.Count, alerts.Count, maintenances.Count);
+            (a, b) => a.Description == b.Description && a.EquipmentId == b.EquipmentId && a.AgentId == b.AgentId, ct);
+        var telemetry = await MissingAsync(db.TelemetryLogs, plan.Telemetry, (a, b) => a.EquipmentId == b.EquipmentId && a.EventType == b.EventType && a.PayloadData == b.PayloadData, ct);
+        var recommendations = await MissingAsync(db.Recommendations, plan.Recommendations, (a, b) => a.EquipmentId == b.EquipmentId && a.Type == b.Type && a.Reason == b.Reason && a.Neighborhood == b.Neighborhood, ct);
+        return new(addresses.Count, equipments.Count, agents.Count, incidents.Count, alerts.Count, maintenances.Count, telemetry.Count, recommendations.Count);
     }
 
     public static async Task<DemoLoadResult> ApplyAsync(AppDbContext db, DateTime utcNow,
         string environment, bool confirmed, CancellationToken ct = default,
-        Action<string>? targetValidator = null)
+        Action<string>? targetValidator = null, DemoDataProfile profile = DemoDataProfile.Legacy)
     {
         if (environment != "Demo" || !confirmed)
             throw new InvalidOperationException("Ambiente Demo e confirmacao explicita sao obrigatorios.");
         var sql = db.Database.IsSqlServer();
         // The only alternative is the existing test provider: never another persistent destination.
-        if (sql) (targetValidator ?? (connection => DemoTargetGuard.Validate(environment, connection)))(db.Database.GetConnectionString() ?? "");
+        if (sql) ValidateTarget(db, environment, targetValidator, profile);
         else if (db.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
             throw new InvalidOperationException("Provider nao autorizado para DEMO.");
         if (db.ChangeTracker.HasChanges())
             throw new InvalidOperationException("Use um contexto exclusivo, sem alteracoes pendentes.");
 
-        var plan = DemoDataPlan.Create(utcNow);
+        var plan = Plan(utcNow, profile);
         if (sql)
         {
             if (!await db.Database.CanConnectAsync(ct))
@@ -78,6 +84,7 @@ public static class DemoDataLoader
         {
             // Check ALL identities and unique business keys before tracking any insert.
             await CheckUniqueKeysAsync(db, plan, ct);
+            await CheckEvaluationIsolationAsync(db, plan, ct);
             var addresses = await MissingAsync(db.Addresses, plan.Addresses,
                 (a, b) => a.LocationReference == b.LocationReference, ct);
             var equipments = await MissingAsync(db.Equipments, plan.Equipments,
@@ -90,7 +97,9 @@ public static class DemoDataLoader
             var alerts = await MissingAsync(db.Alerts, plan.Alerts,
                 (a, b) => a.Message == b.Message && a.EquipmentId == b.EquipmentId, ct);
             var maintenances = await MissingAsync(db.MaintenanceRecords, plan.Maintenances,
-                (a, b) => a.Description == b.Description && a.EquipmentId == b.EquipmentId && a.AgentId == null, ct);
+                (a, b) => a.Description == b.Description && a.EquipmentId == b.EquipmentId && a.AgentId == b.AgentId, ct);
+            var telemetry = await MissingAsync(db.TelemetryLogs, plan.Telemetry, (a, b) => a.EquipmentId == b.EquipmentId && a.EventType == b.EventType && a.PayloadData == b.PayloadData, ct);
+            var recommendations = await MissingAsync(db.Recommendations, plan.Recommendations, (a, b) => a.EquipmentId == b.EquipmentId && a.Type == b.Type && a.Reason == b.Reason && a.Neighborhood == b.Neighborhood, ct);
 
             db.Addresses.AddRange(addresses);
             db.Equipments.AddRange(equipments);
@@ -98,9 +107,11 @@ public static class DemoDataLoader
             db.Incidents.AddRange(incidents);
             db.Alerts.AddRange(alerts);
             db.MaintenanceRecords.AddRange(maintenances);
+            db.TelemetryLogs.AddRange(telemetry);
+            db.Recommendations.AddRange(recommendations);
             await db.SaveChangesAsync(ct);
             if (transaction is not null) await transaction.CommitAsync(ct);
-            return new(addresses.Count, equipments.Count, agents.Count, incidents.Count, alerts.Count, maintenances.Count);
+            return new(addresses.Count, equipments.Count, agents.Count, incidents.Count, alerts.Count, maintenances.Count, telemetry.Count, recommendations.Count);
         }
         catch
         {
@@ -108,6 +119,49 @@ public static class DemoDataLoader
             db.ChangeTracker.Clear();
             throw;
         }
+    }
+
+    private static DemoDataPlan Plan(DateTime at, DemoDataProfile profile) => profile switch
+    {
+        DemoDataProfile.Legacy => DemoDataPlan.Create(at),
+        DemoDataProfile.Evaluation => DemoEvaluationPlan.Create(at),
+        _ => throw new ArgumentOutOfRangeException(nameof(profile))
+    };
+
+    private static void ValidateTarget(AppDbContext db, string environment, Action<string>? validator, DemoDataProfile profile)
+    {
+        var connection = db.Database.GetConnectionString() ?? "";
+        if (profile == DemoDataProfile.Evaluation)
+        {
+            if (validator is not null) throw new InvalidOperationException("Avaliação não admite substituição da proteção de destino.");
+            DemoEvaluationTargetGuard.Validate(environment, connection);
+        }
+        else (validator ?? (value => DemoTargetGuard.Validate(environment, value)))(connection);
+    }
+
+    private static async Task CheckEvaluationIsolationAsync(AppDbContext db, DemoDataPlan plan, CancellationToken ct)
+    {
+        if (plan.Dataset != DemoEvaluationPlan.Prefix) return;
+        var reservedDocuments = Enumerable.Range(0, 10).Select(DemoEvaluationPlan.SyntheticDocument).ToArray();
+        var telemetryIds = plan.Telemetry.Select(t => t.Id).ToArray();
+        if (await db.Equipments.AnyAsync(e => !e.SerialNumber.StartsWith(DemoEvaluationPlan.Prefix + "-"), ct) ||
+            await db.Agents.AnyAsync(a => !a.BadgeNumber.StartsWith(DemoEvaluationPlan.Prefix + "-") || !a.Name.StartsWith("DEMO ") || !reservedDocuments.Contains(a.Cpf) || a.UserId != null, ct) ||
+            await db.Addresses.AnyAsync(a => a.LocationReference == null || !a.LocationReference.StartsWith(DemoEvaluationPlan.Prefix + "/"), ct) ||
+            await db.Users.AnyAsync(u => !u.Name.StartsWith("DEMO ") || !u.Email.EndsWith(".invalid") || !reservedDocuments.Contains(u.Cpf), ct) ||
+            await db.Incidents.AnyAsync(i => i.Description == null || !i.Description.StartsWith(DemoEvaluationPlan.Prefix), ct) ||
+            await db.Alerts.AnyAsync(a => !a.Message.StartsWith(DemoEvaluationPlan.Prefix), ct) ||
+            await db.MaintenanceRecords.AnyAsync(m => !m.Description.StartsWith(DemoEvaluationPlan.Prefix), ct) ||
+            await db.Recommendations.AnyAsync(r => !r.Reason.StartsWith(DemoEvaluationPlan.Prefix), ct) ||
+            await db.TelemetryLogs.AnyAsync(t => !telemetryIds.Contains(t.Id), ct) ||
+            await db.AgentPositionLogs.AnyAsync(ct) || await db.Suppliers.AnyAsync(ct) || await db.OperationalBases.AnyAsync(ct))
+            throw new InvalidOperationException("Banco contém outro conjunto de dados; não misture a avaliação com carga existente.");
+        foreach (var r in plan.Recommendations)
+            if (await db.Recommendations.AnyAsync(x => x.Id != r.Id && x.Status == RecommendationStatus.Pending && x.Type == r.Type && x.EquipmentId == r.EquipmentId &&
+                (r.EquipmentId != null || x.Neighborhood == r.Neighborhood), ct))
+                throw new InvalidOperationException("Recomendação pendente externa ao plano; nenhuma duplicação permitida.");
+        foreach (var m in plan.Maintenances.Where(m => m.Status != MaintenanceStatus.Closed))
+            if (await db.MaintenanceRecords.AnyAsync(x => x.Id != m.Id && x.EquipmentId == m.EquipmentId && x.Status != MaintenanceStatus.Closed, ct))
+                throw new InvalidOperationException("Ordem ativa externa ao plano; nenhuma duplicação permitida.");
     }
 
     private static async Task<List<T>> MissingAsync<T>(DbSet<T> set, IReadOnlyList<T> planned,

@@ -18,6 +18,10 @@ public sealed record DemoDataPlan(
     IReadOnlyList<Alert> Alerts, IReadOnlyList<MaintenanceRecord> Maintenances)
 {
     public const string Prefix = "SENTRA-DEMO-v1";
+    public string Dataset { get; init; } = Prefix;
+    public DateTime? ReferenceUtc { get; init; }
+    public IReadOnlyList<TelemetryLog> Telemetry { get; init; } = [];
+    public IReadOnlyList<Recommendation> Recommendations { get; init; } = [];
 
     public static DemoDataPlan Create(DateTime utcNow)
     {
@@ -176,11 +180,18 @@ public sealed record DemoDataPlan(
             Street = a.Street, Neighborhood = a.Neighborhood, City = a.City, State = a.State,
             ZipCode = a.ZipCode, Country = a.Country, Latitude = a.Latitude, Longitude = a.Longitude
         });
-        foreach (var a in Agents) agentValidator.ValidateAndThrow(new CreateAgentDto
+        foreach (var a in Agents)
         {
-            Name = a.Name, Cpf = a.Cpf, BadgeNumber = a.BadgeNumber, Role = a.Role,
-            Availability = a.Availability, Neighborhood = a.Neighborhood, Latitude = a.Latitude, Longitude = a.Longitude
-        });
+            var result = agentValidator.Validate(new CreateAgentDto
+            {
+                Name = a.Name, Cpf = a.Cpf, BadgeNumber = a.BadgeNumber, Role = a.Role,
+                Availability = a.Availability, Neighborhood = a.Neighborhood, Latitude = a.Latitude, Longitude = a.Longitude
+            });
+            // Exceção exclusiva da fixture: não enfraquece o validador do cadastro real.
+            var errors = result.Errors.Where(e => !(Dataset == DemoEvaluationPlan.Prefix &&
+                DemoEvaluationPlan.IsSyntheticDocument(a.Cpf) && e.PropertyName == nameof(CreateAgentDto.Cpf))).ToList();
+            if (errors.Count > 0) throw new ValidationException(errors);
+        }
         foreach (var e in Equipments) equipmentValidator.ValidateAndThrow(new CreateEquipmentDto
         {
             SerialNumber = e.SerialNumber, Brand = e.Brand, Model = e.Model, AddressId = e.AddressId,
@@ -197,7 +208,9 @@ public sealed record DemoDataPlan(
         if (Equipments.Any(e => !Addresses.Any(a => a.Id == e.AddressId)) ||
             Incidents.Any(i => i.EquipmentId.HasValue && !Equipments.Any(e => e.Id == i.EquipmentId)) ||
             Alerts.Any(a => !Equipments.Any(e => e.Id == a.EquipmentId)) ||
-            Maintenances.Any(m => !Equipments.Any(e => e.Id == m.EquipmentId)) || Agents.Any(a => a.UserId.HasValue))
+            Maintenances.Any(m => !Equipments.Any(e => e.Id == m.EquipmentId) || (m.AgentId.HasValue && !Agents.Any(a => a.Id == m.AgentId))) ||
+            Telemetry.Any(t => !Equipments.Any(e => e.Id == t.EquipmentId)) ||
+            Recommendations.Any(r => r.EquipmentId.HasValue && !Equipments.Any(e => e.Id == r.EquipmentId)) || Agents.Any(a => a.UserId.HasValue))
             throw new InvalidOperationException("Relacionamento DEMO invalido.");
     }
 }

@@ -19,7 +19,7 @@ if (isDemo) builder.WebHost.UseUrls(DemoApiConfiguration.Url);
 // ---- Camadas
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-DemoApiConfiguration.RegisterReadOnlyPersistence(builder.Services, isDemo);
+DemoApiConfiguration.RegisterReadOnlyPersistence(builder.Services, isDemo, builder.Configuration.GetValue<bool>("Demo:InteractiveAcceptance"));
 
 // ---- Cidade Preditiva (pesos e limiares auditaveis + worker de telemetria simulada)
 builder.Services.Configure<PredictiveSettings>(builder.Configuration.GetSection(PredictiveSettings.SectionName));

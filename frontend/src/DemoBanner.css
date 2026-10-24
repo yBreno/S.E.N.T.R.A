@@ -1,0 +1,5 @@
+.demo-app { --demo-banner-height: 52px; }
+.demo-banner { position: sticky; top: 0; z-index: 1500; height: var(--demo-banner-height); box-sizing: border-box; display: grid; align-content: center; gap: 3px; padding: 7px 12px; background: #f5cb00; color: #111316; text-align: center; font-size: 12px; line-height: 16px; }
+.demo-app .dashboard-sidebar { top: var(--demo-banner-height); }
+.demo-app .sidebar-backdrop { top: var(--demo-banner-height); }
+.demo-app .dashboard-layout, .demo-app .app-shell { min-height: calc(100dvh - var(--demo-banner-height)); }
