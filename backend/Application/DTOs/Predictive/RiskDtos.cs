@@ -6,6 +6,7 @@ public record RiskFactorDto(string Name, string Label, double RawValue, string R
     double Points, string Rule, string RecordKind, int RecordCount, List<Guid> RecordIds);
 
 public record NeighborhoodRiskDto(string Neighborhood, double Score, RiskLevel Level, double Latitude, double Longitude,
-    DateTime EvaluatedAt, string Summary, List<RiskFactorDto> Factors);
+    DateTime EvaluatedAt, string Summary, List<RiskFactorDto> Factors,
+    DateTime? IncidentWindowFrom = null, DateTime? FailureWindowFrom = null);
 
 public record RiskSummaryDto(string Neighborhood, double Score, RiskLevel Level);

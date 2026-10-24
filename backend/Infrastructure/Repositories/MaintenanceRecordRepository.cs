@@ -7,6 +7,13 @@ namespace Infrastructure.Repositories;
 
 public class MaintenanceRecordRepository(AppDbContext context) : Repository<MaintenanceRecord>(context), IMaintenanceRecordRepository
 {
+    public Task<List<MaintenanceRecord>> GetRiskEvidenceAsync(DateTime from, DateTime to, CancellationToken ct = default) =>
+        Set.AsNoTracking().Where(m =>
+            (m.Kind == MaintenanceKind.Corrective && m.InitDate >= from && m.InitDate <= to) ||
+            (m.Kind == MaintenanceKind.Preventive && m.Status == MaintenanceStatus.Scheduled))
+            .Select(m => new MaintenanceRecord { Id = m.Id, EquipmentId = m.EquipmentId, Kind = m.Kind, Status = m.Status,
+                InitDate = m.InitDate, ScheduledDate = m.ScheduledDate }).ToListAsync(ct);
+
     private IQueryable<MaintenanceRecord> Detailed => Set.Include(m => m.Equipment);
 
     public override Task<MaintenanceRecord?> GetByIdAsync(Guid id, CancellationToken ct = default) =>

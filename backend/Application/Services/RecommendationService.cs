@@ -152,6 +152,17 @@ public class RecommendationService(IRecommendationRepository repo, IAgentReposit
     private async Task<bool> HasMaintenanceAsync(Guid equipmentId, CancellationToken ct) =>
         (await maintenanceRecords.GetByEquipmentAsync(equipmentId, ct)).Any(m => m.Status != MaintenanceStatus.Closed);
 
+    public async Task<RecommendationResponseDto?> CreateForEquipmentRiskAsync(EquipmentRiskDto risk, CancellationToken ct = default)
+    {
+        if (risk.Level != RiskLevel.High || risk.Status is not (EquipmentStatus.Operational or EquipmentStatus.Malfunctioning)) return null;
+        if (await HasMaintenanceAsync(risk.EquipmentId, ct) ||
+            await repo.ExistsPendingAsync(RecommendationType.SendMaintenance, risk.Neighborhood, risk.EquipmentId, ct)) return null;
+        var recommendation = Build(RecommendationType.SendMaintenance, risk.Neighborhood,
+            $"Inspecionar {risk.SerialNumber}: índice heurístico {risk.Score:0.#}/100. {risk.Summary}", risk.Score, risk.EquipmentId,
+            new { trigger = "EquipmentRisk", priority = "High", action = risk.RecommendedAction, assessment = risk });
+        return (await SaveAsync([recommendation], ct)).FirstOrDefault();
+    }
+
     private async Task<IReadOnlyList<RecommendationResponseDto>> SaveAsync(List<Recommendation> list, CancellationToken ct)
     {
         if (list.Count == 0) return [];

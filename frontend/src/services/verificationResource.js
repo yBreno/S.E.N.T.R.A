@@ -4,7 +4,7 @@ export function resolvePollingInterval(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 5000 && parsed <= 300000 ? Math.round(parsed) : 30000;
 }
-export function createVerificationResource({ load, onUnauthorized, intervalMs = 30000, now = () => new Date(), setTimer = setTimeout, clearTimer = clearTimeout }) {
+export function createVerificationResource({ load, onUnauthorized, intervalMs = 30000, poll = true, now = () => new Date(), setTimer = setTimeout, clearTimer = clearTimeout }) {
   let state = { loading: false, results: [], updatedAt: null, attemptedAt: null, error: '' };
   let running = false, timer = null, deadlineTimer = null, controller = null, generation = 0;
   const listeners = new Set();
@@ -40,7 +40,7 @@ export function createVerificationResource({ load, onUnauthorized, intervalMs = 
       clearTimer(deadline);
       current.signal.removeEventListener('abort', rejectOnAbort);
       if (deadlineTimer === deadline) deadlineTimer = null;
-      if (revision === generation) { controller = null; if (running) timer = setTimer(() => { timer = null; void request(); }, intervalMs); }
+      if (revision === generation) { controller = null; if (running && poll) timer = setTimer(() => { timer = null; void request(); }, intervalMs); }
     }
   }
   function start() {

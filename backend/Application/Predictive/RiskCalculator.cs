@@ -3,7 +3,8 @@ using Domain.Entities;
 using Domain.Enums;
 namespace Application.Predictive;
 
-public record RiskInput(DateTime At, IReadOnlyList<Incident> Incidents, IReadOnlyList<Alert> FailureAlerts, IReadOnlyList<Equipment> Equipments);
+public record RiskInput(DateTime At, IReadOnlyList<Incident> Incidents, IReadOnlyList<Alert> FailureAlerts, IReadOnlyList<Equipment> Equipments,
+    IReadOnlyList<Agent>? Agents = null);
 
 /// <summary>
 /// Indice de risco por bairro (0-100), transparente e baseado em regras:
@@ -29,19 +30,20 @@ public static class RiskCalculator
     public static List<NeighborhoodRiskDto> Calculate(RiskInput input, PredictiveSettings s)
     {
         var cmp = StringComparer.OrdinalIgnoreCase;
-        var at = input.At;
+        var at = DateTime.SpecifyKind(input.At, DateTimeKind.Utc);
         var incidents = input.Incidents.Where(i => i.OccurredAt >= at.AddDays(-s.DensityWindowDays) && i.OccurredAt <= at).ToList();
         var alerts = input.FailureAlerts.Where(a => a.CreatedAt >= at.AddDays(-s.FailureWindowDays) && a.CreatedAt <= at).ToList();
         var equipments = input.Equipments.Where(e => e.Address != null && !string.IsNullOrWhiteSpace(e.Address.Neighborhood)).ToList();
         var equipById = equipments.ToDictionary(e => e.Id);
 
         var names = new Dictionary<string, string>(cmp);
-        foreach (var n in incidents.Select(i => i.Neighborhood).Concat(equipments.Select(e => e.Address.Neighborhood)))
+        foreach (var n in incidents.Select(i => i.Neighborhood).Concat(equipments.Select(e => e.Address.Neighborhood)).Concat(input.Agents?.Select(a => a.Neighborhood) ?? []))
             if (!string.IsNullOrWhiteSpace(n)) names.TryAdd(n.Trim(), n.Trim());
         if (names.Count == 0) return [];
 
         var incByN = incidents.ToLookup(i => i.Neighborhood.Trim(), cmp);
         var eqByN = equipments.ToLookup(e => e.Address.Neighborhood.Trim(), cmp);
+        var agentsByNeighborhood = input.Agents?.ToLookup(a => a.Neighborhood.Trim(), cmp);
         var recurring = alerts.GroupBy(a => a.EquipmentId).Where(g => g.Count() >= s.RecurringFailureMinCount).Select(g => g.Key).ToHashSet();
         var recByN = alerts.Where(a => recurring.Contains(a.EquipmentId) && equipById.ContainsKey(a.EquipmentId))
             .ToLookup(a => equipById[a.EquipmentId].Address.Neighborhood.Trim(), cmp);
@@ -88,7 +90,20 @@ public static class RiskCalculator
                     "fator = indisponiveis / total de equipamentos do bairro", "Equipment", unavailable.Select(e => e.Id).ToList()),
             };
 
-            var score = Math.Round(factors.Sum(f => f.Points), 1);
+            // Cobertura observada agora, não escala de serviço nem reconstrução histórica.
+            // Com agentes disponíveis como fonte, os pesos anteriores ocupam 85% do índice.
+            if (input.Agents is not null)
+            {
+                factors = factors.Select(f => f with { Weight = f.Weight * .85, Points = Math.Round(f.Points * .85, 2) }).ToList();
+                var local = agentsByNeighborhood![r.Name].ToList();
+                var available = local.Where(a => a.Availability == AgentAvailability.Available).ToList();
+                var gap = local.Count == 0 ? 1 : 1 - (double)available.Count / local.Count;
+                factors.Add(F("AgentCoverageGap", "Lacuna de cobertura de agentes", available.Count,
+                    $"{available.Count} de {local.Count} agente(s) cadastrado(s) no bairro disponível(is) agora; posição declarada, sem garantia de cobertura geográfica ou atualização recente.",
+                    gap, .15, "sem agentes no bairro: 1; caso contrário: 1 − disponíveis / total; peso 15 pontos. Não usa CPF nem histórico de localização.", "Agent", local.Select(a => a.Id).ToList()));
+            }
+
+            var score = Math.Clamp(Math.Round(factors.Sum(f => f.Points), 1), 0, 100);
             var level = LevelOf(score, s);
             var top = factors.OrderByDescending(f => f.Points).First();
             var pts = r.Inc.Select(i => (Lat: i.Latitude, Lon: i.Longitude))
@@ -96,7 +111,8 @@ public static class RiskCalculator
 
             result.Add(new NeighborhoodRiskDto(r.Name, score, level,
                 pts.Count > 0 ? pts.Average(p => p.Lat) : 0, pts.Count > 0 ? pts.Average(p => p.Lon) : 0, at,
-                $"Risco {level} ({score:0.#}/100) em {r.Name}. Principal fator: {top.Label} ({top.Points:0.#} pts).", factors));
+                $"Índice de exposição {level} ({score:0.#}/100) em {r.Name}. Principal fator: {top.Label} ({top.Points:0.#} pts). Incidentes: {s.DensityWindowDays} dias; falhas: {s.FailureWindowDays} dias; disponibilidade e cobertura atuais. Não representa probabilidade.", factors,
+                at.AddDays(-s.DensityWindowDays), at.AddDays(-s.FailureWindowDays)));
         }
         return result;
     }

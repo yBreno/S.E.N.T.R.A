@@ -16,7 +16,8 @@ public class RecommendationRepository(AppDbContext context) : Repository<Recomme
     }
 
     public Task<bool> ExistsPendingAsync(RecommendationType type, string neighborhood, Guid? equipmentId, CancellationToken ct = default) =>
-        Set.AnyAsync(r => r.Status == RecommendationStatus.Pending && r.Type == type && r.Neighborhood == neighborhood && r.EquipmentId == equipmentId, ct);
+        Set.AnyAsync(r => r.Status == RecommendationStatus.Pending && r.Type == type && r.EquipmentId == equipmentId &&
+            (equipmentId != null || r.Neighborhood == neighborhood), ct);
 
     public Task<int> CountPendingAsync(CancellationToken ct = default) => Set.CountAsync(r => r.Status == RecommendationStatus.Pending, ct);
 }

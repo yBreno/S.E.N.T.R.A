@@ -21,7 +21,7 @@ const groups = [
     { label: 'Alertas e ocorrências', icon: 'alerts' }
   ] },
   { label: 'Inteligência', items: [
-    { label: 'Cidade preditiva', icon: 'predictive' }, { label: 'Relatórios e indicadores', icon: 'report' }
+    { label: 'Cidade preditiva', icon: 'predictive', target: 'cidade-preditiva' }, { label: 'Relatórios e indicadores', icon: 'report' }
   ] },
   { label: 'Sistema', items: [
     { label: 'Usuarios(Apenas ADM)', icon: 'user' }

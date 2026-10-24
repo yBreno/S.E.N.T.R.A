@@ -36,7 +36,7 @@ public class RecommendationsController(IRecommendationService service) : Control
         return Ok(await service.GetByIdAsync(id, maintenanceOnly, ct));
     }
 
-    /// <summary>Aceita a recomendacao: desloca o agente sugerido (Busy) ou agenda manutencao preventiva no equipamento.</summary>
+    /// <summary>Registra aceite de reforço para avaliação operacional; para equipamento, reutiliza o fluxo de manutenção sem duplicar ordem ativa. Não desloca agentes automaticamente.</summary>
     [HttpPost("{id:guid}/accept")]
     [Authorize(Roles = Roles.Managers)]
     public async Task<ActionResult<RecommendationResponseDto>> Accept(Guid id, CancellationToken ct) =>

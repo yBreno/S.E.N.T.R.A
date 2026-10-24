@@ -9,6 +9,11 @@ public interface IRiskService
     Task<NeighborhoodRiskDto> GetByNeighborhoodAsync(string neighborhood, DateTime? at = null, CancellationToken ct = default);
 }
 
+public interface IEquipmentRiskService
+{
+    Task<IReadOnlyList<EquipmentRiskDto>> GetAllAsync(CancellationToken ct = default);
+}
+
 public interface IHeatmapService
 {
     Task<HeatmapDto> GetAsync(HeatmapQueryDto query, CancellationToken ct = default);
@@ -33,6 +38,7 @@ public interface IRecommendationService
     Task<IReadOnlyList<RecommendationResponseDto>> GenerateForRiskAsync(NeighborhoodRiskDto risk, CancellationToken ct = default);
     Task<RecommendationResponseDto?> CreateForAnomalyAsync(AnomalyDto anomaly, CancellationToken ct = default);
     Task<RecommendationResponseDto?> CreateForPredictionAsync(FailurePredictionDto prediction, CancellationToken ct = default);
+    Task<RecommendationResponseDto?> CreateForEquipmentRiskAsync(EquipmentRiskDto risk, CancellationToken ct = default);
 }
 
 public interface IIncidentService

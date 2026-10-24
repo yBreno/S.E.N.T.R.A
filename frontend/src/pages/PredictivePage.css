@@ -1,0 +1,14 @@
+.predictive-page .predictive-card { border-top: 1px solid var(--border); padding: 20px 0; min-width: 0; overflow-wrap: anywhere; }
+.predictive-card-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.predictive-card-heading h3 { margin: 0; font-size: 1rem; }
+.predictive-card > p, .predictive-confirmation p { font-size: .88rem; line-height: 1.65; }
+.predictive-page .inventory-details { margin-top: 24px; }
+.predictive-factors { margin: 16px 0; font-size: .85rem; }
+.predictive-page summary { cursor: pointer; color: var(--accent); padding: 8px 0; }
+.predictive-page summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.predictive-factors li { padding: 8px 0; line-height: 1.65; }
+.predictive-factors li p { margin: 5px 0; }
+.predictive-caution, .predictive-page .risk-high, .predictive-page .risk-critical { color: var(--accent); }
+.predictive-page .risk-medium { color: #ded5a6; }
+.predictive-confirmation { border: 1px solid var(--accent); padding: 20px; margin: 20px 0; border-radius: 5px; scroll-margin-top: 20px; }
+@media (max-width: 760px) { .predictive-card-heading { align-items: flex-start; flex-direction: column; } }

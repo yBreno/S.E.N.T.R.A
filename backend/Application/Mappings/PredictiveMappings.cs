@@ -15,10 +15,15 @@ public static class PredictiveMappings
         JsonElement? explanation = null;
         if (!string.IsNullOrWhiteSpace(r.ExplanationJson))
         {
-            using var doc = JsonDocument.Parse(r.ExplanationJson);
-            explanation = doc.RootElement.Clone();
+            try
+            {
+                using var doc = JsonDocument.Parse(r.ExplanationJson);
+                explanation = doc.RootElement.Clone();
+            }
+            catch (JsonException) { /* Legado inválido: mantém a recomendação visível sem inventar evidências. */ }
         }
         return new RecommendationResponseDto(r.Id, r.Type, r.Neighborhood, r.Reason, r.Status, r.RiskScore, r.EquipmentId,
-            r.CreatedAt, r.ResolvedAt, explanation);
+            DateTime.SpecifyKind(r.CreatedAt, DateTimeKind.Utc),
+            r.ResolvedAt.HasValue ? DateTime.SpecifyKind(r.ResolvedAt.Value, DateTimeKind.Utc) : null, explanation);
     }
 }

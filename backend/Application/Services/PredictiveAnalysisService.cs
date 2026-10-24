@@ -6,11 +6,22 @@ using Domain.IRepositories;
 namespace Application.Services;
 
 public class PredictiveAnalysisService(IFailurePredictionService predictions, IAnomalyService anomalies, IRiskService risk,
-    IRecommendationService recommendations, IAlertRepository alerts, IUnitOfWork uow) : IPredictiveAnalysisService
+    IRecommendationService recommendations, IAlertRepository alerts, IUnitOfWork uow,
+    IEquipmentRiskService equipmentRisk, PredictiveExecutionGate gate) : IPredictiveAnalysisService
 {
     public async Task<PredictiveAnalysisResultDto> RunAsync(CancellationToken ct = default)
     {
+        await gate.Semaphore.WaitAsync(ct);
+        try { return await AnalyzeAsync(ct); }
+        finally { gate.Semaphore.Release(); }
+    }
+
+    private async Task<PredictiveAnalysisResultDto> AnalyzeAsync(CancellationToken ct)
+    {
         int alertsCreated = 0, recsCreated = 0;
+
+        foreach (var assessment in (await equipmentRisk.GetAllAsync(ct)).Where(r => r.Level == RiskLevel.High))
+            if (await recommendations.CreateForEquipmentRiskAsync(assessment, ct) is not null) recsCreated++;
 
         // 1) Previsao MTBF -> alerta preventivo + recomendacao de manutencao
         var atRisk = (await predictions.PredictAsync(true, ct)).ToList();

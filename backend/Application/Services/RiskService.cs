@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace Application.Services;
 
 public class RiskService(IIncidentRepository incidents, IAlertRepository alerts, IEquipmentRepository equipments,
-    IOptions<PredictiveSettings> options, TimeProvider clock) : IRiskService
+    IOptions<PredictiveSettings> options, TimeProvider clock, IAgentRepository? agents = null) : IRiskService
 {
     private async Task<List<NeighborhoodRiskDto>> BuildAsync(DateTime? at, CancellationToken ct)
     {
@@ -16,7 +16,8 @@ public class RiskService(IIncidentRepository incidents, IAlertRepository alerts,
         var inc = await incidents.SearchAsync(new IncidentFilter(when.AddDays(-s.DensityWindowDays), when, null, null), ct);
         var failures = await alerts.GetFailureAlertsAsync(when.AddDays(-s.FailureWindowDays), ct);
         var eq = await equipments.GetAllAsync(ct); // com Address
-        return RiskCalculator.Calculate(new RiskInput(when, inc, failures, eq), s).OrderByDescending(r => r.Score).ToList();
+        var coverage = agents is null ? null : await agents.GetAllAsync(ct);
+        return RiskCalculator.Calculate(new RiskInput(when, inc, failures, eq, coverage), s).OrderByDescending(r => r.Score).ToList();
     }
 
     public async Task<IReadOnlyList<NeighborhoodRiskDto>> GetAllAsync(DateTime? at = null, CancellationToken ct = default) => await BuildAsync(at, ct);

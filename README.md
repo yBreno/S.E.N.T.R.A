@@ -10,7 +10,7 @@ Integra inventário, monitoramento geográfico e análise preditiva explicável.
 | --- | --- | --- |
 | Inventário Inteligente da Cidade | Equipamentos e agentes: CRUD e estados; endereços; vínculo de veículos; manutenção agendada, em andamento e concluída | Gestão de equipamentos e agentes; manutenção preventiva/corretiva com listagem, filtros, detalhes, histórico, agendamento, início e conclusão |
 | Centro de Operações da Cidade | Dashboard, alertas, ocorrências, telemetria e localização de agentes; consulta operacional sem executar análises preditivas | Indicadores, mapa com símbolos por tipo/estado, filtros, alertas reais, manutenção em destaque, atenção por bairro e polling configurável |
-| Cidade Preditiva | Risco regional, anomalias, previsão por MTBF e recomendações com explicabilidade | Heat Map Incidents/Failures/Risk e filtros; painel de fatores, anomalias, previsões e ações de recomendações pendente |
+| Cidade Preditiva | Risco explicável por equipamento, exposição por bairro com cobertura de agentes, anomalias, MTBF e recomendações | Heat Map e módulo Cidade preditiva: indicadores, fatores, evidências, histórico insuficiente, prioridades e aceite/descarte por gestores |
 
 A presença de um endpoint não significa que o fluxo correspondente já possui tela.
 Fornecedores e bases operacionais têm entidades/repositórios, sem telas ou controllers próprios.
@@ -228,7 +228,7 @@ apresentados no fuso do navegador; início e conclusão efetivos não aceitam da
 Aceitar `SendMaintenance` pela API agora cria uma ordem real na mesma unidade de trabalho da aceitação.
 Repetir a aceitação não duplica a ordem; a análise evita nova sugestão para equipamento com ordem pendente.
 Somente gestores podem aceitar recomendações. Recomendações de bairro sem equipamento exigem triagem
-manual e não podem ser aceitas como agendamento automático. A interface preditiva continua fora do escopo.
+manual e não podem ser aceitas como agendamento automático. A Sprint 05 disponibiliza a interface preditiva.
 Metadados antigos e recomendações já aceitas não são convertidos retroativamente em ordens.
 
 O [relatório da Sprint 03](docs/reports/sprint-03-manutencoes.md) detalha diagnóstico, endpoints,
@@ -280,6 +280,30 @@ Falha ao carregar um módulo apresenta recuperação por recarregamento, preserv
 Veja o [relatório da Sprint 04](docs/reports/sprint-04-central-operacoes.md) para arquivos, critérios,
 endpoints, evidências e roteiro de teste.
 
+### Cidade Preditiva — Sprint 05
+
+Com a API local configurada como acima e uma conta de monitoramento, abra **Cidade preditiva**
+na sidebar ou `http://127.0.0.1:5173/#cidade-preditiva`. A consulta inicial é somente leitura;
+**Atualizar dados** recarrega manualmente as fontes, preservando a última leitura válida em falhas.
+
+- Equipamentos: índice heurístico de 0–100, níveis baixo/médio/alto, falhas e corretivas recentes,
+  preventivas pendentes/atrasadas, indisponibilidade e sinais categóricos de telemetria; janela,
+  fatores, evidências e insuficiência de histórico explícitos. Nenhum índice é probabilidade.
+- Bairros: índice existente acrescido da disponibilidade dos agentes no bairro cadastrado,
+  com períodos de incidentes/falhas e fatores explicados. A cobertura é declarada e atual.
+- **Executar análise**, após confirmação, reutiliza a geração de recomendações e alertas; não abre ordens.
+  Admin/OperationManager/CentralOperator podem analisar. Apenas Admin/OperationManager aceitam ou descartam.
+  O aceite de manutenção por equipamento reutiliza o fluxo existente e impede uma segunda ordem ativa.
+  Recomendações regionais exigem triagem; aceite de reforço não desloca agentes automaticamente.
+- MTBF e picos por média/desvio são estimativas descritivas, sem calibração probabilística;
+  amostra pequena e fallback por tipo são apresentados separadamente do índice heurístico.
+
+Sem migration nova. Use frontend e backend desta versão juntos. Mantenha `Simulation__Enabled=false`
+em uma operação real: os eventos já persistidos não têm marca de procedência e podem incluir simulação
+anterior. A análise é serializada nesta instância, sem lock distribuído para múltiplas réplicas.
+Decisões, limites, arquivos, endpoints e testes estão no
+[relatório da Sprint 05](docs/reports/sprint-05-cidade-preditiva.md).
+
 ### Configuração privada
 
 - Frontend: `VITE_API_BASE_URL` é uma URL pública, sem `/api`, credenciais, query ou fragmento.
@@ -305,9 +329,12 @@ dotnet build backend/Solution/Solution.slnx --no-restore
 dotnet test backend/Tests/Tests.csproj --no-build --no-restore
 ```
 
-A validação da Sprint 04 aprovou build/lint frontend, **148 testes frontend** e **194 testes
+A validação da Sprint 05 aprovou build/lint frontend, **156 testes frontend** e **215 testes
 backend**. A suíte HTTP usa controllers reais, JWT e Kestrel com persistência InMemory, sem iniciar a API
 normal ou acessar conexões privadas. Modelo SQL e snapshot também são conferidos sem conexão.
+Na Sprint 05, o Chrome com API real e banco novo exclusivo no SQL Server LocalDB validou riscos,
+fatores, análise repetida, aceite sem duplicação de ordem, navegação à manutenção, permissões,
+carregamento, falha parcial/recuperação e larguras 320/390/768/1440 px, sem exceções JavaScript.
 Na Sprint 03, bancos novos e exclusivos no SQL Server LocalDB validaram aplicação das cinco migrations,
 upgrade preservando uma ordem anterior, aceite de recomendação, vínculo, unicidade real e ciclo preventivo.
 Essas verificações locais não comprovam o estado do Azure. A Sprint 04 eliminou o aviso de bundle
@@ -333,7 +360,7 @@ exceções JavaScript ou transbordamento horizontal da página. Isso não homolo
 ## Limitações e próximos passos
 
 - Registro/gestão de ocorrências e resolução manual de alertas pela interface continuam pendentes;
-  a visualização operacional de alertas está concluída. A interface preditiva continua pendente. Em manutenção, cancelamento,
+  a visualização operacional de alertas e a interface preditiva estão concluídas no escopo descrito. Em manutenção, cancelamento,
   reagendamento, atribuição de equipe na interface e auditoria de todas as transições são evoluções futuras.
 - Listagens de equipamentos, agentes e manutenções usam busca/filtros e paginação no cliente; paginação de servidor e
   detecção de edição concorrente não fazem parte desta sprint.
@@ -343,8 +370,11 @@ exceções JavaScript ou transbordamento horizontal da página. Isso não homolo
   gestão de contas, exclusão na interface e controle completo de concorrência ficam fora desta sprint.
 - Não há clustering/spiderfy; marcadores próximos podem se sobrepor. O polling não é streaming físico de IoT
   e os endpoints separados não representam uma fotografia transacional única de toda a cidade.
-- O modelo preditivo é estatístico e baseado em regras, sem garantia de ocorrência futura.
-  Revisar o efeito operacional de aceitar recomendações de deslocamento: hoje não movimenta agentes.
+- Os índices preditivos são heurísticos; MTBF e anomalias de volume usam estatística descritiva,
+  sem modelo calibrado, garantia de ocorrência futura ou análise numérica de payloads de sensores.
+  Cobertura de agentes usa posição/disponibilidade declaradas; despacho automático não foi implementado.
+  Unicidade de recomendações entre múltiplas instâncias exige coordenação distribuída ou índice SQL
+  após auditoria das pendências existentes. Ordens ativas continuam protegidas pelo índice SQL existente.
 - A janela padrão de ocorrências do calor é de sete dias. Dados DEMO antigos podem deixar de aparecer;
   a carga idempotente não renova datas já persistidas.
 - Confirmar requisitos no enunciado oficial antes de ampliar tipos de equipamento ou funcionalidades opcionais.

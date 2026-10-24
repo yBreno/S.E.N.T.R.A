@@ -48,8 +48,8 @@ public sealed class EquipmentTestHost : IAsyncDisposable
         builder.Services.AddApplication();
         builder.Services.Configure<JwtSettings>(options => { options.Key = settings.Key; options.Issuer = settings.Issuer; options.Audience = settings.Audience; });
         var databaseName = $"Sprint01_{Guid.NewGuid():N}";
-        if (localSqlDatabase is not null && !System.Text.RegularExpressions.Regex.IsMatch(localSqlDatabase, "^SENTRA_Sprint0[34]_[A-Za-z0-9_]+$"))
-            throw new ArgumentException("O banco de teste deve ter um nome exclusivo com prefixo SENTRA_Sprint03_ ou SENTRA_Sprint04_.");
+        if (localSqlDatabase is not null && !System.Text.RegularExpressions.Regex.IsMatch(localSqlDatabase, "^SENTRA_Sprint0[345]_[A-Za-z0-9_]+$"))
+            throw new ArgumentException("O banco de teste deve ter um nome exclusivo com prefixo SENTRA_Sprint03_, SENTRA_Sprint04_ ou SENTRA_Sprint05_.");
         builder.Services.AddDbContext<AppDbContext>(options =>
         {
             if (localSqlDatabase is null) options.UseInMemoryDatabase(databaseName);
@@ -65,6 +65,7 @@ public sealed class EquipmentTestHost : IAsyncDisposable
         builder.Services.AddScoped<IIncidentRepository, IncidentRepository>();
         builder.Services.AddScoped<IRecommendationRepository, RecommendationRepository>();
         builder.Services.AddScoped<IAgentPositionLogRepository, AgentPositionLogRepository>();
+        builder.Services.AddScoped<ITelemetryLogRepository, TelemetryLogRepository>();
         builder.Services.AddControllers().AddApplicationPart(typeof(EquipmentsController).Assembly)
             .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>

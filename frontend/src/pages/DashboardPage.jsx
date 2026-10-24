@@ -12,6 +12,7 @@ const MapView = lazy(() => import('../components/map/MapView.jsx'));
 const EquipmentPage = lazy(() => import('./EquipmentPage.jsx'));
 const AgentPage = lazy(() => import('./AgentPage.jsx'));
 const MaintenancePage = lazy(() => import('./MaintenancePage.jsx'));
+const PredictivePage = lazy(() => import('./PredictivePage.jsx'));
 import { CityOverview, MaintenanceHighlights } from '../components/dashboard/OperationsOverview.jsx';
 import { createEmptyFilters, neighborhoodFilterValue, UNKNOWN_FILTER_VALUE } from '../components/map/operationalFilters.js';
 import { canMonitor, canMaintain } from '../services/auth.js';
@@ -26,15 +27,16 @@ import '../components/dashboard/OperationsOverview.css';
 
 export default function DashboardPage({ session, onLogout }) {
   const monitoring = canMonitor(session.user);
-  const [active, setActive] = useState(() => window.location.hash === '#manutencoes' && canMaintain(session.user) ? 'manutencoes' : !monitoring || window.location.hash === '#equipamentos' ? 'equipamentos' : window.location.hash === '#agentes' ? 'agentes' : 'dashboard');
+  const [active, setActive] = useState(() => window.location.hash === '#manutencoes' && canMaintain(session.user) ? 'manutencoes' : !monitoring || window.location.hash === '#equipamentos' ? 'equipamentos' : window.location.hash === '#agentes' ? 'agentes' : window.location.hash === '#cidade-preditiva' ? 'cidade-preditiva' : 'dashboard');
   const [relatedEquipment, setRelatedEquipment] = useState('');
   const inventory = active === 'equipamentos';
   const agents = active === 'agentes';
   const maintenance = active === 'manutencoes';
+  const predictive = active === 'cidade-preditiva';
   const [inventorySaving, setInventorySaving] = useState(false);
-  const verification = useEndpointVerification(session.token, onLogout, monitoring && !inventory && !agents && !maintenance, canMaintain(session.user));
+  const verification = useEndpointVerification(session.token, onLogout, monitoring && !inventory && !agents && !maintenance && !predictive, canMaintain(session.user));
   const [mapFilters, setMapFilters] = useState(createEmptyFilters);
-  const heatmap = useHeatmap({ token: session.token, onLogout, verification, active: monitoring && !inventory && !agents && !maintenance });
+  const heatmap = useHeatmap({ token: session.token, onLogout, verification, active: monitoring && !inventory && !agents && !maintenance && !predictive });
   const dashboardResult = verification.results.find(result => result.id === 'dashboard');
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -73,10 +75,11 @@ export default function DashboardPage({ session, onLogout }) {
         busy={inventorySaving} onCollapse={() => setCollapsed(value => !value)} onClose={closeMenu} onNavigate={navigate} onLogout={onLogout} />
       <div className="dashboard-workspace">
         <DashboardHeader user={session.user} verification={verification} mobileOpen={mobileOpen}
-          inventory={inventory || agents || maintenance} inventoryTitle={maintenance ? 'Manutenções' : agents ? 'Agentes' : 'Equipamentos'} inventorySubtitle={maintenance ? 'Planejamento, intervenção e histórico dos equipamentos' : agents ? 'Profissionais de mobilidade, segurança e atuação em campo' : undefined} onMenu={() => setMobileOpen(value => !value)} menuButtonRef={menuButton} />
+          inventory={inventory || agents || maintenance || predictive} inventoryEyebrow={predictive ? 'Análise preventiva da cidade' : undefined}
+          inventoryTitle={predictive ? 'Cidade preditiva' : maintenance ? 'Manutenções' : agents ? 'Agentes' : 'Equipamentos'} inventorySubtitle={predictive ? 'Riscos explicáveis e ações preventivas com dados persistidos' : maintenance ? 'Planejamento, intervenção e histórico dos equipamentos' : agents ? 'Profissionais de mobilidade, segurança e atuação em campo' : undefined} onMenu={() => setMobileOpen(value => !value)} menuButtonRef={menuButton} />
         <main className="dashboard-main" id="conteudo-operacional">
           <ModuleBoundary><Suspense fallback={<p role="status">Carregando módulo…</p>}>
-          {maintenance ? <MaintenancePage key={relatedEquipment} equipmentId={relatedEquipment} session={session} onLogout={onLogout} onChanged={verification.refresh} onSavingChange={setInventorySaving} onEquipment={id => related('equipamentos', id)} /> : agents ? <AgentPage key={relatedEquipment} agentId={relatedEquipment} session={session} onLogout={onLogout} onChanged={verification.refresh} onSavingChange={setInventorySaving} /> : inventory ? <EquipmentPage key={relatedEquipment} equipmentId={relatedEquipment} session={session} onLogout={onLogout} onChanged={verification.refresh} onSavingChange={setInventorySaving} onMaintenance={id => related('manutencoes', id)} /> : <>
+          {predictive ? <PredictivePage session={session} onLogout={onLogout} onSavingChange={setInventorySaving} onEquipment={id => related('equipamentos', id)} onMaintenance={id => related('manutencoes', id)} onAgents={() => related('agentes', '')} /> : maintenance ? <MaintenancePage key={relatedEquipment} equipmentId={relatedEquipment} session={session} onLogout={onLogout} onChanged={verification.refresh} onSavingChange={setInventorySaving} onEquipment={id => related('equipamentos', id)} /> : agents ? <AgentPage key={relatedEquipment} agentId={relatedEquipment} session={session} onLogout={onLogout} onChanged={verification.refresh} onSavingChange={setInventorySaving} /> : inventory ? <EquipmentPage key={relatedEquipment} equipmentId={relatedEquipment} session={session} onLogout={onLogout} onChanged={verification.refresh} onSavingChange={setInventorySaving} onMaintenance={id => related('manutencoes', id)} /> : <>
           <DashboardIndicators loading={verification.loading} result={dashboardResult} error={verification.error} />
           <div className="operations-sync" aria-live="polite"><p>Indicadores da cidade inteira · Sincronização automática a cada {verification.intervalMs / 1000} s após cada ciclo.</p><p>{verification.updatedAt ? <>Último ciclo completo bem-sucedido: <time dateTime={verification.updatedAt.toISOString()}>{verification.updatedAt.toLocaleString('pt-BR')}</time></> : 'Ainda sem ciclo completo bem-sucedido.'}</p>{verification.error && <p role="alert">{verification.error}</p>}</div>
           <div className="operations-grid">

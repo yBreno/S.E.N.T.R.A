@@ -24,6 +24,8 @@ public static class DependencyInjection
         services.AddScoped<IDashboardService, DashboardService>();
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<IRiskService, RiskService>();
+        services.AddScoped<IEquipmentRiskService, EquipmentRiskService>();
+        services.AddSingleton<PredictiveExecutionGate>();
         services.AddScoped<IHeatmapService, HeatmapService>();
         services.AddScoped<IAnomalyService, AnomalyService>();
         services.AddScoped<IFailurePredictionService, FailurePredictionService>();
