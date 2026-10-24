@@ -17,7 +17,9 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         {
             if (context.Response.HasStarted) throw;
             var problem = Map(ex);
-            if (problem.Status >= 500) logger.LogError(ex, "Erro nao tratado");
+            if (problem.Status >= 500)
+                logger.LogError(ex, "Erro HTTP 500 nao tratado. TraceId={TraceId} Method={Method} Path={Path}",
+                    context.TraceIdentifier, context.Request.Method, context.Request.Path);
             problem.Instance = context.Request.Path;
             context.Response.Clear();
             context.Response.StatusCode = problem.Status!.Value;
