@@ -63,7 +63,6 @@ Além das funcionalidades centrais do desafio, a equipe implementou recursos vol
 | **Autenticação e permissões** | Login com JWT, cinco perfis de acesso e autorização efetiva no backend. |
 | **Administração de usuários** | Cadastro, consulta, edição, ativação/desativação, alteração de cargo, histórico de alterações e revogação de sessões. |
 | **Recuperação de senha por e-mail** | Integração com Resend e links temporários de uso único, sem envio de senhas por e-mail. |
-| **Vínculos operacionais** | Associação entre contas e agentes e gerenciamento de vínculo entre agentes e veículos/equipamentos móveis. |
 | **Atualização periódica** | Atualização de informações operacionais com tratamento de falhas e sinalização de dados desatualizados. |
 | **Mapa de calor interativo** | Visualização geográfica com filtros, zoom e interação por toque. |
 | **Ambiente DEMO isolado** | Cenários reproduzíveis com banco local, dados sintéticos e contas de avaliação, separados da produção. |
