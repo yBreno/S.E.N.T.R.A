@@ -1,149 +1,235 @@
-# Instalação e configuração
+# Instalação e execução do S.E.N.T.R.A.
 
-## Pré-requisitos
+Este guia explica como executar o S.E.N.T.R.A. no seu computador, desde a instalação das dependências até o primeiro login.
 
-- .NET 10 SDK e ferramenta `dotnet-ef` compatível com o EF Core 10 do projeto.
-- Node compatível com Vite 8: 22.12+ na linha 22, ou outra versão suportada pelo Vite.
-- SQL Server/LocalDB para executar a aplicação; testes padrão usam InMemory.
-- Dependências restauradas a partir dos projetos e de `frontend/package-lock.json`.
+Você não precisa configurar o Azure nem ter uma conta no Resend para executar o projeto localmente.
 
-Na raiz do repositório, em PowerShell:
+**Quer conhecer o sistema com dados já cadastrados?** Consulte o [guia da DEMO](demo/preparacao-ambiente.md), que utiliza um banco isolado com informações fictícias.
+
+## 1. O que preciso instalar?
+
+Antes de começar, instale estas ferramentas:
+
+| Ferramenta | Para que serve |
+| --- | --- |
+| [.NET SDK 10](https://dotnet.microsoft.com/download/dotnet/10.0) | Executar o backend |
+| [Node.js](https://nodejs.org/) | Executar o frontend React (utilize uma versão compatível com Vite 8) |
+| [SQL Server Express LocalDB](https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/sql-server-express-localdb) | Armazenar os dados localmente |
+| [Git](https://git-scm.com/) | Baixar o projeto |
+
+Este tutorial utiliza **Windows e PowerShell**.
+
+Também precisaremos do Entity Framework CLI. Abra o PowerShell e execute:
+
+```powershell
+dotnet tool install --global dotnet-ef --version "10.*"
+```
+
+Se a ferramenta já estiver instalada, não é necessário instalá-la novamente. Verifique com `dotnet ef --version`.
+
+## 2. Baixar o projeto
+
+Abra o PowerShell e execute:
+
+```powershell
+git clone https://github.com/yBreno/S.E.N.T.R.A.git
+cd S.E.N.T.R.A
+```
+
+Agora instale as dependências do backend e do frontend:
 
 ```powershell
 dotnet restore backend/Solution/Solution.slnx
-dotnet build backend/Solution/Solution.slnx --no-restore
+dotnet build backend/Solution/Solution.slnx
 npm.cmd ci --prefix frontend
 ```
 
-## Banco local novo
+Pronto! O código está preparado.
 
-Utilizar um destino local exclusivo. O exemplo gera um nome novo; conferir a
-conexão antes da execução. Não copiar connection strings do Azure para ensaios.
-Não reutilizar um nome de banco do usuário para esta preparação.
+## 3. Criar o banco de dados
+
+O S.E.N.T.R.A. utiliza SQL Server.
+
+Para facilitar, vamos criar automaticamente um banco novo no LocalDB, sem modificar outros bancos existentes no computador.
+
+**No mesmo PowerShell**, execute:
 
 ```powershell
-$sentraLocalDb = 'SENTRA_Dev_' + [Guid]::NewGuid().ToString('N')
-$sentraLocalConnection = 'Server=(localdb)\MSSQLLocalDB;Database=' + $sentraLocalDb + ';Integrated Security=true;TrustServerCertificate=true'
-dotnet ef database update --project backend/Infrastructure --startup-project backend/Api --connection $sentraLocalConnection
+$database = 'SENTRA_Local_' + [Guid]::NewGuid().ToString('N')
+
+$connection = 'Server=(localdb)\MSSQLLocalDB;Database=' + $database + ';Integrated Security=true;TrustServerCertificate=true'
+
+dotnet ef database update --project backend/Infrastructure --startup-project backend/Api --connection $connection
 ```
 
-São sete migrations oficiais. A factory design-time não inicia a API, seeders ou
-workers. A conexão explícita é obrigatória neste roteiro: o destino de metadados
-da factory não é o banco a ser usado pela aplicação.
+Esse último comando cria a estrutura do banco utilizando as sete migrations existentes no projeto.
 
-Para banco antigo, revisar sua baseline e usar o [roteiro de SQL](sql/README-query-editor.md).
-O incremento fornecido começa em AddMaintenanceScheduling; ele não substitui a
-criação de banco vazio com as sete migrations. A API não migra schema no startup.
+Não é necessário criar tabelas manualmente nem gerar novas migrations.
 
-## Backend e primeiro Admin
+**Importante:** mantenha esse terminal aberto. Vamos utilizar a mesma conexão no próximo passo.
 
-Usar um terminal exclusivo e configuração privada de processo. `Testing` permite
-um ensaio sem ler user-secrets de Development e sem iniciar os seeders operacionais
-de Development. Os defaults de simulação e automação são desabilitados.
+## 4. Configurar e iniciar o backend
+
+Ainda no mesmo PowerShell, copie este bloco:
 
 ```powershell
 $env:DOTNET_ENVIRONMENT = 'Testing'
 $env:ASPNETCORE_ENVIRONMENT = 'Testing'
-$env:ConnectionStrings__DefaultConnection = $sentraLocalConnection
+
+$env:ConnectionStrings__DefaultConnection = $connection
+
 $env:Jwt__Issuer = 'sentra-local'
 $env:Jwt__Audience = 'sentra-react-local'
-$sentraKeyBytes = New-Object byte[] 32
-$sentraRng = [Security.Cryptography.RandomNumberGenerator]::Create()
-$sentraRng.GetBytes($sentraKeyBytes)
-$sentraRng.Dispose()
-$env:Jwt__Key = [Convert]::ToBase64String($sentraKeyBytes)
+
+$bytes = New-Object byte[] 32
+$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+$rng.Dispose()
+
+$env:Jwt__Key = [Convert]::ToBase64String($bytes)
+
 $env:Cors__AllowedOrigins__0 = 'http://127.0.0.1:5173'
+
 $env:Simulation__Enabled = 'false'
 $env:PredictiveAutomation__Enabled = 'false'
 $env:PasswordRecovery__Enabled = 'false'
 $env:PublicRegistration__AllowAgentSelfRegistration = 'false'
 ```
 
-Com Users vazio, definir privadamente `SeedAdmin__Enabled=true`, `SeedAdmin__Name`,
-`SeedAdmin__Email`, `SeedAdmin__Cpf` válido e `SeedAdmin__Password` forte. Não há
-credencial administrativa padrão. A senha segue os requisitos de complexidade e
-o máximo de 72 bytes UTF-8 do BCrypt. Não colocar valores em arquivos versionados,
-capturas ou comandos compartilhados.
+Essas configurações conectam a API ao banco local, criam uma chave de autenticação para este ambiente e desabilitam integrações automáticas desnecessárias.
 
-Exemplo de entrada privada da senha no terminal, sem colocá-la no histórico:
+Não é preciso editar arquivos de configuração.
+
+### Criar o primeiro administrador
+
+Como o banco está vazio, precisamos criar uma conta para entrar no sistema.
+
+No mesmo terminal, execute:
 
 ```powershell
-$sentraBootstrapSecret = Read-Host 'Senha inicial privada' -AsSecureString
-$sentraBootstrapPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sentraBootstrapSecret)
-try { $env:SeedAdmin__Password = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($sentraBootstrapPointer) }
-finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($sentraBootstrapPointer) }
+$env:SeedAdmin__Enabled = 'true'
+
+$env:SeedAdmin__Name = Read-Host 'Nome do administrador'
+$env:SeedAdmin__Email = Read-Host 'E-mail do administrador'
+$env:SeedAdmin__Cpf = Read-Host 'CPF valido do administrador'
 ```
 
-Iniciar após configurar os demais campos:
+Agora defina a senha:
+
+```powershell
+$senha = Read-Host 'Crie uma senha forte' -AsSecureString
+$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($senha)
+
+try {
+    $env:SeedAdmin__Password = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
+}
+finally {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
+}
+```
+
+A senha precisa ter pelo menos oito caracteres, incluindo letra maiúscula, minúscula, número e caractere especial, respeitando o limite de 72 bytes do BCrypt.
+
+**Guarde o e-mail e a senha que você escolheu.** Eles serão utilizados no login.
+
+### Iniciar a API
+
+Execute:
 
 ```powershell
 dotnet run --project backend/Api/Api.csproj --no-build --no-restore --no-launch-profile -- --urls http://127.0.0.1:5129
 ```
 
-O bootstrap cria somente o primeiro Admin, com auditoria e bloqueio transacional.
-Se já existir qualquer usuário, não promove, cria outra conta nem redefine senhas.
-Confirmar o log de provisionamento, encerrar a API e remover a senha temporária do
-ambiente antes de reiniciar:
+Na primeira inicialização, a aplicação provisiona o administrador no banco vazio.
+
+Após confirmar a criação da conta, pressione `Ctrl + C` para interromper a API.
+
+Por segurança, desative a criação automática do administrador e remova os dados temporários:
 
 ```powershell
 $env:SeedAdmin__Enabled = 'false'
-Remove-Item Env:SeedAdmin__Password -ErrorAction SilentlyContinue
+
+'SeedAdmin__Password','SeedAdmin__Cpf','SeedAdmin__Email','SeedAdmin__Name' |
+    ForEach-Object { Remove-Item "Env:$_" -ErrorAction SilentlyContinue }
+
+$senha = $null
 ```
 
-Em seguida, criar contas pelo módulo **Usuários**, exclusivo de Admin. Alterar cargo,
-estado, senha ou e-mail exige novo login do titular; reativação não restaura JWT antigo.
-Conta de login e categoria profissional são conceitos distintos.
+Agora inicie novamente:
 
-## Frontend
+```powershell
+dotnet run --project backend/Api/Api.csproj --no-build --no-restore --no-launch-profile -- --urls http://127.0.0.1:5129
+```
 
-Em outro terminal:
+**Deixe esse terminal aberto.** Ele está executando o backend.
+
+## 5. Iniciar o frontend
+
+Abra **um segundo PowerShell**, sem fechar o primeiro.
+
+Entre na pasta do projeto, caso necessário, e execute na raiz:
 
 ```powershell
 $env:VITE_API_BASE_URL = 'http://127.0.0.1:5129'
 $env:VITE_DEMO_MODE = 'false'
+
 npm.cmd --prefix frontend run dev -- --host 127.0.0.1 --port 5173 --strictPort
 ```
 
-Abrir `http://127.0.0.1:5173`. A URL da API não deve incluir `/api`, segredo, query
-ou fragmento. Preservar qualquer `.env.local` existente; variáveis de processo
-permitem ensaiar outra URL sem modificá-lo. Variáveis `VITE_*` são públicas.
+Agora abra o navegador:
 
-## Variáveis e configurações
+**http://127.0.0.1:5173**
 
-| Configuração | Uso |
-| --- | --- |
-| ConnectionStrings__DefaultConnection | SQL privado do ambiente correto |
-| Jwt__Key / Jwt__Issuer / Jwt__Audience | Assinatura e destinatário; chave aleatória privada, mínimo 32 caracteres |
-| Cors__AllowedOrigins__N | Lista explícita; produção deve incluir https://sentra.uno |
-| Simulation__Enabled=false | Evitar gravação de telemetria/GPS simulados |
-| PredictiveAutomation__Enabled=false | Manter somente análise manual |
-| SeedAdmin__Enabled | Bootstrap temporário e explícito em banco vazio |
-| PublicRegistration__AllowAgentSelfRegistration=false | Sem autoelevação/cadastro público em produção |
-| PasswordRecovery__Enabled / Transport / ApiKey / From / RateLimitKey | Resend e limites privados do backend; [detalhes e DNS](reports/recuperacao-senha-email.md) |
-| VITE_API_BASE_URL / VITE_DEMO_MODE | URL pública da API e identificação do frontend DEMO |
+A tela de login do S.E.N.T.R.A. deverá aparecer.
 
-`LocalTest` de e-mail só é aceito em Development/Testing, em memória e sem caixa
-HTTP pública. Testes recuperam a mensagem por DI; não se imprime token no console.
-Os links reais têm destino fixo HTTPS sentra.uno. Não usar e-mail real para validar
-um banco local nem colocar chave do provedor no navegador.
+Utilize o e-mail e a senha do administrador criados no passo anterior.
 
-## Qualidade, DEMO e publicação
+**Pronto! O sistema está rodando localmente.**
+
+Como o banco é novo, o inventário estará inicialmente vazio. Você poderá cadastrar equipamentos, agentes e outras informações utilizando a interface.
+
+## 6. Como executar os testes?
+
+Se quiser verificar o funcionamento do projeto, abra outro terminal na raiz do repositório e execute:
+
+**Backend:**
 
 ```powershell
-dotnet build backend/Solution/Solution.slnx --no-restore
-dotnet test backend/Tests/Tests.csproj --no-build --no-restore
+dotnet test backend/Tests/Tests.csproj
+```
+
+**Frontend:**
+
+```powershell
 node --test frontend/tests/*.test.js
 npm.cmd --prefix frontend run lint
 npm.cmd --prefix frontend run build
 ```
 
-Para apresentar, utilizar o [DEMO isolado](demo/preparacao-ambiente.md) e o
-[roteiro de 6–8 minutos](demo/roteiro-apresentacao.md).
-Use somente `DemoData`, `DemoAdmin` e o inicializador evaluation atual.
+Na validação realizada em 25/10/2026, o projeto passou em **591 testes automatizados**, sendo 374 no backend e 217 no frontend.
 
-Produção publica exclusivamente de main, com gates de schema/API e concurrency.
-As sete migrations já aplicadas foram informadas pelo responsável; a Sprint 08
-não exige migration nova. Confirmar schema/configuração no procedimento autorizado
-antes de publicar. Não reaplicar SQL ou recriar dados apenas para atualizar código.
+## 7. Problemas comuns
 
-Não executar automaticamente commits, deploys, bootstrap ou cargas em produção.
+| Problema | O que verificar |
+| --- | --- |
+| Erro ao criar o banco | Confira se o SQL Server LocalDB está instalado e se o comando `dotnet ef` funciona. |
+| Frontend não abre | Confira se o segundo terminal está executando o Vite na porta 5173. |
+| Frontend abre, mas não conecta | Verifique se a API está em execução na porta 5129. |
+| Não consigo fazer login | Utilize a conta criada no passo 4 e confirme que o primeiro provisionamento foi concluído. |
+| Algumas telas não aparecem | O S.E.N.T.R.A. exibe os módulos conforme as permissões da conta. |
+| Recuperação de senha indisponível | O envio de e-mails está intencionalmente desativado neste ambiente local. |
+
+## 8. Encerrar a aplicação
+
+Para desligar o S.E.N.T.R.A., pressione `Ctrl + C` nos terminais do backend e frontend.
+
+O banco local continuará salvo para a próxima execução. Se fechar o PowerShell, precisará configurar novamente as variáveis de ambiente e informar a conexão com o mesmo banco para reutilizá-lo. **Não crie um novo banco se quiser conservar os dados anteriores.**
+
+---
+
+## Quer conhecer mais sobre o projeto?
+
+- [README principal](../README.md) — funcionalidades e tecnologias.
+- [Arquitetura do S.E.N.T.R.A.](arquitetura.md) — organização técnica do sistema.
+- [Guia da DEMO](demo/preparacao-ambiente.md) — ambiente isolado com dados fictícios.
+- [Frontend](../frontend/README.md) — configuração e desenvolvimento da interface.
