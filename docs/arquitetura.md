@@ -3,6 +3,10 @@
 S.E.N.T.R.A. é um monólito modular em Clean Architecture. Não utiliza Identity:
 autenticação existente permanece JWT/BCrypt, com estado e versão persistidos.
 
+A [visão geral no README](../README.md#visão-da-arquitetura-e-organização) reúne camadas,
+integrações, testes, publicação e DEMO. O [fonte Mermaid](diagrams/arquitetura-sentra.mmd)
+foi conferido com as referências atuais dos projetos.
+
 ```mermaid
 flowchart LR
     UI[React / Leaflet] --> API[Api: controllers e autorização]
@@ -26,6 +30,37 @@ flowchart LR
 Infrastructure referencia Application/Domain; Domain não depende da API ou do EF.
 Os contratos públicos existentes são reutilizados. Nesta revisão não houve nova
 migration, renomeação de enum persistido ou mudança no discriminador TPH.
+
+## Organização do repositório
+
+```text
+S.E.N.T.R.A./
+├── backend/
+│   ├── Api/                  HTTP, JWT/RBAC, configuração, middleware e workers
+│   ├── Application/          Casos de uso, DTOs, validação e motor preditivo
+│   ├── Domain/               Entidades, enums, regras e contratos de repositório
+│   ├── Infrastructure/       EF Core, migrations, repositórios, e-mail e suporte DEMO
+│   ├── DemoData/             Preparação e carga sintética local explícita
+│   ├── DemoAdmin/            Provisionamento manual das contas de demonstração
+│   ├── Tests/                Testes backend e suporte de integração
+│   └── Solution/             Solução .NET que reúne os projetos atuais
+├── frontend/
+│   ├── src/
+│   │   ├── pages/            Telas e orquestração dos módulos
+│   │   ├── components/       Formulários, painéis, navegação e mapas
+│   │   ├── hooks/            Sessão, consultas, polling e estado operacional
+│   │   ├── services/         Cliente HTTP, contratos, autorização e serviços
+│   │   └── config/           Configuração pública da API
+│   ├── public/               Identidade visual e arquivos públicos
+│   └── tests/                Testes de contratos, estado e componentes React
+├── scripts/demo/             Inicializador do ambiente evaluation isolado
+├── docs/                     Arquitetura, instalação, DEMO, diagramas e SQL revisado
+└── .github/workflows/        Publicação de backend/frontend pela main
+```
+
+Os nomes acima correspondem às pastas versionadas; saídas de compilação e arquivos
+locais não fazem parte do desenho. O frontend acessa HTTP, sem conexão direta ao
+SQL ou ao provedor de e-mail. O mapa busca tiles diretamente no OpenStreetMap.
 
 ## Três partes do desafio
 

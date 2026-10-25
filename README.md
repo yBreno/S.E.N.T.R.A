@@ -42,6 +42,74 @@ Infrastructure implementa persistência, transações e e-mail; Api aplica HTTP,
 autorização e configuração. O frontend separa páginas, componentes, hooks e serviços.
 Veja [arquitetura, permissões e limites](docs/arquitetura.md).
 
+### Visão da arquitetura e organização
+
+```mermaid
+flowchart TB
+  USER["Usuários<br/>Navegador"]
+
+  subgraph FRONT["frontend/ · React + Vite"]
+    UI["src/pages/ · components/<br/>hooks/ · services/ · config/<br/>Leaflet e mapa de calor"]
+  end
+
+  subgraph BACK["backend/ · Clean Architecture"]
+    API["Api/<br/>Controllers · Security · Middleware<br/>Composição de dependências · Workers"]
+    APP["Application/<br/>Services · DTOs · Validators<br/>Mappings · Predictive · Security"]
+    INFRA["Infrastructure/<br/>Data · Repositories · Migrations<br/>Email · Demo"]
+    DOMAIN["Domain/<br/>Entities · Enums · Rules<br/>Exceptions · IRepositories"]
+
+    API -.->|referencia| APP
+    API -.->|referencia| INFRA
+    INFRA -.->|referencia| APP
+    INFRA -.->|referencia| DOMAIN
+    APP -.->|referencia| DOMAIN
+  end
+
+  subgraph DELIVERY["Qualidade e entrega"]
+    TESTS["backend/Tests/ · frontend/tests/<br/>xUnit · node:test · React"]
+    CI[".github/workflows/<br/>GitHub Actions · main"]
+  end
+
+  subgraph DEMO["Demonstração local isolada"]
+    TOOLS["backend/DemoData/ · DemoAdmin/<br/>scripts/demo/ · perfil evaluation"]
+    LOCAL[("SQL Server LocalDB<br/>Dados e contas sintéticos")]
+    TOOLS -->|preparação manual| LOCAL
+  end
+
+  SQL[("Azure SQL<br/>SQL Server · EF Core")]
+  MAIL["Resend<br/>Recuperação de senha"]
+  MAP["OpenStreetMap<br/>Tiles cartográficos"]
+
+  USER --> UI
+  UI -->|HTTPS · JSON · JWT| API
+  UI -->|cartografia| MAP
+  INFRA -->|persistência| SQL
+  INFRA -->|envio de e-mail| MAIL
+  TOOLS -.->|referencia| INFRA
+  TESTS -.->|valida| UI
+  TESTS -.->|valida| API
+  CI -->|Azure Static Web Apps| UI
+  CI -->|Azure App Service| API
+
+  classDef interface fill:#18181b,stroke:#facc15,color:#fafafa
+  classDef core fill:#facc15,stroke:#a16207,color:#18181b
+  classDef support fill:#f4f4f5,stroke:#71717a,color:#18181b
+  classDef data fill:#fef9c3,stroke:#a16207,color:#18181b
+
+  class UI,API,APP,INFRA interface
+  class DOMAIN core
+  class USER,TESTS,CI,TOOLS,MAIL,MAP support
+  class SQL,LOCAL data
+```
+
+As setas tracejadas entre projetos do backend representam referências dos `.csproj`;
+Domain permanece independente da API e da persistência. As demais ligações mostram
+integrações, validação e publicação. Os workers de simulação e automação continuam
+desabilitados por padrão. A preparação DEMO é manual e usa somente LocalDB isolado.
+
+O GitHub renderiza este bloco Mermaid no README. O [arquivo-fonte do diagrama](docs/diagrams/arquitetura-sentra.mmd)
+permite reutilizá-lo em editores Mermaid. Veja também a [organização das pastas](docs/arquitetura.md#organização-do-repositório).
+
 ## Executar e verificar
 
 Seguir o [guia de instalação](docs/instalacao.md) para banco local **novo**, sete
