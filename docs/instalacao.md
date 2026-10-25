@@ -102,7 +102,7 @@ Não é preciso editar arquivos de configuração.
 
 Como o banco está vazio, precisamos criar uma conta para entrar no sistema.
 
-No mesmo terminal, execute:
+No mesmo terminal, execute e responda:
 
 ```powershell
 $env:SeedAdmin__Enabled = 'true'
