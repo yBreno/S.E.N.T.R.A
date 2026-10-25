@@ -1,12 +1,44 @@
 # S.E.N.T.R.A.
 
-**Sistema Estratégico de Navegação, Tráfego e Resposta Ativa**
+# S.E.N.T.R.A.
 
-Uma plataforma web para **gestão, monitoramento e prevenção de problemas na infraestrutura urbana**. O S.E.N.T.R.A. reúne equipamentos, agentes, manutenções e informações geográficas em uma central de operações, com indicadores e recomendações fundamentadas em dados.
+**Sistema Estratégico de Navegação, Tráfego e Resposta Ativa**  
+*Smart Environment Network for Tracking, Response & Analytics*
 
-Desenvolvido por uma equipe de três estudantes para o **DSIN Coder Challenge 2026 — F.O.G.O. / PROMETHEUS**.
+O **S.E.N.T.R.A.** é uma plataforma web para gestão, monitoramento e prevenção de problemas na infraestrutura urbana. O sistema integra equipamentos, agentes, manutenções e informações geográficas em uma Central de Operações, oferecendo indicadores, análises de risco e recomendações preventivas para apoiar a tomada de decisões.
 
-**Tecnologias:** C# · .NET 10 · ASP.NET Core · React 19 · Vite 8 · SQL Server · Leaflet · Azure
+Desenvolvido para o **DSIN Coder Challenge 2026 — F.O.G.O. / PROMETHEUS**.
+
+**Equipe de desenvolvimento:**
+
+- [Breno Redusino](https://github.com/yBreno)
+- [Lucas Belia](https://github.com/B-3L14)
+- [Caua Souza Dias](https://github.com/caua-dias)
+
+## Tecnologias utilizadas
+
+**Backend e banco de dados**
+
+![C#](https://img.shields.io/badge/C%23-18181B?style=for-the-badge&logo=dotnet&logoColor=FACC15)
+![.NET 10](https://img.shields.io/badge/.NET_10-18181B?style=for-the-badge&logo=dotnet&logoColor=FACC15)
+![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core-18181B?style=for-the-badge&logo=dotnet&logoColor=FACC15)
+![SQL Server](https://img.shields.io/badge/SQL_Server-18181B?style=for-the-badge&logoColor=FACC15)
+![Entity Framework Core](https://img.shields.io/badge/EF_Core-18181B?style=for-the-badge&logoColor=FACC15)
+
+**Frontend e mapas**
+
+![JavaScript](https://img.shields.io/badge/JavaScript-18181B?style=for-the-badge&logo=javascript&logoColor=FACC15)
+![React 19](https://img.shields.io/badge/React_19-18181B?style=for-the-badge&logo=react&logoColor=FACC15)
+![Vite 8](https://img.shields.io/badge/Vite_8-18181B?style=for-the-badge&logo=vite&logoColor=FACC15)
+![Leaflet](https://img.shields.io/badge/Leaflet-18181B?style=for-the-badge&logo=leaflet&logoColor=FACC15)
+![OpenStreetMap](https://img.shields.io/badge/OpenStreetMap-18181B?style=for-the-badge&logo=openstreetmap&logoColor=FACC15)
+
+**Infraestrutura e integrações**
+
+![Microsoft Azure](https://img.shields.io/badge/Microsoft_Azure-18181B?style=for-the-badge&logoColor=FACC15)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-18181B?style=for-the-badge&logo=githubactions&logoColor=FACC15)
+![Resend](https://img.shields.io/badge/Resend-18181B?style=for-the-badge&logo=resend&logoColor=FACC15)
+![JWT](https://img.shields.io/badge/JWT-18181B?style=for-the-badge&logo=jsonwebtokens&logoColor=FACC15)
 
 <!-- Adicionar aqui imagens reais da Dashboard, da Central de Operações e da Cidade Preditiva antes da entrega. Não usar capturas com dados privados. -->
 
