@@ -197,7 +197,6 @@ S.E.N.T.R.A/
 - [Ambiente DEMO](docs/demo/preparacao-ambiente.md) — execução com dados fictícios e sem acesso à produção.
 - [Arquitetura](docs/arquitetura.md) — camadas, contratos, segurança e decisões técnicas.
 - [Frontend](frontend/README.md) — detalhes da interface, configuração e build.
-- [Índice da documentação](docs/README.md) — outros guias e relatórios.
 
 ---
 
