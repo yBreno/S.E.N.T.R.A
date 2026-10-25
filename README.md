@@ -134,15 +134,7 @@ npm.cmd ci --prefix frontend
 
 ### 3. Escolher um modo de execução
 
-**Opção A — DEMO local (recomendada para avaliação)**
-
-Siga o **[guia de preparação da DEMO](docs/demo/preparacao-ambiente.md)**. Ele orienta a criar **um banco LocalDB novo e isolado**, aplicar as migrations existentes, carregar dados fictícios, provisionar contas de teste e iniciar API e frontend.
-
-A demonstração inclui **12 equipamentos, 9 agentes, 79 registros operacionais e 5 contas fictícias**. Não há senha padrão: o procedimento solicita uma senha privada para as contas do ensaio. A DEMO inicia em modo de leitura, com uma interação de aceite preventivo opcional e controlada.
-
-Ao concluir a preparação, a interface fica disponível em `http://127.0.0.1:5173`, conectada à API local na porta `5180`. **Não utilize dados reais nem a conexão do Azure nesse procedimento.**
-
-**Opção B — Ambiente de desenvolvimento**
+**Opção A — Ambiente de desenvolvimento**
 
 Siga o **[guia de instalação completa](docs/instalacao.md)** para criar um banco local novo, aplicar as **7 migrations já existentes**, configurar as variáveis privadas, cadastrar o primeiro Admin e executar a aplicação.
 
@@ -157,6 +149,14 @@ npm.cmd --prefix frontend run dev -- --host 127.0.0.1 --port 5173 --strictPort
 Acesse `http://127.0.0.1:5173`. A API e o frontend devem estar em execução simultaneamente.
 
 > **Atenção:** nunca publique senhas, tokens, chaves JWT, chaves do Resend ou connection strings privadas. Variáveis `VITE_*` são visíveis no navegador e não devem conter segredos. O projeto não executa migrations automaticamente ao iniciar a API.
+
+**Opção B — DEMO local**
+
+Siga o **[guia de preparação da DEMO](docs/demo/preparacao-ambiente.md)**. Ele orienta a criar **um banco LocalDB novo e isolado**, aplicar as migrations existentes, carregar dados fictícios, provisionar contas de teste e iniciar API e frontend.
+
+A demonstração inclui **12 equipamentos, 9 agentes, 79 registros operacionais e 5 contas fictícias**. Não há senha padrão: o procedimento solicita uma senha privada para as contas do ensaio. A DEMO inicia em modo de leitura, com uma interação de aceite preventivo opcional e controlada.
+
+Ao concluir a preparação, a interface fica disponível em `http://127.0.0.1:5173`, conectada à API local na porta `5180`. **Não utilize dados reais nem a conexão do Azure nesse procedimento.**
 
 ## Testes e qualidade
 
