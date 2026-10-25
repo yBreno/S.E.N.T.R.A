@@ -48,6 +48,7 @@ Desenvolvido para o **DSIN Coder Challenge 2026 — F.O.G.O. / PROMETHEUS**.
 | **02. Central de Operações** | Dashboard com indicadores, mapa interativo, marcadores por tipo e situação, filtros, acompanhamento dos recursos, alertas operacionais e mapas de calor de ocorrências, falhas e riscos. |
 | **03. Cidade Preditiva** | Análise explicável de risco por equipamento e região, fatores e histórico de falhas, identificação de anomalias e recomendações preventivas, incluindo a possibilidade de planejar manutenções a partir de recomendações. |
 
+**Atenção!**
 O módulo preditivo utiliza **regras heurísticas explicáveis**. Suas pontuações representam prioridade relativa, não probabilidades calibradas nem previsões produzidas por um modelo de machine learning.
 
 ## Funcionalidades
