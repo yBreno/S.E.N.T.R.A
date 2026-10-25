@@ -1,220 +1,174 @@
 # S.E.N.T.R.A.
 
-**Sistema Estratégico de Navegação, Tráfego e Resposta Ativa**, desenvolvido para o
-DSIN Coder Challenge — F.O.G.O./PROMETHEUS. Integra inventário urbano, Central de
-Operações e prevenção explicável em uma aplicação ASP.NET Core/React.
+**Sistema Estratégico de Navegação, Tráfego e Resposta Ativa**
 
-## Estado da entrega
+Uma plataforma web para **gestão, monitoramento e prevenção de problemas na infraestrutura urbana**. O S.E.N.T.R.A. reúne equipamentos, agentes, manutenções e informações geográficas em uma central de operações, com indicadores e recomendações fundamentadas em dados.
 
-A Sprint 08 foi validada localmente com **374 testes backend e 205 frontend**,
-builds .NET/Vite, ESLint, actionlint, SQL Server isolado e navegador em
-320/390/768/1440 px. Consulte o [relatório final](docs/reports/sprint-08-validacao-final.md)
-para evidências, requisitos, correções e ressalvas.
+Desenvolvido por uma equipe de três estudantes para o **DSIN Coder Challenge 2026 — F.O.G.O. / PROMETHEUS**.
 
-Em 25/10/2026, o responsável informou sete migrations aplicadas no Azure SQL e login/
-recuperação por Resend testados manualmente em produção. Nesta sprint, somente três
-GETs públicos foram realizados: site 200, recuperação habilitada com CORS para
-https://sentra.uno e rota de usuários anônima 401. Não houve login automatizado,
-envio real de e-mail, consulta ao Azure SQL, deploy ou alteração de produção.
+**Tecnologias:** C# · .NET 10 · ASP.NET Core · React 19 · Vite 8 · SQL Server · Leaflet · Azure
 
-## As três partes do desafio
+<!-- Adicionar aqui imagens reais da Dashboard, da Central de Operações e da Cidade Preditiva antes da entrega. Não usar capturas com dados privados. -->
 
-| Parte | Funcionalidades verificadas |
+## O desafio: três partes, uma plataforma
+
+| Etapa | O que foi implementado |
 | --- | --- |
-| Inventário Inteligente | Cadastro/edição/lista/detalhes de equipamentos e agentes; série, marca/modelo, endereço completo, CEP/bairro/referência/GPS, situação e planejamento de manutenção; características por tipo; categorias profissionais e vínculos |
-| Central de Operações | Indicadores, Leaflet, marcadores por tipo/estado, filtros, detalhes, alertas integrados, manutenção e atenção por bairro; calor por ocorrências/falhas/risco; polling com sinalização de dados desatualizados |
-| Cidade Preditiva | Índice explicável por equipamento/região, fatores e evidências, histórico/MTBF, anomalias, recomendações, aceite/descarte e ordem preventiva vinculada; análise manual com automação desligada |
+| **01. Inventário Inteligente** | Cadastro, consulta e atualização de equipamentos urbanos e agentes; localização por endereço e GPS; características específicas por tipo; situação operacional, vínculos e manutenção. |
+| **02. Central de Operações** | Dashboard com indicadores, mapa interativo, marcadores por tipo e situação, filtros, acompanhamento dos recursos, alertas operacionais e mapas de calor de ocorrências, falhas e riscos. |
+| **03. Cidade Preditiva** | Análise explicável de risco por equipamento e região, fatores e histórico de falhas, identificação de anomalias e recomendações preventivas, incluindo a possibilidade de planejar manutenções a partir de recomendações. |
 
-Os oito tipos técnicos existentes são preservados. Balanças e controladores IoT de
-cancela usam Sensor; táxi, escolar e viatura são categorias de veículos. Não há
-atuação física de dispositivos. Fornecedores e bases têm persistência, sem telas
-próprias. Não foram criadas telas separadas de Alertas ou Relatórios.
+O módulo preditivo utiliza **regras heurísticas explicáveis**. Suas pontuações representam prioridade relativa, não probabilidades calibradas nem previsões produzidas por um modelo de machine learning.
 
-## Stack e arquitetura
+## Além do enunciado
 
-- ASP.NET Core .NET 10, EF Core, SQL Server, FluentValidation, JWT e BCrypt.
-- React 19, JavaScript, Vite 8, React Leaflet 5, Leaflet 1.9.4 e leaflet.heat 0.2.0.
-- Azure App Service, Azure SQL e Azure Static Web Apps; domínio https://sentra.uno.
-- xUnit/EF InMemory e node:test; ensaios adicionais com SQL Server real e Chrome.
+Além das funcionalidades centrais do desafio, a equipe implementou recursos voltados à segurança, à operação e à experiência de uso:
 
-Domain contém entidades/regras; Application contém casos de uso/DTOs/validação;
-Infrastructure implementa persistência, transações e e-mail; Api aplica HTTP,
-autorização e configuração. O frontend separa páginas, componentes, hooks e serviços.
-Veja [arquitetura, permissões e limites](docs/arquitetura.md).
+| Diferencial | Implementação |
+| --- | --- |
+| **Implantação em nuvem** | Backend no Azure App Service, banco Azure SQL e frontend no Azure Static Web Apps. |
+| **CI/CD** | Workflows do GitHub Actions para publicação dos serviços, com verificações de compatibilidade entre schema, API e frontend. |
+| **Interface responsiva** | Telas adaptadas a diferentes tamanhos de dispositivo, incluindo celular, tablet e desktop. |
+| **Autenticação e permissões** | Login com JWT, cinco perfis de acesso e autorização efetiva no backend. |
+| **Administração de usuários** | Cadastro, consulta, edição, ativação/desativação, alteração de cargo, histórico de alterações e revogação de sessões. |
+| **Recuperação de senha por e-mail** | Integração com Resend e links temporários de uso único, sem envio de senhas por e-mail. |
+| **Vínculos operacionais** | Associação entre contas e agentes e gerenciamento de vínculo entre agentes e veículos/equipamentos móveis. |
+| **Atualização periódica** | Atualização de informações operacionais com tratamento de falhas e sinalização de dados desatualizados. |
+| **Mapa de calor interativo** | Visualização geográfica com filtros, zoom e interação por toque. |
+| **Ambiente DEMO isolado** | Cenários reproduzíveis com banco local, dados sintéticos e contas de avaliação, separados da produção. |
+| **Testes automatizados** | **591 testes aprovados** na última execução local: 374 no backend e 217 no frontend. |
 
-### Visão da arquitetura e organização
+A implantação na Azure foi realizada, mas **o endereço público da aplicação não será divulgado durante a etapa de avaliação**. O repositório contém as instruções para executá-la localmente. A ausência do link público não substitui os controles de autenticação e autorização do sistema.
+
+## Tecnologias
+
+| Área | Tecnologias |
+| --- | --- |
+| **Backend** | C#, .NET 10, ASP.NET Core, Entity Framework Core, FluentValidation |
+| **Frontend** | React 19, JavaScript, Vite 8, Leaflet, React Leaflet, leaflet.heat |
+| **Banco de dados** | SQL Server / Azure SQL |
+| **Autenticação e segurança** | JWT, BCrypt, autorização por perfis (RBAC) |
+| **E-mail** | Resend, integrado exclusivamente ao backend |
+| **Infraestrutura** | Azure App Service, Azure SQL, Azure Static Web Apps, GitHub Actions |
+| **Qualidade** | xUnit, `node:test`, ESLint e testes de integração locais |
+
+## Visão da arquitetura
+
+O backend segue **Clean Architecture**, com responsabilidades separadas entre API, aplicação, domínio e infraestrutura. O frontend acessa a API por HTTP; não se conecta diretamente ao banco de dados.
 
 ```mermaid
 flowchart TB
-  USER["Usuários<br/>Navegador"]
+    USER["Navegador"] --> FRONT["React + Vite<br/>Dashboard · Mapas · Formulários"]
+    FRONT -->|"HTTP / JSON / JWT"| API["ASP.NET Core API<br/>Autenticação · Autorização"]
+    FRONT -->|"Tiles"| MAP["OpenStreetMap"]
 
-  subgraph FRONT["frontend/ · React + Vite"]
-    UI["src/pages/ · components/<br/>hooks/ · services/ · config/<br/>Leaflet e mapa de calor"]
-  end
+    subgraph BACKEND["Backend · Clean Architecture"]
+        API --> APP["Application<br/>Casos de uso · Validação · Risco"]
+        APP --> DOMAIN["Domain<br/>Entidades · Regras"]
+        API --> INFRA["Infrastructure<br/>EF Core · Repositórios · E-mail"]
+        INFRA --> APP
+        INFRA --> DOMAIN
+    end
 
-  subgraph BACK["backend/ · Clean Architecture"]
-    API["Api/<br/>Controllers · Security · Middleware<br/>Composição de dependências · Workers"]
-    APP["Application/<br/>Services · DTOs · Validators<br/>Mappings · Predictive · Security"]
-    INFRA["Infrastructure/<br/>Data · Repositories · Migrations<br/>Email · Demo"]
-    DOMAIN["Domain/<br/>Entities · Enums · Rules<br/>Exceptions · IRepositories"]
-
-    API -.->|referencia| APP
-    API -.->|referencia| INFRA
-    INFRA -.->|referencia| APP
-    INFRA -.->|referencia| DOMAIN
-    APP -.->|referencia| DOMAIN
-  end
-
-  subgraph DELIVERY["Qualidade e entrega"]
-    TESTS["backend/Tests/ · frontend/tests/<br/>xUnit · node:test · React"]
-    CI[".github/workflows/<br/>GitHub Actions · main"]
-  end
-
-  subgraph DEMO["Demonstração local isolada"]
-    TOOLS["backend/DemoData/ · DemoAdmin/<br/>scripts/demo/ · perfil evaluation"]
-    LOCAL[("SQL Server LocalDB<br/>Dados e contas sintéticos")]
-    TOOLS -->|preparação manual| LOCAL
-  end
-
-  SQL[("Azure SQL<br/>SQL Server · EF Core")]
-  MAIL["Resend<br/>Recuperação de senha"]
-  MAP["OpenStreetMap<br/>Tiles cartográficos"]
-
-  USER --> UI
-  UI -->|HTTPS · JSON · JWT| API
-  UI -->|cartografia| MAP
-  INFRA -->|persistência| SQL
-  INFRA -->|envio de e-mail| MAIL
-  TOOLS -.->|referencia| INFRA
-  TESTS -.->|valida| UI
-  TESTS -.->|valida| API
-  CI -->|Azure Static Web Apps| UI
-  CI -->|Azure App Service| API
-
-  classDef interface fill:#18181b,stroke:#facc15,color:#fafafa
-  classDef core fill:#facc15,stroke:#a16207,color:#18181b
-  classDef support fill:#f4f4f5,stroke:#71717a,color:#18181b
-  classDef data fill:#fef9c3,stroke:#a16207,color:#18181b
-
-  class UI,API,APP,INFRA interface
-  class DOMAIN core
-  class USER,TESTS,CI,TOOLS,MAIL,MAP support
-  class SQL,LOCAL data
+    INFRA --> DB[("SQL Server / Azure SQL")]
+    INFRA --> MAIL["Resend"]
 ```
 
-As setas tracejadas entre projetos do backend representam referências dos `.csproj`;
-Domain permanece independente da API e da persistência. As demais ligações mostram
-integrações, validação e publicação. Os workers de simulação e automação continuam
-desabilitados por padrão. A preparação DEMO é manual e usa somente LocalDB isolado.
+A versão detalhada, incluindo testes, deploy e ambiente DEMO, está no [diagrama completo](docs/diagrams/arquitetura-sentra.mmd) e na [documentação de arquitetura](docs/arquitetura.md).
 
-O GitHub renderiza este bloco Mermaid no README. O [arquivo-fonte do diagrama](docs/diagrams/arquitetura-sentra.mmd)
-permite reutilizá-lo em editores Mermaid. Veja também a [organização das pastas](docs/arquitetura.md#organização-do-repositório).
+## Como executar localmente
 
-## Executar e verificar
+O caminho mais simples para conhecer os módulos com dados preenchidos é a **DEMO local isolada**. Para desenvolver com um banco próprio e uma conta administrativa nova, utilize a instalação completa.
 
-Seguir o [guia de instalação](docs/instalacao.md) para banco local **novo**, sete
-migrations, configuração privada, primeiro Admin e API/frontend. Não há senha padrão.
-Testing evita seeders operacionais de Development. A aplicação não migra no startup.
+### 1. Pré-requisitos
 
-Na raiz, após restaurar dependências:
+Para seguir os procedimentos documentados no repositório, recomenda-se **Windows com PowerShell** e:
+
+- **.NET SDK 10** e `dotnet-ef` compatível com EF Core 10;
+- **Node.js compatível com Vite 8** (na linha 22, versão 22.12 ou superior) e npm;
+- **SQL Server LocalDB** para o banco de demonstração;
+- **Git**, para obter o repositório.
+
+### 2. Baixar e preparar o projeto
+
+Abra o **PowerShell** e execute:
 
 ```powershell
+git clone https://github.com/yBreno/S.E.N.T.R.A.git
+cd S.E.N.T.R.A
+
 dotnet restore backend/Solution/Solution.slnx
-npm.cmd ci --prefix frontend
 dotnet build backend/Solution/Solution.slnx --no-restore
-dotnet test backend/Tests/Tests.csproj --no-build --no-restore
+npm.cmd ci --prefix frontend
+```
+
+### 3. Escolher um modo de execução
+
+**Opção A — DEMO local (recomendada para avaliação)**
+
+Siga o **[guia de preparação da DEMO](docs/demo/preparacao-ambiente.md)**. Ele orienta a criar **um banco LocalDB novo e isolado**, aplicar as migrations existentes, carregar dados fictícios, provisionar contas de teste e iniciar API e frontend.
+
+A demonstração inclui **12 equipamentos, 9 agentes, 79 registros operacionais e 5 contas fictícias**. Não há senha padrão: o procedimento solicita uma senha privada para as contas do ensaio. A DEMO inicia em modo de leitura, com uma interação de aceite preventivo opcional e controlada.
+
+Ao concluir a preparação, a interface fica disponível em `http://127.0.0.1:5173`, conectada à API local na porta `5180`. **Não utilize dados reais nem a conexão do Azure nesse procedimento.**
+
+**Opção B — Ambiente de desenvolvimento**
+
+Siga o **[guia de instalação completa](docs/instalacao.md)** para criar um banco local novo, aplicar as **7 migrations já existentes**, configurar as variáveis privadas, cadastrar o primeiro Admin e executar a aplicação.
+
+Após configurar e iniciar a API na porta `5129`, abra outro terminal PowerShell para iniciar o frontend:
+
+```powershell
+$env:VITE_API_BASE_URL = 'http://127.0.0.1:5129'
+$env:VITE_DEMO_MODE = 'false'
+npm.cmd --prefix frontend run dev -- --host 127.0.0.1 --port 5173 --strictPort
+```
+
+Acesse `http://127.0.0.1:5173`. A API e o frontend devem estar em execução simultaneamente.
+
+> **Atenção:** nunca publique senhas, tokens, chaves JWT, chaves do Resend ou connection strings privadas. Variáveis `VITE_*` são visíveis no navegador e não devem conter segredos. O projeto não executa migrations automaticamente ao iniciar a API.
+
+## Testes e qualidade
+
+Depois de preparar as dependências, execute na raiz do repositório:
+
+```powershell
+dotnet build backend/Solution/Solution.slnx
+dotnet test backend/Tests/Tests.csproj
 node --test frontend/tests/*.test.js
 npm.cmd --prefix frontend run lint
 npm.cmd --prefix frontend run build
 ```
 
-A demonstração utiliza `DemoData`, `DemoAdmin` e o perfil `evaluation`.
-Os executáveis históricos foram removidos; a guarda de destino Azure foi preservada
-somente no suporte dos testes. Veja a [revisão das ferramentas DEMO](docs/reports/remocao-ferramentas-demo-historicas.md).
+Na última validação local, em **25/10/2026**, foram aprovados **374 testes backend e 217 testes frontend**, sem falhas. Também passaram os builds .NET/Vite e o ESLint. Esses testes não substituem a verificação do ambiente publicado.
 
-## Autenticação, cargos e contas
+## Organização do repositório
 
-Os cargos oficiais são Admin, OperationManager, CentralOperator,
-MaintenanceTechnician e Agent. TrafficAgent, MunicipalGuard e PoliceOfficer são
-categorias profissionais; o último rótulo visual é **Policial militar**.
+```text
+S.E.N.T.R.A/
+├── backend/
+│   ├── Api/              API HTTP, autenticação e configuração
+│   ├── Application/      Casos de uso, validações e análise preditiva
+│   ├── Domain/           Entidades e regras de negócio
+│   ├── Infrastructure/   Banco de dados, repositórios e e-mail
+│   ├── DemoData/         Preparação de dados sintéticos
+│   ├── DemoAdmin/        Contas locais de demonstração
+│   ├── Tests/            Testes backend
+│   └── Solution/         Solução .NET
+├── frontend/             Aplicação React, componentes e testes
+├── scripts/demo/         Inicializador da DEMO local
+├── docs/                 Guias, diagramas e documentação técnica
+└── .github/workflows/    Publicação dos serviços
+```
 
-Admin administra contas, cargos, estado e solicitações de reset. OperationManager
-gerencia a operação; CentralOperator monitora e executa as ações operacionais
-autorizadas; MaintenanceTechnician acessa equipamentos/manutenção; Agent consulta
-seu próprio profissional pela API. As permissões são verificadas no backend.
+## Documentação
 
-JWT verifica usuário ativo, cargo e AuthVersion persistida. Alterar e-mail, cargo,
-estado ou senha revoga sessões; reativar não restaura tokens antigos. O último
-Admin ativo é protegido, inclusive sob concorrência. Cadastro público permanece
-fechado em produção. O titular pode trocar a senha autenticado em
-`POST /api/auth/change-password`, informando a senha atual.
+- [Instalação completa](docs/instalacao.md) — configuração do banco, API, Admin e frontend.
+- [Ambiente DEMO](docs/demo/preparacao-ambiente.md) — execução com dados fictícios e sem acesso à produção.
+- [Arquitetura](docs/arquitetura.md) — camadas, contratos, segurança e decisões técnicas.
+- [Frontend](frontend/README.md) — detalhes da interface, configuração e build.
+- [Índice da documentação](docs/README.md) — outros guias e relatórios.
 
-Usuários é exclusivo de Admin, com paginação no servidor, busca, filtros, edição e
-histórico mínimo. O ID da conta pode ser fornecido ao gestor para associar um agente
-no formulário existente, sem conceder administração de usuários ao gestor.
-CPF de agentes permanece mascarado após o cadastro.
+---
 
-## Recuperação por e-mail
-
-Esqueci minha senha responde genericamente e envia link fixo HTTPS para sentra.uno.
-O token aleatório tem 256 bits, validade de 15 minutos, hash no banco e uso único.
-Nova senha, revogação e auditoria são confirmadas na mesma transação. Existem limites
-por conta e origem; contas inativas não recebem/consomem links. Admin não recebe
-senha, token ou link secreto. Não se envia senha permanente por e-mail.
-
-Segredos do Resend ficam somente no backend. O padrão local é desabilitado;
-LocalTest só funciona em Development/Testing e não tem caixa HTTP pública.
-[Configuração privada, DNS e limitações](docs/reports/recuperacao-senha-email.md).
-
-## Configuração e publicação
-
-Configurações privadas: ConnectionStrings, Jwt, Cors:AllowedOrigins, bootstrap e
-PasswordRecovery. Variáveis VITE são públicas; não incluir credenciais nelas.
-Preservar arquivos locais do operador.
-
-**Simulation__Enabled=false e PredictiveAutomation__Enabled=false** são os defaults
-versionados e devem permanecer assim em produção. Análise manual continua disponível.
-O DEMO também desabilita recuperação por e-mail.
-
-Publicação exclusivamente de main, com concurrency por serviço:
-
-| Serviço | Caminho | Gates mantidos |
-| --- | --- | --- |
-| Backend | backend/Api/Api.csproj | SENTRA_USERS_SCHEMA_VERSION e SENTRA_PASSWORD_RECOVERY_SCHEMA_VERSION |
-| Frontend | frontend → dist | SENTRA_USERS_API_VERSION e SENTRA_PASSWORD_RECOVERY_API_VERSION |
-
-Os gates de usuários exigem `20261024223405_AddUserAdministration`; os de recuperação,
-`20261024234039_AddPasswordRecovery`. Secrets/identidades/URLs e recursos foram
-preservados. A Sprint 08 não adiciona migration. Conferir schema antes de publicar;
-a ordem continua **SQL → backend → frontend**. Não reaplicar migrations/cargas para
-uma simples atualização de código.
-
-Para baseline antiga, o [SQL revisado](docs/sql/README-query-editor.md) permite
-conferência e aplicação manual no Query Editor. Não foi executado no Azure nesta
-sprint. Não há commit, push ou deploy automático pelo agente.
-
-## Demonstração de 6–8 minutos
-
-Usar o [ambiente DEMO isolado](docs/demo/preparacao-ambiente.md) e o
-[roteiro de apresentação](docs/demo/roteiro-apresentacao.md): 79 registros sintéticos,
-12 equipamentos, nove agentes e cinco contas provisionadas privadamente. Carga
-repetida insere zero; o aceite autorizado do cenário C gera uma única preventiva.
-Não usar dados/contas reais nem executar cargas no Azure.
-
-## Limites que importam para a avaliação
-
-- Índices de 0–100 são prioridade heurística, não probabilidades calibradas ou ML.
-  MTBF é descritivo e pode usar fallback por tipo; histórico insuficiente é explícito.
-- Agendamento não é início/reparo; reforço regional não despacha agentes.
-- Leituras periódicas não são snapshot único. Listas operacionais paginam no cliente;
-  volumes grandes e carga de produção não foram ensaiados.
-- Tiles OpenStreetMap dependem de rede/provedor. O TileLayer usa
-  strict-origin-when-cross-origin; o documento usa no-referrer para proteger links.
-- JWT permanece em sessionStorage. A fila de e-mail é limitada e volátil; aceite do
-  provedor não garante entrega na caixa. Não há endpoint dedicado de health/readiness.
-- Troca de senha própria e consulta de campo têm API, sem telas completas para Agent.
-  Manutenção mostra responsável, mas o formulário atual não seleciona esse vínculo.
-- Há fluxos legados de telemetria/ocorrência com múltiplos SaveChanges e cadastros
-  operacionais sem revisão otimista universal. Ver detalhes no relatório final.
-
-Documentação, procedimentos SQL e relatórios estão no [índice](docs/README.md).
+Projeto desenvolvido para o **DSIN Coder Challenge 2026 — F.O.G.O. / PROMETHEUS**.
