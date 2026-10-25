@@ -84,7 +84,7 @@ A implantação na Azure foi realizada, mas **o endereço público da aplicaçã
 
 ## Visão da arquitetura
 
-O backend segue **Clean Architecture**, com responsabilidades separadas entre API, aplicação, domínio e infraestrutura. O frontend acessa a API por HTTP; não se conecta diretamente ao banco de dados.
+O backend segue **Clean Architecture**, com responsabilidades separadas entre API, Application, Domain e Infrastructure. O frontend acessa a API por HTTP; não se conecta diretamente ao banco de dados.
 
 ```mermaid
 flowchart TB
