@@ -12,6 +12,7 @@ using Domain.Entities;
 using Domain.Enums;
 using Domain.IRepositories;
 using Infrastructure.Data;
+using Infrastructure.Email;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -20,6 +21,7 @@ using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -41,19 +43,27 @@ public sealed class EquipmentTestHost : IAsyncDisposable
             .Features.Get<IServerAddressesFeature>()!.Addresses.Single()) };
     }
 
-    public static async Task<EquipmentTestHost> StartAsync(int port = 0, string? localSqlDatabase = null, bool demo = false, bool interactiveDemo = false, bool validateCurrentUser = false)
+    public static async Task<EquipmentTestHost> StartAsync(int port = 0, string? localSqlDatabase = null, bool demo = false, bool interactiveDemo = false, bool validateCurrentUser = false, bool allowPublicRegistration = true, bool passwordRecovery = false, Action<IServiceCollection>? configure = null)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Testing", ContentRootPath = Path.GetTempPath(), Args = [] });
         builder.Logging.ClearProviders();
         builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
         var settings = new JwtSettings { Key = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)), Issuer = "sentra-sprint-tests", Audience = "sentra-sprint-tests" };
         builder.Services.AddApplication();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["PasswordRecovery:Enabled"] = passwordRecovery.ToString(),
+            ["PasswordRecovery:Transport"] = "LocalTest",
+            ["PasswordRecovery:RateLimitKey"] = Convert.ToHexString(RandomNumberGenerator.GetBytes(32))
+        });
+        builder.Services.AddPasswordRecovery(builder.Configuration, builder.Environment, demo);
+        builder.Services.Configure<PublicRegistrationSettings>(options => options.AllowAgentSelfRegistration = allowPublicRegistration);
         if (interactiveDemo && !demo) throw new ArgumentException("Interação de teste exige middleware Demo.");
         if (demo) builder.Services.Configure<DemoInteractionSettings>(settings => settings.InteractiveAcceptance = interactiveDemo);
         builder.Services.Configure<JwtSettings>(options => { options.Key = settings.Key; options.Issuer = settings.Issuer; options.Audience = settings.Audience; });
         var databaseName = $"Sprint01_{Guid.NewGuid():N}";
-        if (localSqlDatabase is not null && !System.Text.RegularExpressions.Regex.IsMatch(localSqlDatabase, "^SENTRA_Sprint0[3456]_[A-Za-z0-9_]+$"))
-            throw new ArgumentException("O banco de teste deve ter um nome exclusivo com prefixo SENTRA_Sprint03_, SENTRA_Sprint04_, SENTRA_Sprint05_ ou SENTRA_Sprint06_.");
+        if (localSqlDatabase is not null && !System.Text.RegularExpressions.Regex.IsMatch(localSqlDatabase, "^SENTRA_(Sprint0[3456]|Users)_[A-Za-z0-9_]+$"))
+            throw new ArgumentException("Use um banco LocalDB novo e exclusivo com prefixo de sprint autorizada ou SENTRA_Users_.");
         builder.Services.AddDbContext<AppDbContext>(options =>
         {
             if (localSqlDatabase is null) options.UseInMemoryDatabase(databaseName);
@@ -65,6 +75,10 @@ public sealed class EquipmentTestHost : IAsyncDisposable
         builder.Services.AddScoped<IAddressRepository, AddressRepository>();
         builder.Services.AddScoped<IAgentRepository, AgentRepository>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<IUserAuditRepository, UserAuditRepository>();
+        builder.Services.AddScoped<IPasswordRecoveryRepository, PasswordRecoveryRepository>();
+        if (localSqlDatabase is null) builder.Services.AddScoped<Application.Interfaces.IServices.IUserAdministrationCoordinator, InMemoryUserAdministrationCoordinator>();
+        else builder.Services.AddScoped<Application.Interfaces.IServices.IUserAdministrationCoordinator, SqlUserAdministrationCoordinator>();
         builder.Services.AddScoped<IAlertRepository, AlertRepository>();
         builder.Services.AddScoped<IMaintenanceRecordRepository, MaintenanceRecordRepository>();
         builder.Services.AddScoped<IIncidentRepository, IncidentRepository>();
@@ -86,6 +100,7 @@ public sealed class EquipmentTestHost : IAsyncDisposable
         });
         builder.Services.AddAuthorization();
         builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy.WithOrigins("http://127.0.0.1:5405").AllowAnyHeader().AllowAnyMethod()));
+        configure?.Invoke(builder.Services);
         var app = builder.Build();
         app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.UseCors();
@@ -95,11 +110,11 @@ public sealed class EquipmentTestHost : IAsyncDisposable
         return new EquipmentTestHost(app, settings);
     }
 
-    public string Token(UserRole role, Guid? userId = null)
+    public string Token(UserRole role, Guid? userId = null, long authVersion = 1)
     {
         var user = User.Create("Usuario sintetico de teste", "test@sentra.invalid", "", "unused", role);
         if (userId.HasValue) user.Id = userId.Value;
-        return new JwtTokenService(Options.Create(jwt)).GenerateToken(user).Token;
+        return SignedToken([new("sub", user.Id.ToString()), new("role", role.ToString()), new("auth_version", authVersion.ToString(System.Globalization.CultureInfo.InvariantCulture))]);
     }
 
     public string SignedToken(IEnumerable<System.Security.Claims.Claim> claims, DateTime? expires = null, string? issuer = null, string? audience = null) =>

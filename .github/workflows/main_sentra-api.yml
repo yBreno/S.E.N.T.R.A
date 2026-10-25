@@ -51,7 +51,8 @@ jobs:
           if-no-files-found: error
 
   deploy:
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    # Liberar a variável somente após aplicar e conferir a migration no banco de destino.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.SENTRA_USERS_SCHEMA_VERSION == '20261024223405_AddUserAdministration' && vars.SENTRA_PASSWORD_RECOVERY_SCHEMA_VERSION == '20261024234039_AddPasswordRecovery'
     runs-on: windows-latest
     needs: build
 

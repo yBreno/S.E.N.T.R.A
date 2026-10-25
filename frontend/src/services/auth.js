@@ -24,7 +24,8 @@ export async function login(credentials, {
     expiresAt: data.expiresAt,
     user: {
       name: data.user.name,
-      role: data.user.role
+      role: data.user.role,
+      ...(typeof data.user.id === 'string' && data.user.id ? { id: data.user.id } : {})
     }
   };
 }

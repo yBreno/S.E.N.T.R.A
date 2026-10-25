@@ -8,6 +8,7 @@ using Application;
 using Application.Predictive;
 using Application.Security;
 using Infrastructure;
+using Infrastructure.Email;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,7 @@ if (isDemo) builder.WebHost.UseUrls(DemoApiConfiguration.Url);
 // ---- Camadas
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddPasswordRecovery(builder.Configuration, builder.Environment, isDemo);
 DemoApiConfiguration.RegisterReadOnlyPersistence(builder.Services, isDemo, builder.Configuration.GetValue<bool>("Demo:InteractiveAcceptance"));
 
 // ---- Cidade Preditiva (pesos e limiares auditaveis + worker de telemetria simulada)
@@ -34,6 +36,10 @@ if (!isDemo) builder.Services.AddHostedService<PredictiveAutomationWorker>();
 var jwt = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>() ?? new JwtSettings();
 builder.Services.AddSentraJwt(jwt);
 builder.Services.AddAuthorization();
+builder.Services.AddOptions<PublicRegistrationSettings>()
+    .Bind(builder.Configuration.GetSection("PublicRegistration"))
+    .Validate(settings => PublicRegistrationSettings.IsSafe(builder.Environment.EnvironmentName, settings.AllowAgentSelfRegistration), "Auto-cadastro nao pode ser habilitado em Production.")
+    .ValidateOnStart();
 
 // ---- CORS
 var origins = isDemo ? DemoApiConfiguration.Origins : builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];

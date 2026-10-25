@@ -17,6 +17,9 @@ public static class DependencyInjection
         services.AddScoped<Application.Interfaces.IServices.IPredictiveWriteCoordinator, SqlPredictiveWriteCoordinator>();
 
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IUserAuditRepository, UserAuditRepository>();
+        services.AddScoped<IPasswordRecoveryRepository, PasswordRecoveryRepository>();
+        services.AddScoped<Application.Interfaces.IServices.IUserAdministrationCoordinator, SqlUserAdministrationCoordinator>();
         services.AddScoped<IAddressRepository, AddressRepository>();
         services.AddScoped<IAgentRepository, AgentRepository>();
         services.AddScoped<IEquipmentRepository, EquipmentRepository>();

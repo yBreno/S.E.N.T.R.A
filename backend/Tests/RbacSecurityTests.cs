@@ -115,7 +115,7 @@ public class RbacSecurityTests
         using var stale = await Send(host, "/api/equipments", token); Assert.Equal(HttpStatusCode.Unauthorized, stale.StatusCode);
         using var elevation = await Send(host, "/api/auth/register", token, HttpMethod.Post, Registration("Admin"));
         Assert.Equal(HttpStatusCode.Forbidden, elevation.StatusCode); // AllowAnonymous nunca transforma token rejeitado em Admin.
-        var current = host.Token(UserRole.Agent, user.Id);
+        var current = host.Token(UserRole.Agent, user.Id, authVersion: 2);
         using var limited = await Send(host, "/api/equipments", current); Assert.Equal(HttpStatusCode.Forbidden, limited.StatusCode);
         using (var scope = host.App.Services.CreateScope())
         {

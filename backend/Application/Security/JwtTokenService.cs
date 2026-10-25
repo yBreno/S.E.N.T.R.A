@@ -5,6 +5,8 @@ using Application.Interfaces.Security;
 using Domain.Entities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using System.Globalization;
+using Domain.Exceptions;
 namespace Application.Security;
 
 public class JwtTokenService(IOptions<JwtSettings> options) : ITokenService
@@ -13,12 +15,14 @@ public class JwtTokenService(IOptions<JwtSettings> options) : ITokenService
 
     public TokenResult GenerateToken(User user)
     {
+        if (!user.IsActive || user.AuthVersion < 1 || !Enum.IsDefined(user.Role)) throw new UnauthorizedException("Conta indisponível para autenticação.");
         var expires = DateTime.UtcNow.AddMinutes(_s.ExpiresMinutes);
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim("role", user.Role.ToString()),
+            new Claim("auth_version", user.AuthVersion.ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer64),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
         var creds = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_s.Key)), SecurityAlgorithms.HmacSha256);

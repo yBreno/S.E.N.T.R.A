@@ -38,7 +38,7 @@ $env:ASPNETCORE_ENVIRONMENT = 'Demo'
 $env:SENTRA_DEMO_CONNECTION_STRING = 'Server=(localdb)\MSSQLLocalDB;Database=' + $demoDb + ';Integrated Security=true;TrustServerCertificate=true'
 $demoArgs = @('--profile', 'evaluation', '--database', $demoDb, '--confirm', 'DEMO')
 
-# Cria SOMENTE um banco novo LocalDB e aplica as cinco migrations existentes.
+# Cria SOMENTE um banco novo LocalDB e aplica as sete migrations existentes.
 # Se o banco já existir, interrompe sem adotá-lo ou atualizar seu schema.
 dotnet backend/DemoData/bin/Debug/net10.0/DemoData.dll --prepare-new @demoArgs
 if ($LASTEXITCODE -ne 0) { throw 'Preparação interrompida; não prossiga.' }

@@ -73,7 +73,7 @@ public class AuthenticationCompatibilityTests
         Assert.True(PasswordLimits.Accepts(new string('é', 36)));
     }
     [Fact]
-    public void Todas_as_actions_exigem_autorizacao_exceto_login_e_registro_documentados()
+    public void Todas_as_actions_exigem_autorizacao_exceto_autenticacao_e_recuperacao_documentadas()
     {
         var known = Enum.GetNames<UserRole>(); var anonymous = new List<string>();
         foreach (var controller in typeof(AuthController).Assembly.GetTypes().Where(t => !t.IsAbstract && typeof(ControllerBase).IsAssignableFrom(t)))
@@ -85,6 +85,6 @@ public class AuthenticationCompatibilityTests
             foreach (var attribute in authorization.Where(a => a.Roles is not null))
                 Assert.All(attribute.Roles!.Split(','), role => Assert.Contains(role.Trim(), known));
         }
-        Assert.Equal(new[] { "AuthController.Login", "AuthController.Register" }, anonymous.Order());
+        Assert.Equal(new[] { "AuthController.Login", "AuthController.Register", "PasswordRecoveryController.Availability", "PasswordRecoveryController.Confirm", "PasswordRecoveryController.RequestLink" }, anonymous.Order());
     }
 }

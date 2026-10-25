@@ -2,6 +2,9 @@
 import AuthLayout from './components/auth/AuthLayout.jsx';
 import LoginForm from './components/LoginForm.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
+import PasswordRecoveryForm from './components/auth/PasswordRecoveryForm.jsx';
+import { parseRecoveryRoute } from './services/passwordRecovery.js';
+import { useEffect, useState } from 'react';
 
 // Hooks personalizados
 import { useAuth } from './hooks/useAuth.js';
@@ -14,21 +17,30 @@ import './App.css';
 import './DemoBanner.css';
 
 function App() {
+  const [recoveryRoute, setRecoveryRoute] = useState(() => parseRecoveryRoute(window.location.hash));
   const auth = useAuth();
-  const Layout = auth.session && auth.canReadEquipments ? 'div' : AuthLayout;
+  useEffect(() => {
+    function scrubSecret() {
+      if (window.location.hash.startsWith('#redefinir-senha?')) window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#redefinir-senha`);
+    }
+    function navigate() { const route = parseRecoveryRoute(window.location.hash); scrubSecret(); setRecoveryRoute(route); }
+    scrubSecret(); window.addEventListener('hashchange', navigate);
+    return () => window.removeEventListener('hashchange', navigate);
+  }, []);
+  const Layout = !recoveryRoute && auth.session && auth.canReadEquipments ? 'div' : AuthLayout;
 
   return (
     <div className={apiConfig.demoMode ? 'demo-app' : undefined}>
     {apiConfig.demoMode && <aside className="demo-banner" aria-label="Ambiente de demonstração"><strong>DEMO · DADOS SINTÉTICOS</strong><span>Ambiente local · não representa operação real</span></aside>}
     <Layout
-      className={auth.session && auth.canReadEquipments ? 'app-dashboard' : 'app-shell'}
+      className={!recoveryRoute && auth.session && auth.canReadEquipments ? 'app-dashboard' : 'app-shell'}
     >
       {apiConfig.error && (
         <p className="message error" role="alert">
           {apiConfig.error}
         </p>
       )}
-      {auth.isRestoring
+      {recoveryRoute ? <PasswordRecoveryForm key={recoveryRoute.kind} route={recoveryRoute} configurationError={apiConfig.error} onBack={() => { auth.logout(); setRecoveryRoute(null); window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`); }} /> : auth.isRestoring
         ? (
           <p role="status">Validando sessão anterior…</p>
         )

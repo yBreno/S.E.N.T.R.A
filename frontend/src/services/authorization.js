@@ -17,3 +17,4 @@ export const canManageEquipments = user => managers.has(user?.role);
 export const canReadAgents = canMonitor;
 export const canManageAgents = canManageEquipments;
 export const canMaintain = user => canManageEquipments(user) || user?.role === 'MaintenanceTechnician';
+export const canAdministerUsers = user => user?.role === 'Admin';

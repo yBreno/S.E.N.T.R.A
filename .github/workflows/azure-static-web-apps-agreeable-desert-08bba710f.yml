@@ -14,7 +14,8 @@ concurrency:
 
 jobs:
   build_and_deploy_job:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Liberar somente após conferir a nova API com schema e autenticação versionada.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.SENTRA_USERS_API_VERSION == '20261024223405_AddUserAdministration' && vars.SENTRA_PASSWORD_RECOVERY_API_VERSION == '20261024234039_AddPasswordRecovery'
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:

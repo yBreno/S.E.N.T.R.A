@@ -6,7 +6,7 @@ namespace Infrastructure.Demo;
 /// <summary>Preparação explícita de banco novo local; não carrega dados nem altera banco já existente.</summary>
 public static class DemoEvaluationSchema
 {
-    private static readonly string[] Manifest = ["20261018170813_InitialCreate", "20261018220253_RemoveOrganization", "20261019031247_AddPredictiveCity", "20261023214553_AddEquipmentCategory", "20261023224842_AddMaintenanceScheduling"];
+    private static readonly string[] Manifest = ["20261018170813_InitialCreate", "20261018220253_RemoveOrganization", "20261019031247_AddPredictiveCity", "20261023214553_AddEquipmentCategory", "20261023224842_AddMaintenanceScheduling", "20261024223405_AddUserAdministration", "20261024234039_AddPasswordRecovery"];
     public static async Task PrepareNewAsync(string connection, string database, string? environment, bool confirmed, CancellationToken ct = default)
     {
         if (!confirmed) throw new InvalidOperationException("Criação exige confirmação explícita.");

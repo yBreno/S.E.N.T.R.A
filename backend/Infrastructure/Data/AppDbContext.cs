@@ -7,6 +7,9 @@ namespace Infrastructure.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options), IUnitOfWork
 {
     public DbSet<User> Users => Set<User>();
+    public DbSet<UserAuditEvent> UserAuditEvents => Set<UserAuditEvent>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+    public DbSet<PasswordRecoveryLimit> PasswordRecoveryLimits => Set<PasswordRecoveryLimit>();
     public DbSet<Address> Addresses => Set<Address>();
     public DbSet<Agent> Agents => Set<Agent>();
     public DbSet<Equipment> Equipments => Set<Equipment>();

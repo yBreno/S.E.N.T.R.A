@@ -8,6 +8,7 @@ import DashboardIcon from './DashboardIcon.jsx';
 // Serviços e utilitários
 import { userInitials, userRoleLabel } from './dashboardData.js';
 import { canMonitor, canMaintain } from '../../services/auth.js';
+import { canAdministerUsers } from '../../services/authorization.js';
 
 const groups = [
   { label: 'Visão geral', items: [{ label: 'Dashboard', icon: 'dashboard', target: 'dashboard' }] },
@@ -17,14 +18,13 @@ const groups = [
   ] },
   { label: 'Monitoramento', items: [
     { label: 'Mapa operacional', icon: 'map', target: 'mapa-operacional' },
-    { label: 'Mapa de calor', icon: 'heat', target: 'mapa-de-calor' },
-    { label: 'Alertas e ocorrências', icon: 'alerts' }
+    { label: 'Mapa de calor', icon: 'heat', target: 'mapa-de-calor' }
   ] },
   { label: 'Inteligência', items: [
-    { label: 'Cidade preditiva', icon: 'predictive', target: 'cidade-preditiva' }, { label: 'Relatórios e indicadores', icon: 'report' }
+    { label: 'Cidade preditiva', icon: 'predictive', target: 'cidade-preditiva' }
   ] },
   { label: 'Sistema', items: [
-    { label: 'Usuarios(Apenas ADM)', icon: 'user' }
+    { label: 'Usuários', icon: 'user', target: 'usuarios' }
   ] }
 ];
 
@@ -65,20 +65,15 @@ export default function DashboardSidebar({ user, active, collapsed, mobileOpen, 
           </button>
         </div>
         <nav aria-label="Módulos do sistema">
-          {groups.map(group => (
+          {groups.filter(group => group.label !== 'Sistema' || canAdministerUsers(user)).map(group => (
             <section className="sidebar-group" key={group.label}>
               <h2>{group.label}</h2>
-              {group.items.filter(item => item.target === 'manutencoes' ? canMaintain(user) : !item.target || item.target === 'equipamentos' || canMonitor(user)).map(item => item.target ? (
+              {group.items.filter(item => item.target === 'usuarios' ? canAdministerUsers(user) : item.target === 'manutencoes' ? canMaintain(user) : item.target === 'equipamentos' || canMonitor(user)).map(item => (
                 <a key={item.label} className={`sidebar-link ${active === item.target ? 'active' : ''}`}
                   href={`#${item.target}`} aria-current={active === item.target ? 'location' : undefined}
                   aria-disabled={busy} title={item.label} onClick={event => { if (busy) event.preventDefault(); else onNavigate(item.target); }}>
                   <DashboardIcon name={item.icon} /><span className="sidebar-label">{item.label}</span>
                 </a>
-              ) : (
-                <button key={item.label} className="sidebar-link" disabled title={`${item.label}: em breve`}>
-                  <DashboardIcon name={item.icon} /><span className="sidebar-label">{item.label}</span>
-                  <span className="coming-soon">Em breve</span>
-                </button>
               ))}
             </section>
           ))}

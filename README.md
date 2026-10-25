@@ -1,4 +1,4 @@
-﻿# S.E.N.T.R.A.
+# S.E.N.T.R.A.
 
 Plataforma de monitoramento e gestão de operações urbanas desenvolvida para o desafio
 **F.O.G.O. — Ferramenta Onisciente de Gestão e Operações**, da DSIN/PROMETHEUS.
@@ -84,18 +84,57 @@ Os cargos de login são exclusivamente `Admin`, `OperationManager`, `CentralOper
 `MunicipalGuard` e `PoliceOfficer` pertencem ao agente, não concedem permissões e
 mantêm seus nomes persistidos; o último rótulo visual é **Policial militar**.
 
-O backend valida assinatura/expiração do JWT e consulta a existência e o cargo atual
-do usuário em cada requisição autenticada. Tokens com cargo antigo ou usuário removido
-recebem 401. Tokens válidos existentes com o mesmo usuário/cargo continuam compatíveis.
-Não há campo de desativação nem revogação definitiva por versão de sessão nesta etapa;
-esses mecanismos precisam integrar a futura Administração de Usuários.
+O backend valida assinatura/expiração, usuário ativo, cargo atual e versão persistida
+de autenticação. Alterar cargo, estado, senha ou e-mail revoga sessões anteriores;
+reativar ou devolver o cargo antigo não restaura tokens. **Tokens legados sem
+`auth_version` deixam de ser aceitos: todos precisam entrar novamente após a atualização.**
 
-O cadastro público existente continua limitado a `Agent`; criar cargos elevados exige
-Admin atual. Não há tela ou endpoints gerais de administração de usuários/cargos/senhas.
+A sidebar **Usuários** é exclusiva de Admin, com paginação no servidor, busca/filtros,
+cadastro, edição de nome/e-mail, cargo, ativação e histórico mínimo sem credenciais.
+OperationManager não administra contas. O último Admin ativo é protegido, inclusive
+contra alterações concorrentes. A vinculação profissional continua em `Agent.UserId`;
+desativar a conta preserva o cadastro e os dados operacionais do agente.
+
+`PublicRegistration:AllowAgentSelfRegistration` é explicitamente `false`; o opt-in
+somente é aceito em Development/Testing. O caminho administrativo é `POST /api/users`;
+o legado `/api/auth/register` por Admin reutiliza o mesmo fluxo auditado.
+O primeiro Admin é provisionado por configuração privada, apenas se não houver usuários.
+Há recuperação por link de e-mail, desabilitada por padrão até configurar o provedor
+privadamente. Admin pode solicitar o envio; não recebe senha, token ou link secreto.
+O titular pode trocar sua senha pelo endpoint autenticado
+`POST /api/auth/change-password`, informando a senha atual; a operação é auditada e exige novo login.
 Senhas de cadastro/login devem respeitar o limite de **72 bytes UTF-8** do BCrypt;
 credenciais antigas maiores exigem revisão privada e troca segura, sem ajuste automático.
-Veja matrizes reais/desejadas, correções e pendências na
-[revisão de arquitetura e RBAC](docs/reports/revisao-arquitetura-rbac.md).
+Veja endpoints, provisionamento, rollout e pendências no
+[relatório de Administração de Usuários](docs/reports/administracao-usuarios.md).
+
+**Schema obrigatório:** aplicar e conferir `20261024223405_AddUserAdministration`
+e depois `20261024234039_AddPasswordRecovery` antes de publicar a API.
+O [SQL incremental atual](docs/sql/20261024234039-recuperacao-senha-email.sql)
+parte de `AddMaintenanceScheduling`, inclui as duas pendências, preserva contas/hashes
+e não é executado pela aplicação.
+Use uma janela de manutenção: schema → API → frontend, sem mistura de versões de autenticação.
+
+### Recuperação segura de senha por e-mail
+
+No login, **Esqueci minha senha** solicita um link com resposta genérica. O link
+HTTPS aponta exclusivamente para `https://sentra.uno/#redefinir-senha`, expira em
+15 minutos e exige confirmação de nova senha. Apenas o hash do token é persistido;
+o consumo único atualiza senha, AuthVersion e auditoria na mesma transação.
+Contas inativas não recebem links e alterações de acesso invalidam links anteriores.
+
+Configurar somente no backend: `PasswordRecovery__Enabled`, `PasswordRecovery__Transport=Resend`,
+`PasswordRecovery__ApiKey`, `PasswordRecovery__From` e `PasswordRecovery__RateLimitKey`
+(segredo aleatório compartilhado entre instâncias, com ao menos 32 caracteres).
+O padrão é `Enabled=false`; o botão administrativo só é liberado quando a API
+informa disponibilidade. A chave do provedor nunca entra em variáveis `VITE_*`.
+O transporte `LocalTest` é exclusivo de Development/Testing, em memória, sem
+endpoint de caixa de entrada; não pode iniciar em Production, Staging ou Demo.
+
+Resend requer domínio remetente verificado e DNS adequado. Nenhum provedor, DNS,
+credencial ou configuração Azure foi alterado nesta entrega. Consulte a comparação,
+DNS, testes, limitações de fila/entrega e o plano de publicação no
+[relatório de recuperação de senha](docs/reports/recuperacao-senha-email.md).
 
 ## Execução local
 
@@ -113,11 +152,17 @@ da raiz ou em `docs/` não disparam publicação; documentação dentro de `fron
 O backend permite `workflow_dispatch` somente em `refs/heads/main`, com condição nos
 jobs de build e deploy. Cada serviço tem grupo de concorrência próprio e
 `cancel-in-progress: false`, preservando publicações em andamento. A revisão RBAC
-acrescentou os controles do backend e preservou secrets, recursos, URLs e o workflow frontend.
-Não há migrations nos comandos de publicação.
+acrescentou os controles do backend e preservou secrets, recursos e URLs.
+O deploy backend exige a variável de repositório `SENTRA_USERS_SCHEMA_VERSION` igual
+a `20261024223405_AddUserAdministration`, a ser definida somente após conferir a migration.
+O frontend exige `SENTRA_USERS_API_VERSION` com o mesmo valor, somente após validar
+a nova API. Esses bloqueios foram preservados. Adicionalmente, backend exige
+`SENTRA_PASSWORD_RECOVERY_SCHEMA_VERSION` e frontend exige `SENTRA_PASSWORD_RECOVERY_API_VERSION`,
+ambas com `20261024234039_AddPasswordRecovery`, liberadas após schema e API,
+respectivamente. Sem todas as liberações, o deploy é bloqueado. Não há migrations nos workflows.
 
 Credenciais federadas e controles privados do Azure não foram acessados nesta revisão.
-Consulte os resultados e limites na [revisão de arquitetura e RBAC](docs/reports/revisao-arquitetura-rbac.md).
+Consulte o procedimento e os limites no [relatório administrativo](docs/reports/administracao-usuarios.md).
 
 Pré-requisitos: .NET 10 SDK, Node compatível com Vite 8 (22.12+ na linha 22, ou 20.19+ na
 linha 20) e npm. A validação local utilizou Node 26.7.0 e npm 11.16.0.
@@ -148,7 +193,7 @@ $env:Cors__AllowedOrigins__0 = 'http://localhost:5173'
 $env:Cors__AllowedOrigins__1 = 'http://127.0.0.1:5173'
 
 # Aplicação manual de schema exclusivamente no banco local conferido:
-dotnet ef database update --project backend/Infrastructure --startup-project backend/Api
+dotnet ef database update --project backend/Infrastructure --startup-project backend/Api --connection "$env:ConnectionStrings__DefaultConnection"
 dotnet run --project backend/Api/Api.csproj --no-launch-profile -- --urls http://127.0.0.1:5129
 ```
 
@@ -183,7 +228,7 @@ local restrito ao aceite preventivo do cenário C, conforme a [preparação DEMO
 Cadastro e edição continuam bloqueados nesse host; use o ambiente local autorizado para esses fluxos.
 Os perfis normais Development podem executar seeders/simulação; o exemplo SprintLocal acima os desativa.
 
-O [relatório de revisão](docs/reports/sprint-01-equipamentos.md) contém arquivos alterados, endpoints,
+O relatório de revisão (histórico no Git) contém arquivos alterados, endpoints,
 decisões, resultados, limitações e roteiro de conferência no navegador.
 
 ### Gestão de agentes — Sprint 02
@@ -213,7 +258,7 @@ O bairro representa a área atual informada, sem delimitação geográfica perma
 como ativos; Offline não conta. Após salvar, volte ao mapa/dashboard para consultar os dados atualizados.
 Os popups mostram categoria em português, bairro, GPS, disponibilidade e horário da posição, sem CPF.
 
-O [relatório da Sprint 02](docs/reports/sprint-02-agentes.md) registra os endpoints, permissões, arquivos,
+O relatório da Sprint 02 (histórico no Git) registra os endpoints, permissões, arquivos,
 testes, evidências de mapa e limitações. O modo HTTP Demo continua somente leitura.
 
 ### Gestão de manutenções — Sprint 03
@@ -252,7 +297,7 @@ Somente gestores podem aceitar recomendações. Recomendações de bairro sem eq
 manual e não podem ser aceitas como agendamento automático. A Sprint 05 disponibiliza a interface preditiva.
 Metadados antigos e recomendações já aceitas não são convertidos retroativamente em ordens.
 
-O [relatório da Sprint 03](docs/reports/sprint-03-manutencoes.md) detalha diagnóstico, endpoints,
+O relatório da Sprint 03 (histórico no Git) detalha diagnóstico, endpoints,
 permissões, arquivos, testes no SQL Server/Chrome, limitações e roteiro de revisão.
 
 ### Central de Operações — Sprint 04
@@ -298,7 +343,7 @@ em UTC. Nenhuma dessas extensões exige mudança no banco.
 O carregamento separado de mapa/equipamentos/agentes/manutenções eliminou o aviso de chunk de 510 kB:
 o principal ficou em aproximadamente **282 kB**, e o mapa em **181 kB**, sem bibliotecas novas.
 Falha ao carregar um módulo apresenta recuperação por recarregamento, preservando a sessão validada.
-Veja o [relatório da Sprint 04](docs/reports/sprint-04-central-operacoes.md) para arquivos, critérios,
+Veja o relatório da Sprint 04 (histórico no Git) para arquivos, critérios,
 endpoints, evidências e roteiro de teste.
 
 ### Cidade Preditiva — Sprint 05
@@ -323,7 +368,7 @@ Sem migration nova. Use frontend e backend desta versão juntos. Mantenha `Simul
 em uma operação real: os eventos já persistidos não têm marca de procedência e podem incluir simulação
 anterior. A Sprint 06 acrescenta a coordenação SQL entre instâncias, descrita abaixo.
 Decisões, limites, arquivos, endpoints e testes estão no
-[relatório da Sprint 05](docs/reports/sprint-05-cidade-preditiva.md).
+relatório da Sprint 05 (histórico no Git).
 
 ### Automação e Central preditiva — Sprint 06
 
@@ -356,7 +401,7 @@ de outras réplicas. O agendamento também é local: não garante uma única exe
 nem recupera ciclos perdidos com a aplicação suspensa. A proteção SQL impede sobreposição das escritas
 participantes e reaproveita pendências, mas não remove duplicatas legadas.
 Veja testes, limitações e checklist de produção no
-[relatório da Sprint 06](docs/reports/sprint-06-automacao-preditiva.md).
+relatório da Sprint 06 (histórico no Git).
 
 ### Configuração privada
 
@@ -391,7 +436,7 @@ gerando uma ordem sem duplicação. O frontend local com `VITE_DEMO_MODE=true` e
 
 Consulte a [preparação segura](docs/demo/preparacao-ambiente.md), o
 [roteiro de 6min30](docs/demo/roteiro-apresentacao.md) e o
-[relatório da Sprint 07](docs/reports/sprint-07-cenarios-demo.md).
+relatório da Sprint 07 (histórico no Git).
 
 ## Build e testes
 
@@ -406,9 +451,14 @@ dotnet build backend/Solution/Solution.slnx --no-restore
 dotnet test backend/Tests/Tests.csproj --no-build --no-restore
 ```
 
-A revisão de arquitetura/RBAC aprovou build/lint frontend, **176 testes frontend** e **304 testes
-backend**. A suíte HTTP usa controllers reais, JWT e Kestrel com persistência InMemory, sem iniciar a API
+A recuperação de senha foi validada com **368 testes backend e 197 frontend**,
+preservando a base administrativa e acrescentando cobertura de tokens, autorização,
+concorrência, limites e transporte.
+A suíte HTTP usa controllers reais, JWT e Kestrel com persistência InMemory, sem iniciar a API
 normal ou acessar conexões privadas. Modelo SQL e snapshot também são conferidos sem conexão.
+Bancos LocalDB novos validaram as duas migrations pendentes, repetição do SQL, consumo
+concorrente e rollback. O Chrome validou recuperação pública/administrativa e
+responsividade; o provedor real aguarda configuração e homologação privadas.
 Na Sprint 07, bancos novos exclusivos LocalDB e a API DEMO real confirmaram integridade,
 carga repetida sem inserções, aceite único preservado na recarga, roles e navegação
 no Chrome em 320/390/768/1440 px. Nenhum banco Azure foi acessado.
@@ -449,8 +499,8 @@ exceções JavaScript ou transbordamento horizontal da página. Isso não homolo
   detecção de edição concorrente não fazem parte desta sprint.
 - Categoria de equipamento é descritiva; modelos especializados de balanças/atuadores não foram
   acrescentados. Endereços antigos ficam preservados quando uma localização é substituída.
-- Vínculos de agentes abrangem somente as classes de veículos existentes; área de atuação permanente,
-  gestão de contas, exclusão na interface e controle completo de concorrência ficam fora desta sprint.
+- Vínculos de agentes abrangem somente as classes de veículos existentes; área de atuação permanente
+  e exclusão na interface continuam fora do escopo. A gestão de contas possui módulo Admin e concorrência própria.
 - Não há clustering/spiderfy; marcadores próximos podem se sobrepor. O polling não é streaming físico de IoT
   e os endpoints separados não representam uma fotografia transacional única de toda a cidade.
 - Os índices preditivos são heurísticos; MTBF e anomalias de volume usam estatística descritiva,

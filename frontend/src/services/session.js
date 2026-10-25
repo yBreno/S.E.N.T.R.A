@@ -18,6 +18,7 @@ export function normalizeSession(value, now = Date.now()) {
     const payload = decode(parts[1]);
     if (header.alg !== 'HS256' || !Number.isSafeInteger(payload.exp) ||
       payload.role !== value.user.role || typeof payload.sub !== 'string' || !payload.sub) return null;
+    if (value.user.id !== undefined && value.user.id !== payload.sub) return null;
     if (payload.nbf !== undefined && (!Number.isFinite(payload.nbf) || payload.nbf * 1000 > now)) return null;
 
     // A leitura do exp não verifica a assinatura; a restauração ainda exige aceitação pela API.
@@ -27,7 +28,7 @@ export function normalizeSession(value, now = Date.now()) {
     return {
       token: value.token,
       expiresAt: new Date(expiration).toISOString(),
-      user: { name: value.user.name, role: value.user.role }
+      user: { name: value.user.name, role: value.user.role, ...(value.user.id ? { id: value.user.id } : {}) }
     };
   } catch {
     return null;

@@ -263,3 +263,6 @@
         transition: none;
     }
 }
+
+.recovery-navigation { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 20px; }
+.recovery-navigation a { color: var(--accent, #facc15); overflow-wrap: anywhere; }

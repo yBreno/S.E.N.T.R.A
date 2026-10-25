@@ -6,9 +6,9 @@ namespace Application.Services;
 
 public sealed class UserSessionValidator(IUserRepository users) : IUserSessionValidator
 {
-    public async Task<bool> IsCurrentAsync(Guid userId, string role, CancellationToken ct = default)
+    public async Task<bool> IsCurrentAsync(Guid userId, string role, long authVersion, CancellationToken ct = default)
     {
         if (userId == Guid.Empty || !Enum.TryParse<UserRole>(role, out var parsed) || !Enum.IsDefined(parsed) || parsed.ToString() != role) return false;
-        return await users.HasRoleAsync(userId, parsed, ct);
+        return authVersion > 0 && await users.HasSessionAsync(userId, parsed, authVersion, ct);
     }
 }

@@ -1,7 +1,7 @@
 # Frontend S.E.N.T.R.A.
 
 Interface React/JavaScript, Vite e Leaflet para inventário, agentes, manutenção,
-Central de Operações e Cidade Preditiva. A API ASP.NET Core aplica autorização,
+Central de Operações, Cidade Preditiva e Administração de Usuários. A API ASP.NET Core aplica autorização,
 validação e persistência; o navegador utiliza HTTP, sem acesso direto ao SQL Server.
 O [README principal](../README.md) mantém a descrição atual de arquitetura,
 funcionalidades, contratos, permissões e limitações das Sprints 01–07.
@@ -36,7 +36,7 @@ separado da configuração de produção e não requer alterar os workflows.
 | Caminho | Responsabilidade |
 | --- | --- |
 | `src/main.jsx`, `src/App.jsx` | Inicialização, sessão, acesso e identificação DEMO |
-| `src/pages/` | Dashboard, equipamentos, agentes, manutenções e Cidade Preditiva |
+| `src/pages/` | Dashboard, equipamentos, agentes, manutenções, Cidade Preditiva e usuários |
 | `src/components/` | Design compartilhado, formulários, detalhes, painéis e mapa |
 | `src/hooks/` | Sessão, consultas, polling, inspeção e camadas operacionais |
 | `src/services/`, `src/config/` | Transporte HTTP, contratos, recursos e URL da API |
@@ -44,8 +44,12 @@ separado da configuração de produção e não requer alterar os workflows.
 | `tests/` | Testes automatizados com `node:test` e `node:assert/strict` |
 | `package-lock.json` | Versões reproduzíveis das dependências |
 
-Os módulos da sidebar seguem os roles do backend. Itens marcados **Em breve**
-continuam indisponíveis. Falta de permissão, erro de consulta ou ausência de dados
+Os módulos da sidebar seguem os roles do backend. **Usuários** exige Admin e permite
+buscar, filtrar, paginar, cadastrar, editar, alterar cargo, desativar/reativar e
+consultar histórico. A redefinição por e-mail exige disponibilidade informada pela
+API e confirmação; só o titular recebe o link. O login oferece **Esqueci minha senha**,
+com telas de solicitação e redefinição. Não há segredo de provedor no frontend.
+Falta de permissão, erro de consulta ou ausência de dados
 não devem ser interpretados como uma cidade sem ocorrências.
 
 O mapa usa tiles OpenStreetMap e depende de rede para a cartografia. Marcadores,
@@ -69,7 +73,11 @@ seu ambiente no momento da execução. A publicação existente usa o workflow A
 Static Web Apps, fonte `frontend`, saída `dist` e branch de produção `main`.
 Não é necessário publicar para validar uma limpeza local.
 
-Resultados da revisão atual estão no [relatório de limpeza](../docs/reports/limpeza-final.md).
+Resultados e instruções de atualização estão no
+[relatório de Administração de Usuários](../docs/reports/administracao-usuarios.md) e no
+[relatório de recuperação por e-mail](../docs/reports/recuperacao-senha-email.md).
+O schema e a API novos devem ser publicados antes do frontend; os workflows exigem
+as variáveis de liberação documentadas no relatório.
 Os testes de transporte usam fixtures controladas; não fornecem dados fictícios à
 aplicação normal nem comprovam o estado da aplicação publicada.
 

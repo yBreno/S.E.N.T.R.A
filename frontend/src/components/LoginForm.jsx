@@ -62,6 +62,7 @@ export default function LoginForm({
           {isSubmitting ? 'Entrando…' : 'Entrar'}
         </button>
       </form>
+      <div className="recovery-navigation"><a href="#esqueci-minha-senha">Esqueci minha senha</a></div>
       {error && (
         <p className="message error" role="alert">
           {error}

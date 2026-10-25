@@ -41,6 +41,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
         ConflictException => Problem(409, "Conflito", ex.Message),
         BusinessRuleException => Problem(400, "Regra de negocio violada", ex.Message),
         ForbiddenException => Problem(403, "Acesso negado", ex.Message),
+        RateLimitException => Problem(429, "Limite temporário", "Aguarde antes de solicitar novamente."),
         UnauthorizedException => Problem(401, "Nao autenticado", ex.Message),
         DbUpdateException => Problem(409, "Conflito de dados", "A operacao viola uma restricao do banco (duplicidade ou registros dependentes)."),
         _ => Problem(500, "Erro interno", "Ocorreu um erro inesperado.")
