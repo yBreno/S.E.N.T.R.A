@@ -16,6 +16,8 @@ As dependências reproduzíveis estão nos projetos .NET e no lockfile do fronte
 - [Fluxo, configuração privada, DNS, testes e publicação](reports/recuperacao-senha-email.md).
 - [SQL incremental das duas migrations pendentes](sql/20261024234039-recuperacao-senha-email.sql),
   de AddMaintenanceScheduling até AddPasswordRecovery. Preserva o incremento administrativo.
+- [Roteiro para Query Editor e consulta de conferência](sql/README-query-editor.md).
+- [Validação local do SQL e cenários de rollback](reports/sql-query-editor.md).
 
 ## Demonstração para avaliação
 

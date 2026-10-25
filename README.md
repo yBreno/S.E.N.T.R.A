@@ -114,6 +114,9 @@ O [SQL incremental atual](docs/sql/20261024234039-recuperacao-senha-email.sql)
 parte de `AddMaintenanceScheduling`, inclui as duas pendências, preserva contas/hashes
 e não é executado pela aplicação.
 Use uma janela de manutenção: schema → API → frontend, sem mistura de versões de autenticação.
+Para execução manual no Azure Portal Query Editor, seguir o
+[roteiro de aplicação e conferência](docs/sql/README-query-editor.md). O SQL atual
+usa um lote T-SQL e uma transação para as duas migrations, sem SQLCMD/GO.
 
 ### Recuperação segura de senha por e-mail
 

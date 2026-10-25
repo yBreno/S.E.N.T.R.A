@@ -194,11 +194,13 @@ Nova migration **20261024234039_AddPasswordRecovery**, aditiva, posterior à pre
 
 O [SQL incremental revisado](../sql/20261024234039-recuperacao-senha-email.sql) começa
 em `20261023224842_AddMaintenanceScheduling`, inclui as **duas** migrations pendentes
-na ordem correta e é idempotente. Exige baseline registrada, usa `XACT_ABORT` e
-`:ON ERROR EXIT`. Operador deve usar SQLCMD com `-b` ou SSMS em SQLCMD Mode, com
-parada ao primeiro erro. Um erro na segunda migration pode deixar a primeira já
-confirmada: conferir History e reaplicar o script idempotente depois da correção;
-não reverter destrutivamente para "zerar" o banco.
+na ordem correta e é idempotente. Foi posteriormente adaptado para Query Editor:
+confere as cinco migrations anteriores, não usa SQLCMD/GO e aplica as duas em uma
+transação, com `XACT_ABORT`, `TRY/CATCH` e rollback. Erro na segunda reverte também
+as alterações novas da primeira nesta tentativa; migrations confirmadas antes
+desta execução permanecem preservadas. Seguir o
+[roteiro e consultas de conferência](../sql/README-query-editor.md), sem executar
+trechos isolados nem reverter destrutivamente para "zerar" o banco.
 
 O SQL anterior da Etapa 03 não foi alterado. Não executar Down: ele remove dados
 de recuperação/auditoria. Geração usou factory design-time, sem iniciar a API ou ler
