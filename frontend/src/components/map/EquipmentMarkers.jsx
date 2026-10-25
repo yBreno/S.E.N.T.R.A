@@ -10,33 +10,37 @@ import { getMarkerIcon } from './markerIcons.js';
 import { equipmentTypeLabel } from './operationalFilters.js';
 import { maintenanceAttention } from '../../services/operations.js';
 
-export default function EquipmentMarkers({
-  markers,
-  onSelect,
-  selection
-}) {
-  return markers.map(record => {
+export default function EquipmentMarkers({ markers, onSelect, selection }) {
+  return markers.map((record) => {
     const state = getEquipmentState(record.status);
     const attention = maintenanceAttention(record);
     const badge = attention.immediate ? 'immediate' : attention.upcoming ? 'upcoming' : '';
-    const title = `${equipmentTypeLabel(record.type)}: ${displayText(record.serialNumber)} · ${state.label}${record.predictiveRisk ? ` · Risco preditivo alto${record.predictiveRisk.stale ? ' (leitura desatualizada)' : ''}` : ''}${badge ? attention.immediate ? ' · Manutenção imediata' : ' · Manutenção vencida ou próxima' : ''}`;
+    const title = `${equipmentTypeLabel(record.type)}: ${displayText(record.serialNumber)} · ${state.label}${record.predictiveRisk ? ` · Risco preditivo alto${record.predictiveRisk.stale ? ' (leitura desatualizada)' : ''}` : ''}${badge ? (attention.immediate ? ' · Manutenção imediata' : ' · Manutenção vencida ou próxima') : ''}`;
 
     return (
       <Marker
         key={record.id}
         position={record.position}
-        icon={getMarkerIcon('equipment', state, record.type, badge, Boolean(record.predictiveRisk), record.predictiveRisk?.stale)}
+        icon={getMarkerIcon(
+          'equipment',
+          state,
+          record.type,
+          badge,
+          Boolean(record.predictiveRisk),
+          record.predictiveRisk?.stale,
+        )}
         title={title}
         alt={title}
         eventHandlers={{
-          click: () => onSelect({
-            kind: 'equipment',
-            id: record.id
-          })
+          click: () =>
+            onSelect({
+              kind: 'equipment',
+              id: record.id,
+            }),
         }}
       >
         <MapPopup
-          kind="equipment"
+          kind='equipment'
           record={record}
           selected={selection?.kind === 'equipment' && selection.id === record.id}
         />

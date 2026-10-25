@@ -5,7 +5,6 @@ namespace Application.Predictive;
 
 public static class EquipmentRiskCalculator
 {
-    // Pesos fixos somam 100 pontos. Eventos conhecidos são sinais categóricos, não anomalias estatísticas.
     private static readonly HashSet<string> AttentionEvents = new(StringComparer.OrdinalIgnoreCase)
     { "ConnectionLost", "ConexaoPerdida", "Conexao Perdida", "Conexão Perdida", "LowBattery", "Bateria Fraca", "HighTemperature", "Temperatura Elevada" };
 

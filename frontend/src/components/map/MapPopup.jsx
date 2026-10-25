@@ -8,49 +8,42 @@ import OperationalRecordDetails from './OperationalRecordDetails.jsx';
 
 const popupEvents = {
   // Leaflet ajusta a vista ao abrir; depois disso, atualizar a posição não recentraliza o mapa.
-  add: ({
-    target
-  }) => setOptions(target, {
-    autoPan: false
-  }),
-  remove: ({
-    target
-  }) => setOptions(target, {
-    autoPan: true
-  })
+  add: ({ target }) =>
+    setOptions(target, {
+      autoPan: false,
+    }),
+  remove: ({ target }) =>
+    setOptions(target, {
+      autoPan: true,
+    }),
 };
 
-function PopupDetails({
-  kind,
-  record,
-  onReady
-}) {
+function PopupDetails({ kind, record, onReady }) {
   // O primeiro cálculo nativo precede a inserção do conteúdo React no portal.
   useLayoutEffect(() => {
     onReady();
   }, [onReady]);
 
   return (
-    <OperationalRecordDetails kind={kind} record={record} />
+    <OperationalRecordDetails
+      kind={kind}
+      record={record}
+    />
   );
 }
 
-export default function MapPopup({
-  kind,
-  record,
-  selected
-}) {
+export default function MapPopup({ kind, record, selected }) {
   const popupRef = useRef(null);
 
   const onReady = useCallback(() => {
     const popup = popupRef.current;
     if (!popup) return;
     setOptions(popup, {
-      autoPan: true
+      autoPan: true,
     });
     popup.update();
     setOptions(popup, {
-      autoPan: false
+      autoPan: false,
     });
   }, []);
 
@@ -64,7 +57,7 @@ export default function MapPopup({
       autoPan
       autoPanPaddingTopLeft={[5, 80]}
       eventHandlers={popupEvents}
-      className="operational-popup"
+      className='operational-popup'
       minWidth={210}
       maxWidth={280}
     >

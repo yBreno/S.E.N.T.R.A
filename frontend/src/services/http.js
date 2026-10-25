@@ -6,14 +6,10 @@ const statusMessages = {
   401: 'Autenticação não aceita (401). Confira as credenciais ou entre novamente.',
   403: 'Acesso negado (403). Seu usuário não tem permissão para este recurso.',
   404: 'Recurso não encontrado (404). Confira a URL e a rota da API.',
-  500: 'Erro interno da API (500). Tente novamente mais tarde.'
+  500: 'Erro interno da API (500). Tente novamente mais tarde.',
 };
 export class HttpError extends Error {
-  constructor(message, {
-    status = null,
-    kind = 'http',
-    fieldErrors = {}
-  } = {}) {
+  constructor(message, { status = null, kind = 'http', fieldErrors = {} } = {}) {
     super(message);
     this.name = 'HttpError';
     this.status = status;
@@ -26,28 +22,24 @@ export function isAbortError(error) {
 }
 export function invalidResponse() {
   return new HttpError('A API retornou uma resposta incompatível com o contrato esperado.', {
-    kind: 'response'
+    kind: 'response',
   });
 }
 
 // A factory permite verificar o transporte sem depender de um servidor real.
 export function createHttpClient(config = apiConfig, fetchImplementation = globalThis.fetch) {
-  async function request(method, path, {
-    token,
-    signal,
-    body,
-    validation = false
-  } = {}) {
+  async function request(method, path, { token, signal, body, validation = false } = {}) {
     if (config.error || !config.baseUrl) {
       throw new HttpError(config.error || 'URL da API não configurada.', {
-        kind: 'configuration'
+        kind: 'configuration',
       });
     }
-    if (!path.startsWith('/api/')) throw new HttpError('Rota de API inválida.', {
-      kind: 'configuration'
-    });
+    if (!path.startsWith('/api/'))
+      throw new HttpError('Rota de API inválida.', {
+        kind: 'configuration',
+      });
     const headers = {
-      Accept: 'application/json'
+      Accept: 'application/json',
     };
     if (token) headers.Authorization = `Bearer ${token}`;
     if (body !== undefined) headers['Content-Type'] = 'application/json';
@@ -59,25 +51,44 @@ export function createHttpClient(config = apiConfig, fetchImplementation = globa
         signal,
         credentials: 'omit',
         cache: 'no-store',
-        ...(body !== undefined ? {
-          body: JSON.stringify(body)
-        } : {})
+        ...(body !== undefined
+          ? {
+              body: JSON.stringify(body),
+            }
+          : {}),
       });
       signal?.throwIfAborted();
       if (!response.ok) {
         // Apenas formularios opt-in leem chaves de validacao; mensagens/corpos nunca sao reproduzidos.
         let fieldErrors = {};
-        if (validation && response.status === 400 && response.headers.get('content-type')?.includes('application/problem+json')) {
+        if (
+          validation &&
+          response.status === 400 &&
+          response.headers.get('content-type')?.includes('application/problem+json')
+        ) {
           try {
             const problem = await response.json();
-            if (problem?.errors && typeof problem.errors === 'object' && !Array.isArray(problem.errors))
-              fieldErrors = Object.fromEntries(Object.keys(problem.errors).filter(key => /^[A-Za-z][A-Za-z.]{0,80}$/.test(key)).map(key => [key, true]));
-          } catch { /* Resposta invalida mantem o erro HTTP generico. */ }
+            if (
+              problem?.errors &&
+              typeof problem.errors === 'object' &&
+              !Array.isArray(problem.errors)
+            )
+              fieldErrors = Object.fromEntries(
+                Object.keys(problem.errors)
+                  .filter((key) => /^[A-Za-z][A-Za-z.]{0,80}$/.test(key))
+                  .map((key) => [key, true]),
+              );
+          } catch {
+            /* Resposta invalida mantem o erro HTTP generico. */
+          }
         } else await response.body?.cancel();
-        throw new HttpError(statusMessages[response.status] || `A API retornou erro HTTP ${response.status}.`, {
-          status: response.status,
-          fieldErrors
-        });
+        throw new HttpError(
+          statusMessages[response.status] || `A API retornou erro HTTP ${response.status}.`,
+          {
+            status: response.status,
+            fieldErrors,
+          },
+        );
       }
       if (response.status === 204) return null;
       const text = await response.text();
@@ -90,26 +101,32 @@ export function createHttpClient(config = apiConfig, fetchImplementation = globa
     } catch (error) {
       if (signal?.aborted) signal.throwIfAborted();
       if (isAbortError(error) || error instanceof HttpError) throw error;
-      throw new HttpError('Não foi possível conectar à API. Confira se ela está em execução, a URL, o certificado HTTPS e o CORS.', {
-        kind: 'network'
-      });
+      throw new HttpError(
+        'Não foi possível conectar à API. Confira se ela está em execução, a URL, o certificado HTTPS e o CORS.',
+        {
+          kind: 'network',
+        },
+      );
     }
   }
 
   return {
     getJson: (path, options) => request('GET', path, options),
-    postJson: (path, body, options) => request('POST', path, {
-      ...options,
-      body
-    }),
-    putJson: (path, body, options) => request('PUT', path, {
-      ...options,
-      body
-    }),
-    patchJson: (path, body, options) => request('PATCH', path, {
-      ...options,
-      body
-    })
+    postJson: (path, body, options) =>
+      request('POST', path, {
+        ...options,
+        body,
+      }),
+    putJson: (path, body, options) =>
+      request('PUT', path, {
+        ...options,
+        body,
+      }),
+    patchJson: (path, body, options) =>
+      request('PATCH', path, {
+        ...options,
+        body,
+      }),
   };
 }
 export const http = createHttpClient();

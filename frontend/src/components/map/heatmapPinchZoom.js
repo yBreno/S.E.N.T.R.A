@@ -6,13 +6,14 @@ export function attachHeatmapPinchZoom(map, canvas, domUtil) {
   function start() {
     reference = {
       zoom: map.getZoom(),
-      origin: map.layerPointToLatLng(domUtil.getPosition(canvas))
+      origin: map.layerPointToLatLng(domUtil.getPosition(canvas)),
     };
   }
 
   function transform(center, zoom) {
     const paneOffset = map.containerPointToLayerPoint([0, 0]);
-    const pixelOrigin = map.project(center, zoom)
+    const pixelOrigin = map
+      .project(center, zoom)
       .subtract(map.getSize().divideBy(2))
       .subtract(paneOffset)
       .round();

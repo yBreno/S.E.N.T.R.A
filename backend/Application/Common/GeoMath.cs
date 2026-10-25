@@ -2,7 +2,6 @@ namespace Application.Common;
 
 public static class GeoMath
 {
-    /// <summary>Distancia em km (formula de Haversine).</summary>
     public static double DistanceKm(double lat1, double lon1, double lat2, double lon2)
     {
         const double r = 6371.0;

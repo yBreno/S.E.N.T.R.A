@@ -8,7 +8,6 @@ using Domain.IRepositories;
 using FluentValidation;
 namespace Api.Seed;
 
-/// <summary>Bootstrap explícito por configuração privada, somente se não houver usuários.</summary>
 public static class AdminSeeder
 {
     public static async Task SeedAsync(IServiceProvider services, IConfiguration config, ILogger logger)

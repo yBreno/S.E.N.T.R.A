@@ -16,8 +16,16 @@ const MaintenancePage = lazy(() => import('./MaintenancePage.jsx'));
 const PredictivePage = lazy(() => import('./PredictivePage.jsx'));
 const UserPage = lazy(() => import('./UserPage.jsx'));
 import { canAdministerUsers } from '../services/authorization.js';
-import { CityOverview, MaintenanceHighlights } from '../components/dashboard/OperationsOverview.jsx';
-import { createEmptyFilters, neighborhoodFilterValue, UNKNOWN_FILTER_VALUE } from '../components/map/operationalFilters.js';
+import { dashboardTarget } from '../services/navigation.js';
+import {
+  CityOverview,
+  MaintenanceHighlights,
+} from '../components/dashboard/OperationsOverview.jsx';
+import {
+  createEmptyFilters,
+  neighborhoodFilterValue,
+  UNKNOWN_FILTER_VALUE,
+} from '../components/map/operationalFilters.js';
 import { canMonitor, canMaintain } from '../services/auth.js';
 
 // Hooks personalizados
@@ -31,7 +39,11 @@ import '../components/dashboard/OperationsOverview.css';
 
 export default function DashboardPage({ session, onLogout }) {
   const monitoring = canMonitor(session.user);
-  const [active, setActive] = useState(() => window.location.hash === '#usuarios' && canAdministerUsers(session.user) ? 'usuarios' : window.location.hash === '#manutencoes' && canMaintain(session.user) ? 'manutencoes' : !monitoring || window.location.hash === '#equipamentos' ? 'equipamentos' : window.location.hash === '#agentes' ? 'agentes' : window.location.hash === '#cidade-preditiva' ? 'cidade-preditiva' : 'dashboard');
+  const [active, setActive] = useState(
+    () =>
+      dashboardTarget(window.location.hash, session.user) ||
+      (monitoring ? 'dashboard' : 'equipamentos'),
+  );
   const [relatedEquipment, setRelatedEquipment] = useState('');
   const inventory = active === 'equipamentos';
   const agents = active === 'agentes';
@@ -41,17 +53,44 @@ export default function DashboardPage({ session, onLogout }) {
   const central = monitoring && !inventory && !agents && !maintenance && !predictive && !users;
   const prevention = usePredictiveOperations(session, onLogout, central);
   const [inventorySaving, setInventorySaving] = useState(false);
-  const verification = useEndpointVerification(session.token, onLogout, central, canMaintain(session.user));
+  const verification = useEndpointVerification(
+    session.token,
+    onLogout,
+    central,
+    canMaintain(session.user),
+  );
   const [mapFilters, setMapFilters] = useState(createEmptyFilters);
-  const heatmap = useHeatmap({ token: session.token, onLogout, verification, active: central });
-  const dashboardResult = verification.results.find(result => result.id === 'dashboard');
+  const heatmap = useHeatmap({
+    token: session.token,
+    onLogout,
+    verification,
+    active: central,
+    initialEnabled: active === 'mapa-de-calor',
+  });
+  const { changeEnabled } = heatmap;
+  const dashboardResult = verification.results.find((result) => result.id === 'dashboard');
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuButton = useRef(null);
 
   useEffect(() => {
+    function followHistory() {
+      const target = dashboardTarget(window.location.hash, session.user);
+      if (!target || inventorySaving || target === active) return;
+      setRelatedEquipment('');
+      setActive(target);
+      setMobileOpen(false);
+      if (target !== 'dashboard') changeEnabled(target === 'mapa-de-calor');
+    }
+    window.addEventListener('hashchange', followHistory);
+    return () => window.removeEventListener('hashchange', followHistory);
+  }, [active, session.user, inventorySaving, changeEnabled]);
+
+  useEffect(() => {
     const media = window.matchMedia('(max-width: 760px)');
-    const change = event => { if (!event.matches) setMobileOpen(false); };
+    const change = (event) => {
+      if (!event.matches) setMobileOpen(false);
+    };
     media.addEventListener('change', change);
 
     return () => media.removeEventListener('change', change);
@@ -63,7 +102,13 @@ export default function DashboardPage({ session, onLogout }) {
   }
 
   function navigate(target) {
-    if (inventorySaving || (target === 'usuarios' && !canAdministerUsers(session.user)) || (target === 'manutencoes' && !canMaintain(session.user)) || (!monitoring && !['equipamentos', 'manutencoes'].includes(target))) return;
+    if (
+      inventorySaving ||
+      (target === 'usuarios' && !canAdministerUsers(session.user)) ||
+      (target === 'manutencoes' && !canMaintain(session.user)) ||
+      (!monitoring && !['equipamentos', 'manutencoes'].includes(target))
+    )
+      return;
     setRelatedEquipment('');
     setActive(target);
     setMobileOpen(false);
@@ -72,47 +117,239 @@ export default function DashboardPage({ session, onLogout }) {
 
   function related(target, id) {
     if (inventorySaving) return;
-    setRelatedEquipment(id); setActive(target); setMobileOpen(false); window.location.hash = target;
+    setRelatedEquipment(id);
+    setActive(target);
+    setMobileOpen(false);
+    window.location.hash = target;
   }
 
   function focusNeighborhood(label) {
-    setMapFilters(previous => ({ ...previous, neighborhood: label === 'Bairro não informado' ? UNKNOWN_FILTER_VALUE : neighborhoodFilterValue(label) }));
+    setMapFilters((previous) => ({
+      ...previous,
+      neighborhood:
+        label === 'Bairro não informado' ? UNKNOWN_FILTER_VALUE : neighborhoodFilterValue(label),
+    }));
     document.getElementById('mapa-operacional')?.scrollIntoView({ block: 'start' });
   }
 
   return (
-    <div className={`dashboard-layout ${collapsed ? 'sidebar-is-collapsed' : ''}`} id="dashboard">
-      <a className="skip-link" href="#conteudo-operacional">Ir para o conteúdo</a>
-      <DashboardSidebar user={session.user} active={active} collapsed={collapsed} mobileOpen={mobileOpen}
-        busy={inventorySaving} onCollapse={() => setCollapsed(value => !value)} onClose={closeMenu} onNavigate={navigate} onLogout={onLogout} />
-      <div className="dashboard-workspace">
-        <DashboardHeader user={session.user} verification={verification} mobileOpen={mobileOpen}
-          inventory={inventory || agents || maintenance || predictive || users} inventoryEyebrow={users ? 'Acesso e segurança' : predictive ? 'Análise preventiva da cidade' : undefined}
-          inventoryTitle={users ? 'Usuários' : predictive ? 'Cidade preditiva' : maintenance ? 'Manutenções' : agents ? 'Agentes' : 'Equipamentos'} inventorySubtitle={users ? 'Administração exclusiva de contas por Admin' : predictive ? 'Riscos explicáveis e ações preventivas com dados persistidos' : maintenance ? 'Planejamento, intervenção e histórico dos equipamentos' : agents ? 'Profissionais de mobilidade, segurança e atuação em campo' : undefined} onMenu={() => setMobileOpen(value => !value)} menuButtonRef={menuButton} />
-        <main className="dashboard-main" id="conteudo-operacional">
-          <ModuleBoundary><Suspense fallback={<p role="status">Carregando módulo…</p>}>
-          {users ? <UserPage session={session} onLogout={onLogout} onSavingChange={setInventorySaving} /> : predictive ? <PredictivePage session={session} onLogout={onLogout} onSavingChange={setInventorySaving} onEquipment={id => related('equipamentos', id)} onMaintenance={id => related('manutencoes', id)} onAgents={() => related('agentes', '')} /> : maintenance ? <MaintenancePage key={relatedEquipment} equipmentId={relatedEquipment} session={session} onLogout={onLogout} onChanged={verification.refresh} onSavingChange={setInventorySaving} onEquipment={id => related('equipamentos', id)} /> : agents ? <AgentPage key={relatedEquipment} agentId={relatedEquipment} session={session} onLogout={onLogout} onChanged={verification.refresh} onSavingChange={setInventorySaving} /> : inventory ? <EquipmentPage key={relatedEquipment} equipmentId={relatedEquipment} session={session} onLogout={onLogout} onChanged={verification.refresh} onSavingChange={setInventorySaving} onMaintenance={id => related('manutencoes', id)} /> : <>
-          <DashboardIndicators loading={verification.loading} result={dashboardResult} error={verification.error} />
-          <div className="operations-sync" aria-live="polite"><p>Indicadores da cidade inteira · Sincronização automática a cada {verification.intervalMs / 1000} s após cada ciclo.</p><p>{verification.updatedAt ? <>Último ciclo completo bem-sucedido: <time dateTime={verification.updatedAt.toISOString()}>{verification.updatedAt.toLocaleString('pt-BR')}</time></> : 'Ainda sem ciclo completo bem-sucedido.'}</p>{verification.error && <p role="alert">{verification.error}</p>}</div>
-          <div className="operations-grid">
-            <section className="map-panel" id="mapa-operacional" aria-labelledby="map-heading">
-              <MapView verification={verification} predictiveResult={prevention.result} heatmap={heatmap} filters={mapFilters} onFiltersChange={setMapFilters} navigation={{ equipment: id => related('equipamentos', id), agent: id => related('agentes', id), maintenance: canMaintain(session.user) ? id => related('manutencoes', id) : null, predictive: () => related('cidade-preditiva', ''), neighborhood: focusNeighborhood }} />
-            </section>
-            <aside className="dashboard-secondary" aria-label="Resumo da operação">
-              <RecentAlerts result={verification.results.find(item => item.id === 'alerts')} equipments={verification.results.find(item => item.id === 'equipments')?.items} loading={verification.loading} onEquipment={id => related('equipamentos', id)} />
-              <MaintenanceHighlights verification={verification} canMaintain={canMaintain(session.user)} onEquipment={id => related('equipamentos', id)} onMaintenance={id => related('manutencoes', id)} />
-              <NetworkStatus result={dashboardResult} loading={verification.loading} />
-            </aside>
-          </div>
-          <PredictiveOperations resource={prevention} onEquipment={id => related('equipamentos', id)} onNeighborhood={focusNeighborhood} onMaintenance={canMaintain(session.user) ? id => related('manutencoes', id) : null} onPredictive={() => related('cidade-preditiva', '')} />
-          <CityOverview verification={verification} onNeighborhood={focusNeighborhood} />
-          </>}
-          </Suspense></ModuleBoundary>
-          <footer className="dashboard-footer">
-            <span><span className="footer-location" />São Paulo, SP</span>
-            <span>{inventory || agents || maintenance || predictive || users ? 'Atualização manual do módulo' : 'Sincronização automática da Central'}{verification.updatedAt && <> · Último sucesso da Central: <time dateTime={verification.updatedAt.toISOString()}>
-              {verification.updatedAt.toLocaleString('pt-BR')}
-            </time></>}</span>
+    <div
+      className={`dashboard-layout ${collapsed ? 'sidebar-is-collapsed' : ''}`}
+      id='dashboard'
+    >
+      <a
+        className='skip-link'
+        href='#conteudo-operacional'
+      >
+        Ir para o conteúdo
+      </a>
+      <DashboardSidebar
+        user={session.user}
+        active={active}
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
+        busy={inventorySaving}
+        onCollapse={() => setCollapsed((value) => !value)}
+        onClose={closeMenu}
+        onNavigate={navigate}
+        onLogout={onLogout}
+      />
+      <div className='dashboard-workspace'>
+        <DashboardHeader
+          user={session.user}
+          verification={verification}
+          mobileOpen={mobileOpen}
+          inventory={inventory || agents || maintenance || predictive || users}
+          inventoryEyebrow={
+            users ? 'Acesso e segurança' : predictive ? 'Análise preventiva da cidade' : undefined
+          }
+          inventoryTitle={
+            users
+              ? 'Usuários'
+              : predictive
+                ? 'Cidade preditiva'
+                : maintenance
+                  ? 'Manutenções'
+                  : agents
+                    ? 'Agentes'
+                    : 'Equipamentos'
+          }
+          inventorySubtitle={
+            users
+              ? 'Administração exclusiva de contas por Admin'
+              : predictive
+                ? 'Riscos explicáveis e ações preventivas com dados persistidos'
+                : maintenance
+                  ? 'Planejamento, intervenção e histórico dos equipamentos'
+                  : agents
+                    ? 'Profissionais de mobilidade, segurança e atuação em campo'
+                    : undefined
+          }
+          onMenu={() => setMobileOpen((value) => !value)}
+          menuButtonRef={menuButton}
+        />
+        <main
+          className='dashboard-main'
+          id='conteudo-operacional'
+        >
+          <ModuleBoundary>
+            <Suspense fallback={<p role='status'>Carregando módulo…</p>}>
+              {users ? (
+                <UserPage
+                  session={session}
+                  onLogout={onLogout}
+                  onSavingChange={setInventorySaving}
+                />
+              ) : predictive ? (
+                <PredictivePage
+                  session={session}
+                  onLogout={onLogout}
+                  onSavingChange={setInventorySaving}
+                  onEquipment={(id) => related('equipamentos', id)}
+                  onMaintenance={(id) => related('manutencoes', id)}
+                  onAgents={() => related('agentes', '')}
+                />
+              ) : maintenance ? (
+                <MaintenancePage
+                  key={relatedEquipment}
+                  equipmentId={relatedEquipment}
+                  session={session}
+                  onLogout={onLogout}
+                  onChanged={verification.refresh}
+                  onSavingChange={setInventorySaving}
+                  onEquipment={(id) => related('equipamentos', id)}
+                />
+              ) : agents ? (
+                <AgentPage
+                  key={relatedEquipment}
+                  agentId={relatedEquipment}
+                  session={session}
+                  onLogout={onLogout}
+                  onChanged={verification.refresh}
+                  onSavingChange={setInventorySaving}
+                />
+              ) : inventory ? (
+                <EquipmentPage
+                  key={relatedEquipment}
+                  equipmentId={relatedEquipment}
+                  session={session}
+                  onLogout={onLogout}
+                  onChanged={verification.refresh}
+                  onSavingChange={setInventorySaving}
+                  onMaintenance={(id) => related('manutencoes', id)}
+                />
+              ) : (
+                <>
+                  <DashboardIndicators
+                    loading={verification.loading}
+                    result={dashboardResult}
+                    error={verification.error}
+                  />
+                  <div
+                    className='operations-sync'
+                    aria-live='polite'
+                  >
+                    <p>
+                      Indicadores da cidade inteira · Sincronização automática a cada{' '}
+                      {verification.intervalMs / 1000} s após cada ciclo.
+                    </p>
+                    <p>
+                      {verification.updatedAt ? (
+                        <>
+                          Último ciclo completo bem-sucedido:{' '}
+                          <time dateTime={verification.updatedAt.toISOString()}>
+                            {verification.updatedAt.toLocaleString('pt-BR')}
+                          </time>
+                        </>
+                      ) : (
+                        'Ainda sem ciclo completo bem-sucedido.'
+                      )}
+                    </p>
+                    {verification.error && <p role='alert'>{verification.error}</p>}
+                  </div>
+                  <div className='operations-grid'>
+                    <section
+                      className='map-panel'
+                      id='mapa-operacional'
+                      aria-labelledby='map-heading'
+                    >
+                      <MapView
+                        verification={verification}
+                        predictiveResult={prevention.result}
+                        heatmap={heatmap}
+                        filters={mapFilters}
+                        onFiltersChange={setMapFilters}
+                        navigation={{
+                          equipment: (id) => related('equipamentos', id),
+                          agent: (id) => related('agentes', id),
+                          maintenance: canMaintain(session.user)
+                            ? (id) => related('manutencoes', id)
+                            : null,
+                          predictive: () => related('cidade-preditiva', ''),
+                          neighborhood: focusNeighborhood,
+                        }}
+                      />
+                    </section>
+                    <aside
+                      className='dashboard-secondary'
+                      aria-label='Resumo da operação'
+                    >
+                      <RecentAlerts
+                        result={verification.results.find((item) => item.id === 'alerts')}
+                        equipments={
+                          verification.results.find((item) => item.id === 'equipments')?.items
+                        }
+                        loading={verification.loading}
+                        onEquipment={(id) => related('equipamentos', id)}
+                      />
+                      <MaintenanceHighlights
+                        verification={verification}
+                        canMaintain={canMaintain(session.user)}
+                        onEquipment={(id) => related('equipamentos', id)}
+                        onMaintenance={(id) => related('manutencoes', id)}
+                      />
+                      <NetworkStatus
+                        result={dashboardResult}
+                        loading={verification.loading}
+                      />
+                    </aside>
+                  </div>
+                  <PredictiveOperations
+                    resource={prevention}
+                    onEquipment={(id) => related('equipamentos', id)}
+                    onNeighborhood={focusNeighborhood}
+                    onMaintenance={
+                      canMaintain(session.user) ? (id) => related('manutencoes', id) : null
+                    }
+                    onPredictive={() => related('cidade-preditiva', '')}
+                  />
+                  <CityOverview
+                    verification={verification}
+                    onNeighborhood={focusNeighborhood}
+                  />
+                </>
+              )}
+            </Suspense>
+          </ModuleBoundary>
+          <footer className='dashboard-footer'>
+            <span>
+              <span className='footer-location' />
+              São Paulo, SP
+            </span>
+            <span>
+              {inventory || agents || maintenance || predictive || users
+                ? 'Atualização manual do módulo'
+                : 'Sincronização automática da Central'}
+              {verification.updatedAt && (
+                <>
+                  {' '}
+                  · Último sucesso da Central:{' '}
+                  <time dateTime={verification.updatedAt.toISOString()}>
+                    {verification.updatedAt.toLocaleString('pt-BR')}
+                  </time>
+                </>
+              )}
+            </span>
           </footer>
         </main>
       </div>

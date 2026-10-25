@@ -22,6 +22,8 @@ export function boundHeatKernel(renderer) {
   };
 
   renderer.draw = function (minOpacity = 0.05) {
+    // Leaflet may briefly resize to zero while its module/layout is being removed.
+    if (!(this._width > 0 && this._height > 0)) return this;
     if (!this._circle) this.radius(this.defaultRadius);
     if (!this._grad) this.gradient(this.defaultGradient);
     const context = this._ctx;

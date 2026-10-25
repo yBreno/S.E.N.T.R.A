@@ -12,8 +12,7 @@ public sealed class PasswordRecoveryRepository(AppDbContext db) : IPasswordRecov
     public async Task<bool> TakeLimitAsync(string key, int maximum, DateTime now, CancellationToken ct)
     {
         var row = await db.PasswordRecoveryLimits.FindAsync([key], ct);
-        // Pruning may have scheduled this same expired key for removal in this transaction.
-        // Reuse must persist its new window instead of deleting the first counted attempt.
+        
         if (row is not null && db.Entry(row).State == EntityState.Deleted) db.Entry(row).State = EntityState.Modified;
         if (row is null) { row = new() { Key = key, ExpiresAt = now.AddMinutes(15) }; db.PasswordRecoveryLimits.Add(row); }
         if (row.ExpiresAt <= now) { row.Count = 0; row.ExpiresAt = now.AddMinutes(15); }

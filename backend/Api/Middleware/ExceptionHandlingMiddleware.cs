@@ -18,12 +18,13 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             if (context.Response.HasStarted) throw;
             var problem = Map(ex);
             if (problem.Status >= 500)
-                logger.LogError(ex, "Erro HTTP 500 nao tratado. TraceId={TraceId} Method={Method} Path={Path}",
-                    context.TraceIdentifier, context.Request.Method, context.Request.Path);
+                logger.LogError("Erro HTTP 500 nao tratado. Tipo={FailureType} TraceId={TraceId} Method={Method} Path={Path}",
+                    ex.GetType().Name, context.TraceIdentifier, context.Request.Method, context.Request.Path);
             problem.Instance = context.Request.Path;
             context.Response.Clear();
             context.Response.StatusCode = problem.Status!.Value;
             context.Response.ContentType = "application/problem+json";
+            context.Response.Headers.CacheControl = "no-store";
             // Preserva Errors de ValidationProblemDetails na serializacao do tipo derivado.
             if (problem is ValidationProblemDetails validation)
                 await context.Response.WriteAsJsonAsync(validation, (System.Text.Json.JsonSerializerOptions?)null, "application/problem+json");

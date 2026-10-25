@@ -31,10 +31,7 @@ public static class Mappings
     public static AgentResponseDto ToResponse(this Domain.Entities.Agent a) => new(a.Id, a.Name, Documents.MaskCpf(a.Cpf),
         a.BadgeNumber, a.Role, a.Availability, a.UserId,
         a.Neighborhood, a.Latitude, a.Longitude,
-        // SQL datetime2 loses Kind; persisted agent locations are written in UTC.
-        a.LocationUpdatedAt.Kind == DateTimeKind.Unspecified
-            ? DateTime.SpecifyKind(a.LocationUpdatedAt, DateTimeKind.Utc)
-            : a.LocationUpdatedAt.ToUniversalTime());
+        Utc(a.LocationUpdatedAt));
 
     public static void Apply(this Domain.Entities.Agent a, AgentWriteDto d)
     {
@@ -53,18 +50,17 @@ public static class Mappings
     public static UserResponseDto ToResponse(this User u) => new(u.Id, u.Name, u.Email, Documents.MaskCpf(u.Cpf), u.Role);
 
     public static AlertResponseDto ToResponse(this Domain.Entities.Alert a) =>
-        new(a.Id, a.EquipmentId, a.Type, a.Severity, a.Message, a.Status, Utc(a.CreatedAt)!.Value, Utc(a.ResolvedAt));
+        new(a.Id, a.EquipmentId, a.Type, a.Severity, a.Message, a.Status, Utc(a.CreatedAt), Utc(a.ResolvedAt));
 
     public static MaintenanceResponseDto ToResponse(this MaintenanceRecord m) => new(m.Id, m.EquipmentId, m.AgentId, Utc(m.InitDate),
         Utc(m.EndDate), m.Description, m.Cost, m.Urgency, m.Status, m.PeriodicityDays, m.Kind, Utc(m.ScheduledDate), m.RecommendationId);
 
-    private static DateTime? Utc(DateTime? value) => value is { } date
-        ? date.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(date, DateTimeKind.Utc) : date.ToUniversalTime() : null;
+    internal static DateTime Utc(DateTime value) => value.Kind == DateTimeKind.Unspecified
+        ? DateTime.SpecifyKind(value, DateTimeKind.Utc) : value.ToUniversalTime();
+    private static DateTime? Utc(DateTime? value) => value.HasValue ? Utc(value.Value) : null;
 
     public static EquipmentResponseDto ToResponse(this Domain.Entities.Equipment e) => new(e.Id, e.Type, e.SerialNumber, e.Brand, e.Model,
-        e.Status, e.MaintenanceNeed, e.NextMaintenanceDate is { } nextMaintenance
-            ? nextMaintenance.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(nextMaintenance, DateTimeKind.Utc) : nextMaintenance.ToUniversalTime()
-            : null, e.AddressId,
+        e.Status, e.MaintenanceNeed, Utc(e.NextMaintenanceDate), e.AddressId,
         e.Address?.Neighborhood, e.Address?.Latitude, e.Address?.Longitude, Attributes(e), e.Category, e.Address?.ToResponse());
 
     private static Dictionary<string, object?> VehicleAttrs(Vehicle v) => new()

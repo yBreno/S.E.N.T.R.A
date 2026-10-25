@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore.Design;
 namespace Infrastructure.Data;
 
-/// <summary>Geração offline de migrations/SQL, sem startup da API ou leitura de segredos.</summary>
 public sealed class AppDbContextDesignTimeFactory : IDesignTimeDbContextFactory<AppDbContext>
 {
     public AppDbContext CreateDbContext(string[] args) => new(new DbContextOptionsBuilder<AppDbContext>()

@@ -13,7 +13,7 @@ $apiProject = Join-Path $repoPath 'backend/Api/Api.csproj'
 $values = @{
     DOTNET_ENVIRONMENT = 'Demo'; ASPNETCORE_ENVIRONMENT = 'Demo'; Demo__Enabled = 'true';
     Demo__InteractiveAcceptance = $InteractiveAcceptance.IsPresent.ToString().ToLowerInvariant();
-    Simulation__Enabled = 'false'; SeedAdmin__Enabled = 'false'; PredictiveAutomation__Enabled = 'false';
+    Simulation__Enabled = 'false'; SeedAdmin__Enabled = 'false'; PredictiveAutomation__Enabled = 'false'; PasswordRecovery__Enabled = 'false';
     SENTRA_DEMO_DATABASE = $Database;
     SENTRA_DEMO_CONNECTION_STRING = ('Server=(localdb)\MSSQLLocalDB;Database=' + $Database + ';Integrated Security=true;TrustServerCertificate=true')
 }

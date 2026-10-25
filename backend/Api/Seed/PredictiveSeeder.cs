@@ -5,10 +5,7 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 namespace Api.Seed;
 
-/// <summary>
-/// Popula dados historicos realistas da Cidade Preditiva (somente Development e apenas quando nao ha Incidentes).
-/// Inclui enderecos, equipamentos, agentes, falhas historicas (MTBF e recorrencia) e 6 semanas de ocorrencias.
-/// </summary>
+
 public static class PredictiveSeeder
 {
     public static async Task SeedAsync(IServiceProvider services, ILogger logger)
@@ -280,7 +277,7 @@ public static class PredictiveSeeder
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Seed da Cidade Preditiva ignorado (banco indisponivel ou migration pendente).");
+            logger.LogWarning("Seed da Cidade Preditiva ignorado (banco indisponivel ou migration pendente). Tipo={FailureType}", ex.GetType().Name);
         }
     }
 }

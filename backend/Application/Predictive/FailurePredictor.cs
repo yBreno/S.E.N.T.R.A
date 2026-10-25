@@ -3,10 +3,7 @@ using Domain.Entities;
 using Domain.Enums;
 namespace Application.Predictive;
 
-/// <summary>
-/// Previsao de indisponibilidade por MTBF (tempo medio entre falhas):
-/// dias estimados ate a falha = MTBF - dias desde a ultima restauracao (falha ou manutencao concluida).
-/// </summary>
+
 public static class FailurePredictor
 {
     private static List<double> Gaps(List<Alert> l)

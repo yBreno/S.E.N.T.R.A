@@ -6,10 +6,7 @@ namespace Application.Predictive;
 public record RiskInput(DateTime At, IReadOnlyList<Incident> Incidents, IReadOnlyList<Alert> FailureAlerts, IReadOnlyList<Equipment> Equipments,
     IReadOnlyList<Agent>? Agents = null);
 
-/// <summary>
-/// Indice de risco por bairro (0-100), transparente e baseado em regras:
-/// Score = 100 x (wDensidade x densidade + wFalhas x falhas + wPico x pico + wIndisp x indisponibilidade), cada fator normalizado em 0..1.
-/// </summary>
+
 public static class RiskCalculator
 {
     private static readonly EquipmentStatus[] Unavailable = [EquipmentStatus.Malfunctioning, EquipmentStatus.UnderMaintenance, EquipmentStatus.Stolen];

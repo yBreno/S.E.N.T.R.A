@@ -1,7 +1,6 @@
 using Domain.Enums;
 namespace Domain.Entities;
 
-/// <summary>Ocorrencia operacional (base historica da Cidade Preditiva). Dia da semana/horario derivam de OccurredAt (UTC).</summary>
 public class Incident : BaseEntity
 {
     public IncidentType Type { get; set; }

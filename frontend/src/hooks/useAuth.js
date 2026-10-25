@@ -1,19 +1,19 @@
 // Bibliotecas externas
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Serviços e utilitários
-import { canMonitor, canReadEquipments, login as authenticate } from "../services/auth.js";
-import { invalidResponse, isAbortError } from "../services/http.js";
+import { canMonitor, canReadEquipments, login as authenticate } from '../services/auth.js';
+import { invalidResponse, isAbortError } from '../services/http.js';
 import {
   normalizeSession,
   restoreSession,
   scheduleSessionExpiration,
   sessionStore,
-} from "../services/session.js";
+} from '../services/session.js';
 
 export function useAuth() {
   const [session, setSession] = useState(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRestoring, setIsRestoring] = useState(true);
 
@@ -22,7 +22,7 @@ export function useAuth() {
 
   useEffect(() => () => pendingLogin.current?.abort(), []);
 
-  const logout = useCallback((message = "") => {
+  const logout = useCallback((message = '') => {
     pendingLogin.current?.abort();
     pendingRestore.current?.abort();
     sessionStore.clear();
@@ -44,8 +44,8 @@ export function useAuth() {
         if (!controller.signal.aborted && !isAbortError(error)) {
           setError(
             error.status === 401
-              ? "A API recusou a sessão (401). Entre novamente."
-              : "Não foi possível validar a sessão anterior. Entre novamente.",
+              ? 'A API recusou a sessão (401). Entre novamente.'
+              : 'Não foi possível validar a sessão anterior. Entre novamente.',
           );
         }
       } finally {
@@ -67,7 +67,7 @@ export function useAuth() {
     pendingLogin.current = controller;
     setIsSubmitting(true);
     setIsRestoring(false);
-    setError("");
+    setError('');
     try {
       const authenticated = await authenticate(credentials, {
         signal: controller.signal,
@@ -79,8 +79,7 @@ export function useAuth() {
         setSession(valid);
       }
     } catch (error) {
-      if (!controller.signal.aborted && !isAbortError(error))
-        setError(error.message);
+      if (!controller.signal.aborted && !isAbortError(error)) setError(error.message);
     } finally {
       if (!controller.signal.aborted) setIsSubmitting(false);
     }
@@ -89,9 +88,7 @@ export function useAuth() {
   useEffect(() => {
     if (!session) return;
 
-    return scheduleSessionExpiration(session, () =>
-      logout("Sua sessão expirou. Entre novamente."),
-    );
+    return scheduleSessionExpiration(session, () => logout('Sua sessão expirou. Entre novamente.'));
   }, [session, logout]);
 
   return {

@@ -1,6 +1,6 @@
 using Microsoft.Data.SqlClient;
 
-namespace DemoData.Azure;
+namespace Tests.Support;
 
 public static class AzureDemoTargetGuard
 {

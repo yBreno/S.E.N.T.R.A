@@ -9,10 +9,10 @@ function point(x, y) {
   return {
     x,
     y,
-    add: other => point(x + other.x, y + other.y),
-    subtract: other => point(x - other.x, y - other.y),
-    divideBy: value => point(x / value, y / value),
-    round: () => point(Math.round(x), Math.round(y))
+    add: (other) => point(x + other.x, y + other.y),
+    subtract: (other) => point(x - other.x, y - other.y),
+    divideBy: (value) => point(x / value, y / value),
+    round: () => point(Math.round(x), Math.round(y)),
   };
 }
 
@@ -39,34 +39,49 @@ function fixture() {
     getSize: () => size,
     getZoomScale: (to, from) => 2 ** (to - from),
     project,
-    layerPointToLatLng: value => value.add(origin()).divideBy(2 ** state.zoom),
+    layerPointToLatLng: (value) => value.add(origin()).divideBy(2 ** state.zoom),
     containerPointToLayerPoint: () => point(-state.pane.x, -state.pane.y),
-    on: events => {
+    on: (events) => {
       for (const [name, callback] of Object.entries(events)) {
         if (!listeners.has(name)) listeners.set(name, new Set());
         listeners.get(name).add(callback);
       }
     },
-    off: events => {
+    off: (events) => {
       for (const [name, callback] of Object.entries(events)) listeners.get(name)?.delete(callback);
-    }
+    },
   };
   const fire = (name, event = {}) => {
     for (const callback of listeners.get(name) || []) callback(event);
   };
   const domUtil = {
-    getPosition: element => { assert.equal(element, canvas); return position; },
+    getPosition: (element) => {
+      assert.equal(element, canvas);
+      return position;
+    },
     setTransform: (element, offset, scale) => {
       assert.equal(element, canvas);
       transforms.push({ offset, scale });
-    }
+    },
   };
-  map.on({ moveend: () => { resets++; } });
+  map.on({
+    moveend: () => {
+      resets++;
+    },
+  });
 
   return {
-    state, map, canvas, domUtil, transforms, fire, project, origin,
+    state,
+    map,
+    canvas,
+    domUtil,
+    transforms,
+    fire,
+    project,
+    origin,
     resets: () => resets,
-    listenerCount: () => [...listeners.values()].reduce((total, entries) => total + entries.size, 0)
+    listenerCount: () =>
+      [...listeners.values()].reduce((total, entries) => total + entries.size, 0),
   };
 }
 
@@ -81,7 +96,9 @@ for (const delta of [0.6, -0.7]) {
     const coordinate = point(103, 65);
     const baselineZoom = state.zoom;
     const baselineOrigin = map.layerPointToLatLng(domUtil.getPosition(canvas));
-    const bitmapPoint = project(coordinate, baselineZoom).subtract(project(baselineOrigin, baselineZoom));
+    const bitmapPoint = project(coordinate, baselineZoom).subtract(
+      project(baselineOrigin, baselineZoom),
+    );
     const cleanup = attachHeatmapPinchZoom(map, canvas, domUtil);
 
     fire('zoomstart');
@@ -117,7 +134,9 @@ test('encaixe final de zoom usa o bitmap inicial e o centro de destino, sem salt
   const destination = { center: point(104, 57), zoom: 5 };
   fire('zoomanim', destination);
   const { offset, scale } = transforms.at(-1);
-  const expected = project(baselineOrigin, destination.zoom).subtract(origin(destination.center, destination.zoom));
+  const expected = project(baselineOrigin, destination.zoom).subtract(
+    origin(destination.center, destination.zoom),
+  );
 
   assert.equal(scale, 2);
   close(offset.x, expected.x);

@@ -1,6 +1,5 @@
 namespace Domain.Entities;
 
-/// <summary>One current capability per account. The secret itself is never persisted.</summary>
 public sealed class PasswordResetToken : BaseEntity
 {
     public Guid UserId { get; set; }

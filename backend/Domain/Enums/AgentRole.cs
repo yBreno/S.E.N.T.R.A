@@ -1,2 +1,8 @@
 namespace Domain.Enums;
-public enum AgentRole { TrafficAgent, MunicipalGuard, PoliceOfficer }
+
+public enum AgentRole
+{
+    TrafficAgent,
+    MunicipalGuard,
+    PoliceOfficer
+}

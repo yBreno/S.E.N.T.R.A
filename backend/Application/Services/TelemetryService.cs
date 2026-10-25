@@ -1,5 +1,6 @@
 using Application.DTOs.Predictive;
 using Application.Interfaces.IServices;
+using Application.Mappings;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Exceptions;
@@ -10,7 +11,7 @@ namespace Application.Services;
 public class TelemetryService(ITelemetryLogRepository logs, IEquipmentRepository equipments, IIncidentService incidents, IUnitOfWork uow,
     IValidator<CreateTelemetryDto> validator, TimeProvider clock) : ITelemetryService
 {
-    private static readonly string[] ConnectionLost = ["ConexÃ£o Perdida", "Conexao Perdida", "ConnectionLost"];
+    private static readonly string[] ConnectionLost = ["Conexão Perdida", "Conexao Perdida", "ConnectionLost", "Conex\u00c3\u00a3o Perdida"];
     private static readonly string[] LowBattery = ["Bateria Fraca", "LowBattery"];
 
     private static bool Is(string evt, string[] names) => names.Contains(evt.Trim(), StringComparer.OrdinalIgnoreCase);
@@ -49,10 +50,10 @@ public class TelemetryService(ITelemetryLogRepository logs, IEquipmentRepository
             triggered = true;
         }
 
-        return new TelemetryResponseDto(log.Id, log.EquipmentId, log.Timestamp, log.EventType, log.PayloadData, log.Latitude, log.Longitude, triggered);
+        return log.ToResponse(triggered);
     }
 
     public async Task<IReadOnlyList<TelemetryResponseDto>> GetByEquipmentAsync(Guid equipmentId, int take, CancellationToken ct = default) =>
         (await logs.GetByEquipmentAsync(equipmentId, ct)).Take(Math.Clamp(take, 1, 500))
-            .Select(l => new TelemetryResponseDto(l.Id, l.EquipmentId, l.Timestamp, l.EventType, l.PayloadData, l.Latitude, l.Longitude, false)).ToList();
+            .Select(l => l.ToResponse()).ToList();
 }

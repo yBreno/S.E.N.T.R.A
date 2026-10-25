@@ -56,14 +56,12 @@ public interface ITelemetryService
 
 public interface IAgentLocationService
 {
-    /// <param name="isStaff">Admin/OperationManager podem atualizar qualquer agente; o proprio agente so a si mesmo.</param>
     Task<AgentPositionDto> UpdateLocationAsync(Guid agentId, UpdateAgentLocationDto dto, Guid? callerUserId, bool isStaff, CancellationToken ct = default);
     Task<IReadOnlyList<AgentPositionDto>> GetHistoryAsync(Guid agentId, DateTime? from, DateTime? to, int take, CancellationToken ct = default);
 }
 
 public interface IPredictiveAnalysisService
 {
-    /// <summary>Roda anomalias + previsao MTBF + risco e gera alertas preventivos e recomendacoes (sem duplicar pendentes).</summary>
     Task<PredictiveAnalysisResultDto> RunAsync(CancellationToken ct = default);
     Task<PredictiveAnalysisResultDto> RunAutomaticAsync(CancellationToken ct = default);
 }

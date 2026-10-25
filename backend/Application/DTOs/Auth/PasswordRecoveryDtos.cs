@@ -8,7 +8,6 @@ public record ResetPasswordDto(string Token, string NewPassword, string ConfirmP
 {
     public override string ToString() => nameof(ResetPasswordDto);
 }
-// Ephemeral queued request, never serialized or logged.
 public sealed class PasswordRecoveryRequest(string email, Guid? userId = null, long? authVersion = null)
 {
     public string Email { get; } = email;

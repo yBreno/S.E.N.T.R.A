@@ -6,7 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Demo;
 
-public enum DemoDataProfile { Legacy, Evaluation }
+public enum DemoDataProfile
+{
+    Legacy,
+    Evaluation
+}
 public sealed record DemoLoadResult(int Addresses, int Equipments, int Agents, int Incidents, int Alerts, int Maintenances,
     int Telemetry = 0, int Recommendations = 0)
 {

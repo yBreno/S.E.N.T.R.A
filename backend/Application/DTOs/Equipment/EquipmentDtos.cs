@@ -2,7 +2,6 @@ using Domain.Enums;
 using Application.DTOs.Address;
 namespace Application.DTOs.Equipment;
 
-/// <summary>Campos comuns + campos especificos de cada subtipo (so os do tipo informado sao usados).</summary>
 public abstract record EquipmentWriteDto
 {
     public string SerialNumber { get; init; } = string.Empty;
@@ -10,9 +9,7 @@ public abstract record EquipmentWriteDto
     public string Model { get; init; } = string.Empty;
     public Guid AddressId { get; init; }
     public string? Category { get; init; }
-    /// <summary>Alternativa a AddressId: cria uma localizacao exclusiva na mesma unidade de trabalho.</summary>
     public CreateAddressDto? Address { get; init; }
-    /// <summary>Omitir preserva o planejamento existente em clientes anteriores.</summary>
     public MaintenanceNeed? MaintenanceNeed { get; init; }
     public DateTime? NextMaintenanceDate { get; init; }
 
@@ -43,7 +40,6 @@ public record CreateEquipmentDto : EquipmentWriteDto
 {
     public EquipmentType Type { get; init; }
 }
-/// <summary>O tipo do equipamento e imutavel.</summary>
 public record UpdateEquipmentDto : EquipmentWriteDto;
 
 public record ChangeEquipmentStatusDto(EquipmentStatus NewStatus, string? Reason);

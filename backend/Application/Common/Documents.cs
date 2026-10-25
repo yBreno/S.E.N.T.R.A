@@ -1,7 +1,6 @@
 using System.Text.RegularExpressions;
 namespace Application.Common;
 
-/// <summary>Utilitarios de normalizacao/validacao de documentos brasileiros.</summary>
 public static partial class Documents
 {
     public static string Digits(string? s) => new((s ?? string.Empty).Where(char.IsDigit).ToArray());
@@ -41,12 +40,11 @@ public static partial class Documents
     public static string NormalizePlate(string? plate) =>
         (plate ?? string.Empty).Replace("-", "").Replace(" ", "").ToUpperInvariant();
 
-    /// <summary>Placa antiga (ABC1234) ou Mercosul (ABC1D23).</summary>
     public static bool IsValidLicensePlate(string? plate) => PlateRegex().IsMatch(NormalizePlate(plate));
 
     public static bool IsValidZipCode(string? zip) => Digits(zip).Length == 8;
 
-    /// <summary>LGPD: ***.456.789-** (nunca devolve o CPF completo).</summary>
+    /// LGPD: ***.456.789-**
     public static string MaskCpf(string? cpf)
     {
         var d = Digits(cpf);

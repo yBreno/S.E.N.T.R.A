@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 namespace Infrastructure.Data;
 
-/// <summary>Mesmo recurso SQL para análise e todos os geradores de recomendações desta versão.</summary>
 public sealed class SqlPredictiveWriteCoordinator(AppDbContext db) : IPredictiveWriteCoordinator
 {
     public bool SupportsMultipleInstances => db.Database.IsSqlServer();

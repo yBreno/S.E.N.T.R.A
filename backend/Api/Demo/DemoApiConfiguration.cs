@@ -3,9 +3,9 @@ using Infrastructure.Demo;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
+// Demonstração
 namespace Api.Demo;
 
-/// <summary>Pure configuration checks. Does not connect, seed, migrate or start a host.</summary>
 public static class DemoApiConfiguration
 {
     public const string Database = "SENTRA_DEMO_Stage73";

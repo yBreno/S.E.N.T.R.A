@@ -6,7 +6,6 @@ public record EquipmentFilter(EquipmentType? Type, EquipmentStatus? Status, stri
 
 public interface IEquipmentRepository : IRepository<Equipment>
 {
-    /// <summary>Retorna o equipamento com Address carregado.</summary>
     Task<Equipment?> GetDetailedAsync(Guid id, CancellationToken ct = default);
     Task<List<Equipment>> SearchAsync(EquipmentFilter filter, CancellationToken ct = default);
     Task<bool> SerialNumberExistsAsync(string serialNumber, Guid? ignoreId = null, CancellationToken ct = default);

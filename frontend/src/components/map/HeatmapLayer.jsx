@@ -12,14 +12,10 @@ const options = {
     0.25: '#3498db',
     0.5: '#2ecc71',
     0.75: '#f1c40f',
-    1: '#e74c3c'
-  }
+    1: '#e74c3c',
+  },
 };
-export default function HeatmapLayer({
-  points,
-  max,
-  onError
-}) {
+export default function HeatmapLayer({ points, max, onError }) {
   const map = useMap();
 
   const layerRef = useRef(null);
@@ -27,17 +23,17 @@ export default function HeatmapLayer({
 
   const latest = useRef({
     points,
-    max
+    max,
   });
 
   useEffect(() => {
     latest.current = {
       points,
-      max
+      max,
     };
     geographicRef.current?.updatePoints(points);
     layerRef.current?.setOptions({
-      max
+      max,
     });
     layerRef.current?.setLatLngs(points);
   }, [points, max]);
@@ -46,20 +42,22 @@ export default function HeatmapLayer({
     let cancelled = false;
     let layer;
     let geographic;
-    loadHeatmapFactory().then(createLayer => {
-      if (cancelled) return;
-      layer = createLayer(latest.current.points, {
-        ...options,
-        max: latest.current.max
+    loadHeatmapFactory()
+      .then((createLayer) => {
+        if (cancelled) return;
+        layer = createLayer(latest.current.points, {
+          ...options,
+          max: latest.current.max,
+        });
+        geographic = attachGeographicHeatmap(map, layer, latest.current.points);
+        layer.addTo(map);
+        layerRef.current = layer;
+        geographicRef.current = geographic;
+        onError('');
+      })
+      .catch((error) => {
+        if (!cancelled) onError(error.message);
       });
-      geographic = attachGeographicHeatmap(map, layer, latest.current.points);
-      layer.addTo(map);
-      layerRef.current = layer;
-      geographicRef.current = geographic;
-      onError('');
-    }).catch(error => {
-      if (!cancelled) onError(error.message);
-    });
 
     return () => {
       cancelled = true;

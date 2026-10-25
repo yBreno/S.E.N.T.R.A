@@ -2,7 +2,6 @@ using Domain.Enums;
 using Domain.Exceptions;
 namespace Domain.Entities;
 
-/// <summary>Recomendacao acionavel gerada pelo motor preditivo; o gestor aceita ou descarta.</summary>
 public class Recommendation : BaseEntity
 {
     public RecommendationType Type { get; set; }

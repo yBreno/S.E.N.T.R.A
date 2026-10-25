@@ -8,14 +8,11 @@ namespace Api.Workers;
 public class SimulationSettings
 {
     public const string SectionName = "Simulation";
-    public bool Enabled { get; set; } = true;
+    public bool Enabled { get; set; } = false;
     public int IntervalSeconds { get; set; } = 30;
 }
 
-/// <summary>
-/// Worker em segundo plano que simula telemetria continua de equipamentos e atualizacao de GPS dos agentes.
-/// Controlado por Simulation:Enabled e Simulation:IntervalSeconds no appsettings.json.
-/// </summary>
+
 public class TelemetrySimulationWorker(
     IServiceScopeFactory scopeFactory,
     IOptionsMonitor<SimulationSettings> options,
@@ -41,7 +38,7 @@ public class TelemetrySimulationWorker(
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    logger.LogDebug(ex, "Ciclo de simulacao de telemetria ignorado.");
+                    logger.LogDebug("Ciclo de simulacao de telemetria ignorado. Tipo={FailureType}", ex.GetType().Name);
                 }
             }
 

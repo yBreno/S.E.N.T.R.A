@@ -14,6 +14,6 @@ export function useMarkerInspection(layers, visibility) {
   return {
     selection,
     inspection,
-    select: setSelection
+    select: setSelection,
   };
 }

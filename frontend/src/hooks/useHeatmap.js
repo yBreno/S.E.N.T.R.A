@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import {
   createHeatmapFilters,
   buildHeatmapQuery,
-  defaultHeatmapQuery
+  defaultHeatmapQuery,
 } from '../services/heatmapQuery.js';
 import { getHeatmap } from '../services/heatmap.js';
 import { createHeatmapResource } from '../services/heatmapResource.js';
@@ -13,37 +13,46 @@ import { createHeatmapResource } from '../services/heatmapResource.js';
 export function useHeatmap({
   token,
   onLogout,
-  verification, active = true
+  verification,
+  active = true,
+  initialEnabled = false,
 }) {
   const [filters, setFilters] = useState(createHeatmapFilters);
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState(initialEnabled);
 
-  const resource = useMemo(() => createHeatmapResource({
-    load: (query, {
-      signal
-    }) => getHeatmap(query, {
-      token,
-      signal
-    }),
-    onUnauthorized: () => onLogout('A API recusou a sessão (401). Entre novamente.')
-  }), [token, onLogout]);
+  const resource = useMemo(
+    () =>
+      createHeatmapResource({
+        load: (query, { signal }) =>
+          getHeatmap(query, {
+            token,
+            signal,
+          }),
+        onUnauthorized: () => onLogout('A API recusou a sessão (401). Entre novamente.'),
+      }),
+    [token, onLogout],
+  );
 
   const state = useSyncExternalStore(resource.subscribe, resource.getSnapshot);
 
   const parsed = useMemo(() => buildHeatmapQuery(filters), [filters]);
 
-  const sharedResult = verification.results.find(result => result.id === 'heatmap');
+  const sharedResult = verification.results.find((result) => result.id === 'heatmap');
 
   useEffect(() => {
     resource.setShared({
       result: sharedResult,
       loading: verification.loading,
-      attemptedAt: verification.attemptedAt?.toISOString()
+      attemptedAt: verification.attemptedAt?.toISOString(),
     });
   }, [resource, sharedResult, verification.loading, verification.attemptedAt]);
 
-  useEffect(() => { if (active && enabled && verification.attemptedAt) void resource.poll(); }, [resource, active, enabled, verification.attemptedAt]);
-  useEffect(() => { if (!active) resource.cancel(false); }, [resource, active]);
+  useEffect(() => {
+    if (active && enabled && verification.attemptedAt) void resource.poll();
+  }, [resource, active, enabled, verification.attemptedAt]);
+  useEffect(() => {
+    if (!active) resource.cancel(false);
+  }, [resource, active]);
 
   useEffect(() => () => resource.cancel(false), [resource]);
 
@@ -66,8 +75,9 @@ export function useHeatmap({
     validationError: parsed.error,
     waitingForShared: parsed.query?.key === defaultHeatmapQuery.key && verification.loading,
     apply: () => resource.request(),
-    refresh: () => resource.request({
-      force: true
-    })
+    refresh: () =>
+      resource.request({
+        force: true,
+      }),
   };
 }

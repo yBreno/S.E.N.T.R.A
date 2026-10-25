@@ -1,7 +1,6 @@
 using Domain.Enums;
 namespace Domain.Entities;
 
-/// <summary>Histórico sem senha, token, CPF, nomes, e-mails ou valores de credenciais.</summary>
 public class UserAuditEvent : BaseEntity
 {
     public Guid UserId { get; set; }

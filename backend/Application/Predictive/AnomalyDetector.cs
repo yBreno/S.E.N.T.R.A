@@ -2,10 +2,7 @@ using Application.DTOs.Predictive;
 using Domain.Entities;
 namespace Application.Predictive;
 
-/// <summary>
-/// Anomalia estatistica e auditavel: atual &gt; media + k x desvio-padrao, comparando a janela atual
-/// com as mesmas janelas dos mesmos dias da semana nas semanas anteriores.
-/// </summary>
+
 public static class AnomalyDetector
 {
     public static List<AnomalyDto> Detect(DateTime at, IReadOnlyList<Incident> incidents, IReadOnlyList<Alert> failureAlerts,

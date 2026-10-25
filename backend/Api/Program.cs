@@ -8,7 +8,6 @@ using Application;
 using Application.Predictive;
 using Application.Security;
 using Infrastructure;
-using Infrastructure.Email;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -1,46 +1,46 @@
 export const equipmentStates = Object.freeze({
   Operational: {
     label: 'Operacional',
-    tone: 'operational'
+    tone: 'operational',
   },
   Malfunctioning: {
     label: 'Com falha',
-    tone: 'malfunctioning'
+    tone: 'malfunctioning',
   },
   UnderMaintenance: {
     label: 'Em manutenção',
-    tone: 'maintenance'
+    tone: 'maintenance',
   },
   Deactivated: {
     label: 'Desativado',
-    tone: 'deactivated'
+    tone: 'deactivated',
   },
   Stolen: {
     label: 'Furtado / roubado',
-    tone: 'stolen'
+    tone: 'stolen',
   },
   NotInstalled: {
     label: 'Não instalado',
-    tone: 'not-installed'
-  }
+    tone: 'not-installed',
+  },
 });
 export const agentStates = Object.freeze({
   Available: {
     label: 'Disponível',
-    tone: 'available'
+    tone: 'available',
   },
   Busy: {
     label: 'Ocupado',
-    tone: 'busy'
+    tone: 'busy',
   },
   Offline: {
     label: 'Offline',
-    tone: 'offline'
-  }
+    tone: 'offline',
+  },
 });
 const unknownState = Object.freeze({
   label: 'Estado não informado ou desconhecido',
-  tone: 'unknown'
+  tone: 'unknown',
 });
 export function getEquipmentState(value) {
   const normalized = typeof value === 'string' ? value.trim() : '';
@@ -54,7 +54,17 @@ export function getAgentState(value) {
 }
 export function normalizeCoordinates(latitude, longitude) {
   // Sem coerção: Number(null), Number('') e Number(false) criariam posições falsas em zero.
-  if (typeof latitude !== 'number' || typeof longitude !== 'number' || !Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null;
+  if (
+    typeof latitude !== 'number' ||
+    typeof longitude !== 'number' ||
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  )
+    return null;
 
   return [latitude, longitude];
 }
@@ -68,20 +78,24 @@ export function prepareMarkers(records = []) {
     seen.add(id);
     markers.push({
       ...record,
-      position
+      position,
     });
   }
 
   return {
     markers,
-    discarded: records.length - markers.length
+    discarded: records.length - markers.length,
   };
 }
 export function displayText(value) {
   return typeof value === 'string' && value.trim() ? value : 'Não informado';
 }
 export function agentRoleLabel(value) {
-  const roles = { TrafficAgent: 'Agente de trânsito', MunicipalGuard: 'Guarda municipal', PoliceOfficer: 'Policial militar' };
+  const roles = {
+    TrafficAgent: 'Agente de trânsito',
+    MunicipalGuard: 'Guarda municipal',
+    PoliceOfficer: 'Policial militar',
+  };
   return Object.hasOwn(roles, value) ? roles[value] : displayText(value);
 }
 export function formatLocationUpdatedAt(value) {

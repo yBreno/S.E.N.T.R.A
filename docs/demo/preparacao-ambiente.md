@@ -2,8 +2,8 @@
 
 Este procedimento é manual e exclusivo para um ambiente local de demonstração
 separado e autorizado. A aplicação normal, o Azure e os bancos já existentes não
-participam da preparação. Não usar `DemoData.Azure` nem o roteiro histórico Stage73
-para executar esta sprint.
+participam da preparação. Use somente `DemoData`, `DemoAdmin` e o inicializador
+evaluation descritos abaixo; os executáveis históricos foram removidos.
 
 ## Pré-requisitos e destino
 
@@ -119,6 +119,8 @@ recompile antes de iniciar caso altere código. A API fica em
 LocalDB. Ele não carrega dados, migra schema, cria usuários ou inicia simulação,
 seeders e automação preditiva. As variáveis configuradas pelo script são restauradas
 ao encerrá-lo. Para remover as variáveis definidas manualmente, feche o terminal dedicado.
+A recuperação por e-mail também é explicitamente desabilitada pelo script, mesmo
+se o terminal tiver herdado uma configuração habilitada. O DEMO não envia e-mails.
 
 Com `-InteractiveAcceptance`, somente o POST abaixo atravessa o bloqueio de escritas,
 além do login; continua exigindo JWT e `Admin`/`OperationManager`:

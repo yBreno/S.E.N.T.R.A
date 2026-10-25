@@ -1,2 +1,8 @@
 namespace Domain.Enums;
-public enum AgentAvailability { Offline, Available, Busy }
+
+public enum AgentAvailability
+{
+    Offline,
+    Available,
+    Busy
+}

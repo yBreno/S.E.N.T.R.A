@@ -8,12 +8,8 @@ import MapPopup from './MapPopup.jsx';
 import { agentRoleLabel, displayText, getAgentState } from './markerData.js';
 import { getMarkerIcon } from './markerIcons.js';
 
-export default function AgentMarkers({
-  markers,
-  onSelect,
-  selection
-}) {
-  return markers.map(record => {
+export default function AgentMarkers({ markers, onSelect, selection }) {
+  return markers.map((record) => {
     const state = getAgentState(record.availability);
     const title = `${agentRoleLabel(record.role)}: ${displayText(record.name)} · ${state.label}`;
 
@@ -25,14 +21,15 @@ export default function AgentMarkers({
         title={title}
         alt={title}
         eventHandlers={{
-          click: () => onSelect({
-            kind: 'agent',
-            id: record.id
-          })
+          click: () =>
+            onSelect({
+              kind: 'agent',
+              id: record.id,
+            }),
         }}
       >
         <MapPopup
-          kind="agent"
+          kind='agent'
           record={record}
           selected={selection?.kind === 'agent' && selection.id === record.id}
         />

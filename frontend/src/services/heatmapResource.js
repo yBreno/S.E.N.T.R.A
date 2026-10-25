@@ -1,14 +1,12 @@
 // Serviços e utilitários
 import { defaultHeatmapQuery } from './heatmapQuery.js';
-import {
-  isAbortError
-} from './http.js';
+import { isAbortError } from './http.js';
 
 // Cache em memória por consulta e por sessão. Nenhum token ou dado persiste fora do hook.
 export function createHeatmapResource({
   load,
   onUnauthorized,
-  now = () => new Date().toISOString()
+  now = () => new Date().toISOString(),
 }) {
   const cache = new Map();
   const listeners = new Set();
@@ -23,31 +21,32 @@ export function createHeatmapResource({
     receivedAt: null,
     error: null,
     stale: false,
-    loading: false
+    loading: false,
   };
 
-  const publish = next => {
+  const publish = (next) => {
     snapshot = next;
-    listeners.forEach(listener => listener());
+    listeners.forEach((listener) => listener());
   };
 
   const entry = () => cache.get(query?.key);
 
-  const show = (overrides = {}) => publish({
-    key: query?.key ?? null,
-    data: null,
-    receivedAt: null,
-    error: null,
-    stale: false,
-    loading: false,
-    ...entry(),
-    ...overrides
-  });
+  const show = (overrides = {}) =>
+    publish({
+      key: query?.key ?? null,
+      data: null,
+      receivedAt: null,
+      error: null,
+      stale: false,
+      loading: false,
+      ...entry(),
+      ...overrides,
+    });
 
   function remember(key, value) {
     cache.delete(key);
     cache.set(key, value);
-    if (cache.size > 8) cache.delete(Array.from(cache.keys()).find(item => item !== query?.key));
+    if (cache.size > 8) cache.delete(Array.from(cache.keys()).find((item) => item !== query?.key));
   }
 
   function cancel(update = true) {
@@ -64,11 +63,7 @@ export function createHeatmapResource({
     show();
   }
 
-  function setShared({
-    result,
-    loading,
-    attemptedAt
-  }) {
+  function setShared({ result, loading, attemptedAt }) {
     sharedLoading = loading;
     if (loading) return;
     const stamp = `${result?.receivedAt || ''}:${attemptedAt || ''}:${Boolean(result?.error)}`;
@@ -80,28 +75,26 @@ export function createHeatmapResource({
         data: result.heatmap,
         receivedAt: result.receivedAt,
         stale: Boolean(result.stale),
-        error: result.error || null
+        error: result.error || null,
       });
     } else if (result?.error && (!previous?.data || attemptedAt >= previous.receivedAt)) {
       remember(defaultHeatmapQuery.key, {
         data: previous?.data || null,
         receivedAt: previous?.receivedAt || null,
         stale: Boolean(previous?.data),
-        error: result.error
+        error: result.error,
       });
     }
     if (query?.key === defaultHeatmapQuery.key && !active) show();
   }
 
-  function request({
-    force = false
-  } = {}) {
+  function request({ force = false } = {}) {
     if (!query) return Promise.resolve();
     if (active?.key === query.key) return active.promise;
     if (query.key === defaultHeatmapQuery.key && sharedLoading) {
       show({
         loading: true,
-        stale: Boolean(entry()?.data)
+        stale: Boolean(entry()?.data),
       });
 
       return Promise.resolve();
@@ -118,29 +111,36 @@ export function createHeatmapResource({
     const task = {
       key: requested.key,
       controller,
-      promise: null
+      promise: null,
     };
     active = task;
     show({
       loading: true,
       stale: Boolean(entry()?.data),
-      error: null
+      error: null,
     });
     task.promise = (async () => {
       try {
         const data = await load(requested, {
-          signal: controller.signal
+          signal: controller.signal,
         });
-        if (controller.signal.aborted || sequence !== ticket || query?.key !== requested.key) return;
+        if (controller.signal.aborted || sequence !== ticket || query?.key !== requested.key)
+          return;
         remember(requested.key, {
           data,
           receivedAt: now(),
           stale: false,
-          error: null
+          error: null,
         });
         show();
       } catch (error) {
-        if (controller.signal.aborted || sequence !== ticket || query?.key !== requested.key || isAbortError(error)) return;
+        if (
+          controller.signal.aborted ||
+          sequence !== ticket ||
+          query?.key !== requested.key ||
+          isAbortError(error)
+        )
+          return;
         if (error?.status === 401) {
           onUnauthorized();
 
@@ -151,7 +151,7 @@ export function createHeatmapResource({
           data: last?.data || null,
           receivedAt: last?.receivedAt || null,
           stale: Boolean(last?.data),
-          error
+          error,
         });
         show();
       } finally {
@@ -164,7 +164,7 @@ export function createHeatmapResource({
 
   return {
     getSnapshot: () => snapshot,
-    subscribe: listener => {
+    subscribe: (listener) => {
       listeners.add(listener);
 
       return () => listeners.delete(listener);
@@ -172,7 +172,10 @@ export function createHeatmapResource({
     setQuery,
     setShared,
     request,
-    poll: () => query?.key !== defaultHeatmapQuery.key && (entry()?.data || entry()?.error) ? request({ force: true }) : Promise.resolve(),
-    cancel
+    poll: () =>
+      query?.key !== defaultHeatmapQuery.key && (entry()?.data || entry()?.error)
+        ? request({ force: true })
+        : Promise.resolve(),
+    cancel,
   };
 }

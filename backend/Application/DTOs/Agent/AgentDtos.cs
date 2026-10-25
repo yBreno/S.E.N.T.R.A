@@ -16,10 +16,8 @@ public record CreateAgentDto : AgentWriteDto
 {
     public string Cpf { get; init; } = string.Empty;
 }
-/// <summary>O CPF nao e alteravel.</summary>
 public record UpdateAgentDto : AgentWriteDto;
 
-/// <summary>LGPD: apenas CPF mascarado.</summary>
 public record AgentResponseDto(Guid Id, string Name, string MaskedCpf, string BadgeNumber, AgentRole Role,
     AgentAvailability Availability, Guid? UserId,
     string Neighborhood, double Latitude, double Longitude, DateTime LocationUpdatedAt);

@@ -1,4 +1,4 @@
-using DemoData.Azure;
+using Tests.Support;
 using Microsoft.Data.SqlClient;
 
 namespace Tests;

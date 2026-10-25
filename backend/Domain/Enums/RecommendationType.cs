@@ -1,2 +1,7 @@
 namespace Domain.Enums;
-public enum RecommendationType { DeployAgent, SendMaintenance }
+
+public enum RecommendationType
+{
+    DeployAgent,
+    SendMaintenance
+}

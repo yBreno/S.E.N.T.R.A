@@ -12,15 +12,12 @@ public interface IAddressService : IService<AddressResponseDto, CreateAddressDto
 
 public interface IAgentService : IService<AgentResponseDto, CreateAgentDto, UpdateAgentDto>
 {
-    /// <summary>Perfil do proprio agente (vinculado ao usuario autenticado).</summary>
     Task<AgentResponseDto> GetByUserIdAsync(Guid userId, CancellationToken ct = default);
 }
 
 public interface IEquipmentService : IService<EquipmentResponseDto, CreateEquipmentDto, UpdateEquipmentDto>
 {
-    /// <summary>RF-04: busca filtrada (tipo, status, bairro) com coordenadas.</summary>
     Task<IReadOnlyList<EquipmentResponseDto>> SearchAsync(EquipmentSearchDto filter, CancellationToken ct = default);
-    /// <summary>RD-02/RF-05. isManager = Admin ou OperationManager.</summary>
     Task<EquipmentResponseDto> ChangeStatusAsync(Guid id, ChangeEquipmentStatusDto dto, bool isManager, CancellationToken ct = default);
 }
 
@@ -28,7 +25,6 @@ public interface IMaintenanceService
 {
     Task<MaintenanceResponseDto> ScheduleAsync(ScheduleMaintenanceDto dto, CancellationToken ct = default);
     Task<MaintenanceResponseDto> StartAsync(Guid id, CancellationToken ct = default);
-    /// <summary>Prepara ordem e metadados sem salvar; a aceitacao da recomendacao salva a mesma unidade de trabalho.</summary>
     Task PrepareRecommendationAsync(Guid equipmentId, Guid recommendationId, DateTime date, string description, CancellationToken ct = default);
     Task<MaintenanceResponseDto> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<MaintenanceResponseDto>> GetAllAsync(MaintenanceStatus? status, Guid? equipmentId, CancellationToken ct = default);
@@ -50,7 +46,6 @@ public interface IDashboardService
 
 public interface IAuthService
 {
-    /// <param name="callerIsAdmin">Papeis diferentes de Agent so podem ser atribuidos por um Admin.</param>
     Task<UserResponseDto> RegisterAsync(RegisterDto dto, bool callerIsAdmin, CancellationToken ct = default);
     Task<AuthResponseDto> LoginAsync(LoginDto dto, CancellationToken ct = default);
 }
