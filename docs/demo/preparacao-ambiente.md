@@ -303,6 +303,5 @@ O banco de demonstração não é excluído automaticamente.
 - [README principal](../../README.md) — apresentação e funcionalidades.
 - [Instalação completa](../instalacao.md) — ambiente de desenvolvimento com banco próprio.
 - [Arquitetura](../arquitetura.md) — organização e tecnologias.
-- [Roteiro de demonstração](roteiro-apresentacao.md) — sequência sugerida para apresentar os cenários.
 
 **Esta demonstração utiliza exclusivamente dados sintéticos e não depende do ambiente de produção publicado no Azure.**
