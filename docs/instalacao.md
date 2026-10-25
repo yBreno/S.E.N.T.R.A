@@ -1,7 +1,5 @@
 # Instalação e execução do S.E.N.T.R.A.
 
-Este guia explica como executar o S.E.N.T.R.A. no seu computador, desde a instalação das dependências até o primeiro login.
-
 Você não precisa configurar o Azure nem ter uma conta no Resend para executar o projeto localmente.
 
 **Quer conhecer o sistema com dados já cadastrados?** Consulte o [guia da DEMO](demo/preparacao-ambiente.md), que utiliza um banco isolado com informações fictícias.
