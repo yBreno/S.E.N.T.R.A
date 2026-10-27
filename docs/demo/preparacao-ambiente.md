@@ -19,12 +19,12 @@ Este procedimento foi preparado para **Windows com PowerShell**.
 
 Antes de começar, tenha instalado:
 
-| Ferramenta | Utilização |
+| Ferramenta | Para que serve |
 | --- | --- |
-| .NET SDK 10 | Executar a API e as ferramentas de demonstração |
-| Node.js compatível com Vite 8 | Executar o frontend |
-| SQL Server Express LocalDB | Armazenar os dados fictícios |
-| Git | Baixar o repositório |
+| [.NET SDK 10](https://dotnet.microsoft.com/download/dotnet/10.0) | Executar o backend |
+| [Node.js](https://nodejs.org/) | Executar o frontend React (utilize uma versão compatível com Vite 8) |
+| [SQL Server Express LocalDB](https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/sql-server-express-localdb) | Armazenar os dados localmente |
+| [Git](https://git-scm.com/) | Baixar o projeto |
 
 As portas `5180` (API) e `5173` (frontend) precisam estar disponíveis.
 
