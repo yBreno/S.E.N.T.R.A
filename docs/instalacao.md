@@ -140,25 +140,6 @@ dotnet run --project backend/Api/Api.csproj --no-build --no-restore --no-launch-
 
 Na primeira inicialização, a aplicação provisiona o administrador no banco vazio.
 
-Após confirmar a criação da conta, pressione `Ctrl + C` para interromper a API.
-
-Por segurança, desative a criação automática do administrador e remova os dados temporários:
-
-```powershell
-$env:SeedAdmin__Enabled = 'false'
-
-'SeedAdmin__Password','SeedAdmin__Cpf','SeedAdmin__Email','SeedAdmin__Name' |
-    ForEach-Object { Remove-Item "Env:$_" -ErrorAction SilentlyContinue }
-
-$senha = $null
-```
-
-Agora inicie novamente:
-
-```powershell
-dotnet run --project backend/Api/Api.csproj --no-build --no-restore --no-launch-profile -- --urls http://127.0.0.1:5129
-```
-
 **Deixe esse terminal aberto.** Ele está executando o backend.
 
 ## 5. Iniciar o frontend
